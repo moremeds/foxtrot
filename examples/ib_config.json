@@ -1,0 +1,15 @@
+{
+  "ib": {
+    "host": "127.0.0.1",
+    "port": 7497,
+    "client_id": "DU8220818",
+    "account": "mnvvzx301",
+    "connection_timeout": 30,
+    "data_timeout": 10,
+    "retry_attempts": 3,
+    "retry_delay": 5,
+    "log_level": "INFO",
+    "verbose": false,
+    "json_output": false
+  }
+}

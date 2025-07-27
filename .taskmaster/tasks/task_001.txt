@@ -1,0 +1,92 @@
+# Task ID: 1
+# Title: Implement Binance API Adapter using CCXT
+# Status: pending
+# Dependencies: None
+# Priority: medium
+# Description: Create a new Binance API adapter using the ccxt library. The adapter must be a 'drop-in' replacement for other adapters, strictly adhering to the existing foxtrot framework. It must mirror the structure, interface, and data transformations of the existing Interactive Brokers adapter to ensure system-wide compatibility without requiring any changes to the core system.
+# Details:
+The implementation should follow these steps:
+
+1.  **Project Setup:**
+    -   Create a new directory: `foxtrot/adapter/binance/`.
+    -   Add the `ccxt` library to the project's dependencies (e.g., `requirements.txt` or `package.json`).
+
+2.  **Adapter Class Structure:**
+    -   Create a `BinanceAdapter` class within the new directory that inherits from the framework's `foxtrot.gateway.BaseAdapter`.
+    -   The adapter will be initialized by the `MainEngine`, which will provide the `EventEngine` instance for event communication.
+    -   The constructor should accept API key, secret, and a flag for sandbox/testnet mode. It will initialize the `ccxt.binance()` instance.
+    -   Implement all abstract methods from `BaseAdapter`, such as: `connect()`, `disconnect()`, `send_order()`, `cancel_order()`, `query_market_data()`, `subscribe_tick()`, etc.
+
+3.  **CCXT Integration & Method Implementation:**
+    -   Use the initialized `ccxt` instance to implement the interface methods.
+    -   `connect()`: Should perform an initial authenticated call, like `fetchBalance()`, to verify credentials and then start the main data polling/streaming loop.
+    -   `send_order()`: Map the framework's `OrderRequest` object to `ccxt.createOrder()` arguments. Handle different order types and parameters.
+    -   `query_account()`: Use `ccxt.fetchBalance()` to retrieve account holdings.
+    -   `query_market_data()`: Use `ccxt.fetchOHLCV()` for historical candlestick data.
+
+4.  **Data Transformation Layer:**
+    -   Implement private helper methods to transform data between the Binance API format (via `ccxt`) and the framework's standard data objects (e.g., `OrderData`, `AccountData`, `BarData`, `TickData`).
+    -   **Symbols:** Convert from Binance format (e.g., 'BTCUSDT') to the internal format (e.g., 'BTC.USDT').
+    -   **Timestamps:** Convert millisecond epoch timestamps from `ccxt` to the application's standard format (e.g., ISO 8601 strings).
+    -   **Order Status:** Map Binance statuses ('open', 'closed', 'canceled') to the internal `OrderStatus` enum used by the foxtrot `OrderData` object.
+    -   **Numeric Types:** Use a high-precision numeric type like `Decimal` for all price and quantity values to avoid floating-point inaccuracies.
+
+5.  **Real-time Event Handling (WebSockets):**
+    -   Utilize `ccxt`'s unified WebSocket streaming methods (`watchTicker`, `watchOrders`, `watchMyTrades`).
+    -   Upon receiving a WebSocket message from `ccxt`, transform the data payload into standard `Event` objects (e.g., `TickEvent`, `OrderEvent`) containing the appropriate data objects (`TickData`, `OrderData`).
+    -   Put the created `Event` objects onto the `EventEngine` queue for system-wide distribution using the `on_tick` and `on_order` callback patterns.
+
+6.  **Error Handling:**
+    -   Wrap all `ccxt` calls in try/except blocks.
+    -   Catch specific `ccxt` exceptions (e.g., `AuthenticationError`, `InsufficientFunds`, `InvalidOrder`) and translate them into application-level `ErrorEvent` objects, which are then put on the `EventEngine` queue.
+
+# Test Strategy:
+1.  **Unit Testing (Mocked CCXT):**
+    -   Create unit tests in `tests/unit/adapter/binance/`.
+    -   Use a mocking library to mock the `ccxt.binance` class.
+    -   **Transformation Tests:** Provide mock `ccxt` API responses and assert that the adapter's transformation logic produces the correct, fully-typed foxtrot data objects (`AccountData`, `OrderData`, `BarData`).
+    -   **Method Call Tests:** Call adapter methods like `send_order()` with a foxtrot `OrderRequest` and assert that the underlying `ccxt` methods are called with the correctly translated parameters.
+    -   **Error Handling Tests:** Configure the mock to raise `ccxt` exceptions and verify that the adapter handles them by putting a correctly formatted `ErrorEvent` on a mocked `EventEngine`.
+
+2.  **Integration Testing (Binance Testnet):**
+    -   Create a separate integration test suite that runs against the live Binance Spot Testnet.
+    -   Configure the tests to use dedicated testnet API keys stored securely as environment variables.
+    -   **Connectivity:** Test the `connect()` method to ensure successful authentication.
+    -   **Order Lifecycle:** Write a test that places a small limit order, verifies its status is 'open' via an `OrderEvent`, cancels the order, and verifies the final status is 'canceled' via another `OrderEvent`.
+    -   **Data Fetching:** Call `query_account()` and `query_market_data()` and validate the structure and types of the returned data objects against the framework's models.
+    -   **WebSocket Events:** Subscribe to a ticker (e.g., BTC/USDT) and order updates. Assert that correctly formatted `TickEvent` and `OrderEvent` objects are received via the `EventEngine` within a reasonable timeframe.
+
+3.  **Compatibility Testing:**
+    -   Execute an abstract, high-level test suite against both the existing IB adapter and the new Binance adapter to ensure they produce identical outputs and events for equivalent actions. This test is critical to validate the 'drop-in replacement' requirement and confirm strict interface compatibility.
+
+# Subtasks:
+## 1. Initial Project Setup and Adapter Scaffolding [pending]
+### Dependencies: None
+### Description: Set up the project structure for the new Binance adapter and create the main `BinanceAdapter` class. This class will serve as the skeleton, inheriting from the `BaseAdapter` class and implementing its abstract methods with placeholder logic.
+### Details:
+Create the directory `foxtrot/adapter/binance/`. Add `ccxt` to the project's dependencies. Create the `BinanceAdapter` class inheriting from `BaseAdapter`. The constructor should accept API credentials and be prepared to receive the `EventEngine` from the `MainEngine`. Implement all required public methods with their bodies raising `NotImplementedError`.
+
+## 2. Implement RESTful Account and Order Management [pending]
+### Dependencies: None
+### Description: Implement the essential account and order management methods using CCXT's REST API. This includes fetching account balances, placing, and canceling orders, along with the necessary data transformations into foxtrot objects and error handling.
+### Details:
+Implement `connect()`, `query_account()`, `send_order()`, and `cancel_order()` using the corresponding `ccxt` methods (`fetchBalance`, `createOrder`, `cancelOrder`). Implement the data transformation layer for these methods, converting `ccxt` responses into the framework's `AccountData` and `OrderData` objects. Ensure all numeric values for price and quantity use the `Decimal` type. Handle specific `ccxt` exceptions by creating and queueing `ErrorEvent` objects.
+
+## 3. Implement RESTful Market Data Retrieval [pending]
+### Dependencies: None
+### Description: Implement the functionality to fetch historical market data, specifically OHLCV (candlestick) data, from Binance via CCXT. This involves handling data requests and transforming the results into the framework's standard `BarData` format.
+### Details:
+Implement the `query_market_data()` method using `ccxt.fetchOHLCV()`. The implementation must handle parameters such as symbol, timeframe, and date ranges. Create and apply data transformation logic to convert the OHLCV array from `ccxt` into a list of the framework's `BarData` objects, ensuring timestamps are converted to ISO 8601 strings and all price/volume values are `Decimal` objects.
+
+## 4. Implement Real-time WebSocket Data Streams [pending]
+### Dependencies: None
+### Description: Integrate CCXT's unified WebSocket client to subscribe to real-time market data (ticks) and user-specific data (order updates). Received data must be transformed into standard foxtrot events and put on the EventEngine.
+### Details:
+Implement `subscribe_tick()` and the logic for order updates using `ccxt.watchTicker()` and `ccxt.watchOrders()` respectively. In the asynchronous loop handling WebSocket messages, transform the data payload into `TickData` and `OrderData` objects. Wrap these objects in `TickEvent` and `OrderEvent` respectively, and put them onto the `EventEngine` queue. Implement the `disconnect()` method to gracefully close WebSocket connections.
+
+## 5. Finalize Error Handling and Perform Integration Testing [pending]
+### Dependencies: None
+### Description: Conduct a comprehensive review of the adapter's error handling and perform integration testing against the Binance testnet. The goal is to ensure all API interactions are robust and exceptions are handled gracefully and consistently across the adapter.
+### Details:
+Review all `try/except` blocks to ensure all relevant `ccxt` exceptions are caught and translated into standardized `ErrorEvent` objects. Add robust logging for errors and key events. Write an integration test suite that connects to the Binance testnet to execute an end-to-end workflow: connect, query balance, send an order, receive a WebSocket `OrderEvent`, query market data, and cancel the order.
+

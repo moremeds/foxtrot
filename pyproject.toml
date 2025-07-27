@@ -1,0 +1,72 @@
+[tool.poetry]
+name = "foxtrot"
+version = "0.1.0"
+description = "Event-driven trading platform framework"
+authors = ["Chenxi <chenxi.li08@outlook.com>"]
+readme = "README.md"
+packages = [{include = "foxtrot"}]
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.14"
+tzlocal = "^5.3.1"
+PySide6 = "^6.8.2.1"
+pyqtgraph = "^0.13.7"
+qdarkstyle = "^3.2.3"
+numpy = "^2.2.3"
+pandas = "^2.2.3"
+ta-lib = "^0.6.4"
+deap = "^1.4.2"
+ccxt = "^4.4.96"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.4.1"
+pytest-cov = "^6.0.0"
+black = "^25.1.0"
+ruff = "^0.12.5"
+mypy = "^1.17.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 100
+target-version = ['py310']
+
+[tool.ruff]
+line-length = 100
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "N",  # pep8-naming
+    "UP", # pyupgrade
+]
+ignore = [
+    "E501",  # line too long (handled by black)
+]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+strict_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+
+
+[[tool.mypy.overrides]]
+module = "ibapi.*"
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+addopts = "-v --cov=foxtrot --cov-report=html --cov-report=term"
