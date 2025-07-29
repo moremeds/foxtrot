@@ -1,261 +1,193 @@
 """
-Unit tests for BinanceAdapter.
+Unit tests for BinanceAdapter facade.
+
+Tests the main adapter facade to ensure it properly delegates
+to the BinanceApiClient and maintains the BaseAdapter interface.
 """
 
 import pytest
-from unittest.mock import Mock, patch, AsyncMock
-from datetime import datetime
+from unittest.mock import Mock, patch
 
 from foxtrot.adapter.binance import BinanceAdapter
-from foxtrot.core.engine import EventEngine
-from foxtrot.util.constants import Exchange, Status, Direction, OrderType
-from foxtrot.util.object import (
-    SubscribeRequest, OrderRequest, CancelRequest, HistoryRequest,
-    OrderData, AccountData, BarData, TickData, TradeData
-)
+from foxtrot.core.event_engine import EventEngine
+from foxtrot.util.constants import Exchange, Direction, OrderType
+from foxtrot.util.object import OrderRequest, CancelRequest, SubscribeRequest
 
 
 class TestBinanceAdapter:
-    """Test cases for BinanceAdapter class."""
+    """Test cases for BinanceAdapter facade."""
 
-    def test_adapter_instantiation(self):
-        """Test that BinanceAdapter can be instantiated correctly."""
-        # Create mock EventEngine
-        mock_event_engine = Mock(spec=EventEngine)
-        adapter_name = "test_binance"
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.event_engine = Mock(spec=EventEngine)
+        self.adapter = BinanceAdapter(self.event_engine, "TEST_BINANCE")
+
+    def test_initialization(self):
+        """Test adapter initialization."""
+        assert self.adapter.adapter_name == "TEST_BINANCE"
+        assert self.adapter.event_engine == self.event_engine
+        assert self.adapter.default_name == "BINANCE"
+        assert Exchange.BINANCE in self.adapter.exchanges
+        assert hasattr(self.adapter, 'api_client')
+
+    def test_default_settings(self):
+        """Test default settings configuration."""
+        expected_settings = {
+            "API Key": "",
+            "Secret": "",
+            "Sandbox": False,
+            "Proxy Host": "",
+            "Proxy Port": 0,
+        }
+        assert self.adapter.default_setting == expected_settings
+
+    @patch('foxtrot.adapter.binance.api_client.BinanceApiClient.connect')
+    def test_connect_delegates_to_api_client(self, mock_connect):
+        """Test that connect method delegates to api_client."""
+        mock_connect.return_value = True
         
-        # Instantiate adapter
-        adapter = BinanceAdapter(
-            event_engine=mock_event_engine,
-            adapter_name=adapter_name
+        settings = {
+            "API Key": "test_key",
+            "Secret": "test_secret",
+            "Sandbox": True
+        }
+        
+        result = self.adapter.connect(settings)
+        
+        assert result is True
+        mock_connect.assert_called_once_with(settings)
+
+    @patch('foxtrot.adapter.binance.api_client.BinanceApiClient.close')
+    def test_close_delegates_to_api_client(self, mock_close):
+        """Test that close method delegates to api_client."""
+        self.adapter.close()
+        mock_close.assert_called_once()
+
+    def test_send_order_when_order_manager_none(self):
+        """Test send_order returns empty string when order_manager is None."""
+        self.adapter.api_client.order_manager = None
+        
+        req = OrderRequest(
+            symbol="BTCUSDT.BINANCE",
+            exchange=Exchange.BINANCE,
+            direction=Direction.LONG,
+            type=OrderType.LIMIT,
+            volume=0.001,
+            price=30000
         )
         
-        # Verify basic properties
-        assert adapter.event_engine is mock_event_engine
-        assert adapter.adapter_name == adapter_name
-        assert adapter.default_name == "BINANCE"
-        assert Exchange.BINANCE in adapter.exchanges
-        assert adapter.ccxt_exchange is None
-        assert adapter.connected is False
-
-    def test_default_setting_structure(self):
-        """Test that default_setting has required fields."""
-        mock_event_engine = Mock(spec=EventEngine)
-        adapter = BinanceAdapter(mock_event_engine, "test")
-        
-        required_fields = ["API Key", "Secret", "Sandbox", "Proxy Host", "Proxy Port"]
-        for field in required_fields:
-            assert field in adapter.default_setting
-
-    def test_status_mappings(self):
-        """Test status conversion mappings."""
-        mock_event_engine = Mock(spec=EventEngine)
-        adapter = BinanceAdapter(mock_event_engine, "test")
-        
-        # Test CCXT to VT status mapping
-        assert adapter.STATUS_CCXT2VT["open"] == Status.NOTTRADED
-        assert adapter.STATUS_CCXT2VT["closed"] == Status.ALLTRADED
-        assert adapter.STATUS_CCXT2VT["canceled"] == Status.CANCELLED
-        
-        # Test VT to CCXT status mapping
-        assert adapter.STATUS_VT2CCXT[Status.NOTTRADED] == "open"
-        assert adapter.STATUS_VT2CCXT[Status.ALLTRADED] == "closed"
-
-    def test_order_type_mappings(self):
-        """Test order type conversion mappings."""
-        mock_event_engine = Mock(spec=EventEngine)
-        adapter = BinanceAdapter(mock_event_engine, "test")
-        
-        assert adapter.ORDERTYPE_VT2CCXT[OrderType.LIMIT] == "limit"
-        assert adapter.ORDERTYPE_VT2CCXT[OrderType.MARKET] == "market"
-        
-        assert adapter.ORDERTYPE_CCXT2VT["limit"] == OrderType.LIMIT
-        assert adapter.ORDERTYPE_CCXT2VT["market"] == OrderType.MARKET
-
-    def test_direction_mappings(self):
-        """Test direction conversion mappings."""
-        mock_event_engine = Mock(spec=EventEngine)
-        adapter = BinanceAdapter(mock_event_engine, "test")
-        
-        assert adapter.DIRECTION_VT2CCXT[Direction.LONG] == "buy"
-        assert adapter.DIRECTION_VT2CCXT[Direction.SHORT] == "sell"
-        
-        assert adapter.DIRECTION_CCXT2VT["buy"] == Direction.LONG
-        assert adapter.DIRECTION_CCXT2VT["sell"] == Direction.SHORT
-
-    def test_symbol_conversion(self):
-        """Test symbol format conversion."""
-        mock_event_engine = Mock(spec=EventEngine)
-        adapter = BinanceAdapter(mock_event_engine, "test")
-        
-        # Test VT symbol to CCXT
-        vt_symbol = "BTC.BINANCE"
-        ccxt_symbol = adapter._convert_symbol_to_ccxt(vt_symbol)
-        assert ccxt_symbol == "BTC/USDT"
-        
-        # Test CCXT symbol to VT
-        ccxt_symbol = "ETH/USDT"
-        vt_symbol = adapter._convert_symbol_from_ccxt(ccxt_symbol)
-        assert vt_symbol == "ETH.BINANCE"
-
-    def test_interval_conversion(self):
-        """Test interval to timeframe conversion."""
-        mock_event_engine = Mock(spec=EventEngine)
-        adapter = BinanceAdapter(mock_event_engine, "test")
-        
-        # Test common intervals
-        assert adapter._convert_interval_to_ccxt_timeframe(1) == "1m"
-        assert adapter._convert_interval_to_ccxt_timeframe(5) == "5m"
-        assert adapter._convert_interval_to_ccxt_timeframe(60) == "1h"
-        assert adapter._convert_interval_to_ccxt_timeframe(1440) == "1d"
-        
-        # Test default fallback
-        assert adapter._convert_interval_to_ccxt_timeframe(999) == "1h"
-
-    @patch('ccxt.binance')
-    def test_init_ccxt_success(self, mock_ccxt_binance):
-        """Test successful CCXT initialization."""
-        mock_event_engine = Mock(spec=EventEngine)
-        adapter = BinanceAdapter(mock_event_engine, "test")
-        
-        mock_exchange = Mock()
-        mock_ccxt_binance.return_value = mock_exchange
-        
-        adapter._init_ccxt("test_key", "test_secret", False)
-        
-        # Verify CCXT exchange was created
-        mock_ccxt_binance.assert_called_once()
-        assert adapter.ccxt_exchange == mock_exchange
-
-    def test_connect_not_connected(self):
-        """Test operations when not connected."""
-        mock_event_engine = Mock(spec=EventEngine)
-        adapter = BinanceAdapter(mock_event_engine, "test")
-        
-        # Test query_account when not connected
-        adapter.query_account()
-        # Should not raise exception, just log warning
-        
-        # Test send_order when not connected
-        mock_order_req = Mock(spec=OrderRequest)
-        result = adapter.send_order(mock_order_req)
+        result = self.adapter.send_order(req)
         assert result == ""
 
-    def test_convert_ccxt_order_to_order_data(self):
-        """Test conversion of CCXT order to OrderData."""
-        mock_event_engine = Mock(spec=EventEngine)
-        adapter = BinanceAdapter(mock_event_engine, "test")
+    def test_send_order_delegates_to_order_manager(self):
+        """Test send_order delegates to order_manager when available."""
+        mock_order_manager = Mock()
+        mock_order_manager.send_order.return_value = "TEST_ORDER_123"
+        self.adapter.api_client.order_manager = mock_order_manager
         
-        ccxt_order = {
-            'id': '12345',
-            'symbol': 'BTC/USDT',
-            'type': 'limit',
-            'side': 'buy',
-            'amount': 1.0,
-            'price': 50000.0,
-            'filled': 0.5,
-            'status': 'open',
-            'timestamp': 1640995200000  # 2022-01-01 00:00:00 UTC
-        }
+        req = OrderRequest(
+            symbol="BTCUSDT.BINANCE",
+            exchange=Exchange.BINANCE,
+            direction=Direction.LONG,
+            type=OrderType.LIMIT,
+            volume=0.001,
+            price=30000
+        )
         
-        order_data = adapter._convert_ccxt_order_to_order_data(ccxt_order)
+        result = self.adapter.send_order(req)
         
-        assert order_data.orderid == '12345'
-        assert order_data.symbol == 'BTC'
-        assert order_data.exchange == Exchange.BINANCE
-        assert order_data.type == OrderType.LIMIT
-        assert order_data.direction == Direction.LONG
-        assert order_data.volume == 1.0
-        assert order_data.price == 50000.0
-        assert order_data.traded == 0.5
-        assert order_data.status == Status.NOTTRADED
+        assert result == "TEST_ORDER_123"
+        mock_order_manager.send_order.assert_called_once_with(req)
 
-    def test_convert_ccxt_trade_to_trade_data(self):
-        """Test conversion of CCXT trade to TradeData."""
-        mock_event_engine = Mock(spec=EventEngine)
-        adapter = BinanceAdapter(mock_event_engine, "test")
+    def test_cancel_order_when_order_manager_none(self):
+        """Test cancel_order returns False when order_manager is None."""
+        self.adapter.api_client.order_manager = None
         
-        ccxt_trade = {
-            'id': '67890',
-            'order': '12345',
-            'symbol': 'ETH/USDT',
-            'side': 'sell',
-            'amount': 2.0,
-            'price': 3000.0,
-            'timestamp': 1640995200000
-        }
+        req = CancelRequest(orderid="TEST_ORDER_123", symbol="BTCUSDT.BINANCE", exchange=Exchange.BINANCE)
         
-        trade_data = adapter._convert_ccxt_trade_to_trade_data(ccxt_trade)
-        
-        assert trade_data.tradeid == '67890'
-        assert trade_data.orderid == '12345'
-        assert trade_data.symbol == 'ETH'
-        assert trade_data.exchange == Exchange.BINANCE
-        assert trade_data.direction == Direction.SHORT
-        assert trade_data.volume == 2.0
-        assert trade_data.price == 3000.0
+        result = self.adapter.cancel_order(req)
+        assert result is False
 
-    def test_convert_ccxt_ticker_to_tick_data(self):
-        """Test conversion of CCXT ticker to TickData."""
-        mock_event_engine = Mock(spec=EventEngine)
-        adapter = BinanceAdapter(mock_event_engine, "test")
+    def test_cancel_order_delegates_to_order_manager(self):
+        """Test cancel_order delegates to order_manager when available."""
+        mock_order_manager = Mock()
+        mock_order_manager.cancel_order.return_value = True
+        self.adapter.api_client.order_manager = mock_order_manager
         
-        ticker = {
-            'symbol': 'BTC/USDT',
-            'timestamp': 1640995200000,
-            'baseVolume': 100.0,
-            'open': 49000.0,
-            'high': 51000.0,
-            'low': 48000.0,
-            'last': 50000.0,
-            'ask': 50010.0,
-            'bid': 49990.0
-        }
+        req = CancelRequest(orderid="TEST_ORDER_123", symbol="BTCUSDT.BINANCE", exchange=Exchange.BINANCE)
         
-        mock_req = Mock()
-        mock_req.symbol = 'BTC'
+        result = self.adapter.cancel_order(req)
         
-        tick_data = adapter._convert_ccxt_ticker_to_tick_data(ticker, mock_req)
-        
-        assert tick_data.symbol == 'BTC'
-        assert tick_data.exchange == Exchange.BINANCE
-        assert tick_data.volume == 100.0
-        assert tick_data.open_price == 49000.0
-        assert tick_data.high_price == 51000.0
-        assert tick_data.low_price == 48000.0
-        assert tick_data.last_price == 50000.0
-        assert tick_data.ask_price_1 == 50010.0
-        assert tick_data.bid_price_1 == 49990.0
+        assert result is True
+        mock_order_manager.cancel_order.assert_called_once_with(req)
 
-    def test_query_position_not_implemented(self):
-        """Test that query_position raises NotImplementedError."""
-        mock_event_engine = Mock(spec=EventEngine)
-        adapter = BinanceAdapter(mock_event_engine, "test")
+    def test_subscribe_when_market_data_none(self):
+        """Test subscribe returns False when market_data is None."""
+        self.adapter.api_client.market_data = None
         
-        with pytest.raises(NotImplementedError):
-            adapter.query_position()
+        req = SubscribeRequest(symbol="BTCUSDT.BINANCE", exchange=Exchange.BINANCE)
+        
+        result = self.adapter.subscribe(req)
+        assert result is False
 
-    @patch.object(BinanceAdapter, 'write_log')
-    def test_error_logging(self, mock_write_log):
-        """Test that errors are properly logged."""
-        mock_event_engine = Mock(spec=EventEngine)
-        adapter = BinanceAdapter(mock_event_engine, "test")
+    def test_subscribe_delegates_to_market_data(self):
+        """Test subscribe delegates to market_data when available."""
+        mock_market_data = Mock()
+        mock_market_data.subscribe.return_value = True
+        self.adapter.api_client.market_data = mock_market_data
         
-        # Test connection error logging
-        adapter.query_account()
-        mock_write_log.assert_called_with("Not connected to Binance")
+        req = SubscribeRequest(symbol="BTCUSDT.BINANCE", exchange=Exchange.BINANCE)
+        
+        result = self.adapter.subscribe(req)
+        
+        assert result is True
+        mock_market_data.subscribe.assert_called_once_with(req)
 
-    def test_close_connection(self):
-        """Test connection closing."""
-        mock_event_engine = Mock(spec=EventEngine)
-        adapter = BinanceAdapter(mock_event_engine, "test")
+    def test_query_account_when_account_manager_none(self):
+        """Test query_account returns early when account_manager is None."""
+        self.adapter.api_client.account_manager = None
         
-        # Setup a mock exchange
-        mock_exchange = Mock()
-        adapter.ccxt_exchange = mock_exchange
-        adapter.connected = True
+        # Should not raise exception, just return early
+        self.adapter.query_account()
+
+    def test_query_account_delegates_to_account_manager(self):
+        """Test query_account delegates to account_manager when available."""
+        mock_account_manager = Mock()
+        mock_account_data = Mock()
+        mock_account_manager.query_account.return_value = mock_account_data
+        self.adapter.api_client.account_manager = mock_account_manager
         
-        adapter.close()
+        # Mock the on_account callback
+        self.adapter.on_account = Mock()
         
-        assert adapter.connected is False
-        assert adapter.ccxt_exchange is None
+        self.adapter.query_account()
+        
+        mock_account_manager.query_account.assert_called_once()
+        self.adapter.on_account.assert_called_once_with(mock_account_data)
+
+    def test_connected_property(self):
+        """Test connected property delegates to api_client."""
+        self.adapter.api_client.connected = True
+        assert self.adapter.connected is True
+        
+        self.adapter.api_client.connected = False
+        assert self.adapter.connected is False
+
+    def test_get_available_contracts_when_contract_manager_none(self):
+        """Test get_available_contracts returns empty list when contract_manager is None."""
+        self.adapter.api_client.contract_manager = None
+        
+        result = self.adapter.get_available_contracts()
+        assert result == []
+
+    def test_get_available_contracts_delegates_to_contract_manager(self):
+        """Test get_available_contracts delegates to contract_manager when available."""
+        mock_contract_manager = Mock()
+        mock_contracts = [Mock(), Mock()]
+        mock_contract_manager.get_available_contracts.return_value = mock_contracts
+        self.adapter.api_client.contract_manager = mock_contract_manager
+        
+        result = self.adapter.get_available_contracts()
+        
+        assert result == mock_contracts
+        mock_contract_manager.get_available_contracts.assert_called_once()

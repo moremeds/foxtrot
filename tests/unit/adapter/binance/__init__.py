@@ -1,3 +1,1 @@
-"""
-Unit tests for Binance adapter.
-"""
+"""Binance adapter unit tests package."""

@@ -2,6 +2,6 @@
 Binance adapter for foxtrot trading platform.
 """
 
-from .adapter import BinanceAdapter
+from .binance import BinanceAdapter
 
 __all__ = ["BinanceAdapter"]
