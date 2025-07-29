@@ -10,7 +10,7 @@ Foxtrot is an event-driven trading platform framework built with Python. It foll
 
 ### Core Components
 
-1. **Event Engine** (`foxtrot/core/engine.py`)
+1. **Event Engine** (`foxtrot/core/event_engine.py`)
    - Central event-driven system using `EventEngine` class
    - Handles event distribution, timer events, and handler registration
    - Thread-safe with queue-based event processing
@@ -110,7 +110,7 @@ Global settings in `util/settings.py`, loaded from `vt_setting.json`:
 
 ## Important Notes
 
-- All imports should use `foxtrot` as the root package (e.g., `from foxtrot.core.engine import EventEngine`)
+- All imports should use `foxtrot` as the root package (e.g., `from foxtrot.core.event_engine import EventEngine`)
 - Settings file `vt_setting.json` must exist in working directory
 - Uses timezone-aware datetime objects
 - Follows dataclass patterns for all data structures

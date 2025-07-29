@@ -2,7 +2,7 @@
   "ib": {
     "host": "127.0.0.1",
     "port": 7497,
-    "client_id": "DU8220818",
+    "client_id": "1",
     "account": "mnvvzx301",
     "connection_timeout": 30,
     "data_timeout": 10,

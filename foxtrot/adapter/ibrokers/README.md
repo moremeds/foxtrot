@@ -7,7 +7,7 @@ This module has been refactored from a single 1059-line file into a modular, mai
 ```
 foxtrot/adapter/ibrokers/
 ├── __init__.py              # Public interface exports
-├── adapter.py               # IBAdapter - Main interface (70 lines)
+├── ibrokers.py               # IBAdapter - Main interface (70 lines)
 ├── api_client.py            # IbApi - Central coordinator (300+ lines)
 ├── market_data.py           # MarketDataManager - Tick handling (200+ lines)
 ├── order_manager.py         # OrderManager - Order/trade processing (180+ lines)
@@ -15,7 +15,7 @@ foxtrot/adapter/ibrokers/
 ├── contract_manager.py      # ContractManager - Contract utilities (150+ lines)
 ├── historical_data.py       # HistoricalDataManager - Historical queries (150+ lines)
 ├── ib_mappings.py          # Type mappings (unchanged, 140 lines)
-├── ibrokers.py             # Original file (marked as legacy)
+├── ibrokers_legacy.py             # Original file (marked as legacy)
 └── README.md               # This documentation
 ```
 

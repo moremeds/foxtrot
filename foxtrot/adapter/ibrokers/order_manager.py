@@ -11,38 +11,45 @@ from ibapi.execution import Execution
 from ibapi.order import Order
 from ibapi.order_cancel import OrderCancel
 from ibapi.order_state import OrderState
-from foxtrot.util.constants import Direction, Exchange, OrderType
+
+from foxtrot.util.constants import Exchange, OrderType
 from foxtrot.util.object import CancelRequest, OrderData, OrderRequest, TradeData
 from foxtrot.util.utility import ZoneInfo
 
 from .contract_manager import generate_ib_contract
-from .ib_mappings import (DIRECTION_IB2VT, DIRECTION_VT2IB, EXCHANGE_IB2VT, 
-                          EXCHANGE_VT2IB, ORDERTYPE_IB2VT, ORDERTYPE_VT2IB, 
-                          STATUS_IB2VT)
+from .ib_mappings import (
+    DIRECTION_IB2VT,
+    DIRECTION_VT2IB,
+    EXCHANGE_IB2VT,
+    EXCHANGE_VT2IB,
+    ORDERTYPE_IB2VT,
+    ORDERTYPE_VT2IB,
+    STATUS_IB2VT,
+)
 
 LOCAL_TZ = ZoneInfo("Asia/Shanghai")
 
 
 class OrderManager:
     """Manages order placement, tracking, and execution."""
-    
+
     def __init__(self, adapter_name: str):
         """Initialize order manager."""
         self.adapter_name = adapter_name
-        
+
         # Order storage
         self.orders: dict[str, OrderData] = {}
-        
+
         # Order ID tracking
         self.orderid: int = 0
         self.clientid: int = 0
-    
+
     def set_next_order_id(self, orderId: int) -> None:
         """Set the next valid order ID from IB."""
         if not self.orderid:
             self.orderid = orderId
-    
-    def send_order(self, req: OrderRequest, client, account: str, 
+
+    def send_order(self, req: OrderRequest, client, account: str,
                   write_log_callback, on_order_callback) -> str:
         """Send an order to IB."""
         if req.exchange not in EXCHANGE_VT2IB:
@@ -84,13 +91,13 @@ class OrderManager:
         self.orders[order.orderid] = order
         on_order_callback(order)
         return order.vt_orderid
-    
+
     def cancel_order(self, req: CancelRequest, client) -> None:
         """Cancel an order."""
         cancel: OrderCancel = OrderCancel()
         client.cancelOrder(int(req.orderid), cancel)
-    
-    def process_order_status(self, orderId: OrderId, status: str, filled: Decimal, 
+
+    def process_order_status(self, orderId: OrderId, status: str, filled: Decimal,
                            remaining: Decimal, avgFillPrice: float, on_order_callback) -> None:
         """Process order status updates."""
         orderid: str = str(orderId)
@@ -106,9 +113,9 @@ class OrderManager:
             order.status = order_status
 
         on_order_callback(copy(order))
-    
-    def process_open_order(self, orderId: OrderId, ib_contract: Contract, 
-                          ib_order: Order, orderState: OrderState, 
+
+    def process_open_order(self, orderId: OrderId, ib_contract: Contract,
+                          ib_order: Order, orderState: OrderState,
                           contract_manager, on_order_callback) -> None:
         """Process new/updated order information."""
         orderid: str = str(orderId)
@@ -139,8 +146,8 @@ class OrderManager:
 
         self.orders[orderid] = order
         on_order_callback(copy(order))
-    
-    def process_execution(self, reqId: int, contract: Contract, execution: Execution, 
+
+    def process_execution(self, reqId: int, contract: Contract, execution: Execution,
                          contract_manager, on_trade_callback, write_log_callback) -> None:
         """Process trade execution data."""
         # Parse execution time
@@ -189,7 +196,7 @@ class OrderManager:
         )
 
         on_trade_callback(trade)
-    
+
     def get_order(self, orderid: str) -> OrderData | None:
         """Get order by order ID."""
         return self.orders.get(orderid)

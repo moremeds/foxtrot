@@ -9,9 +9,9 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from foxtrot.tools.config import load_config
-from foxtrot.tools.enhanced_tester import run_test_with_retries
-from foxtrot.tools.utils import setup_logging, create_summary_report
+from foxtrot.testing.ibrokers.config import load_config
+from foxtrot.testing.ibrokers.enhanced import run_test_with_retries
+from foxtrot.testing.ibrokers.utils import setup_logging, create_summary_report
 
 
 def main():

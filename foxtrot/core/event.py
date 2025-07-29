@@ -1,7 +1,6 @@
 from collections import defaultdict
 from collections.abc import Callable
-from queue import Empty
-from queue import Queue
+from queue import Empty, Queue
 from threading import Thread
 from time import sleep
 from typing import Any

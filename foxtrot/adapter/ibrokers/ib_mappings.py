@@ -1,13 +1,15 @@
 from tzlocal import get_localzone_name
 
-from foxtrot.util.constants import Currency
-from foxtrot.util.constants import Direction
-from foxtrot.util.constants import Exchange
-from foxtrot.util.constants import Interval
-from foxtrot.util.constants import OptionType
-from foxtrot.util.constants import OrderType
-from foxtrot.util.constants import Product
-from foxtrot.util.constants import Status
+from foxtrot.util.constants import (
+    Currency,
+    Direction,
+    Exchange,
+    Interval,
+    OptionType,
+    OrderType,
+    Product,
+    Status,
+)
 from foxtrot.util.utility import ZoneInfo
 
 # 委托状态映射

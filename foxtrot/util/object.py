@@ -2,19 +2,11 @@
 Basic data structure used for general trading function in the trading platform.
 """
 
-from dataclasses import dataclass
-from dataclasses import field
+from dataclasses import dataclass, field
 from datetime import datetime as Datetime
 from typing import Any
 
-from .constants import Direction
-from .constants import Exchange
-from .constants import Interval
-from .constants import Offset
-from .constants import OptionType
-from .constants import OrderType
-from .constants import Product
-from .constants import Status
+from .constants import Direction, Exchange, Interval, Offset, OptionType, OrderType, Product, Status
 
 INFO: int = 20
 

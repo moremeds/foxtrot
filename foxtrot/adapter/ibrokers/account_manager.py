@@ -5,6 +5,7 @@ from copy import copy
 from decimal import Decimal
 
 from ibapi.contract import Contract
+
 from foxtrot.util.constants import Direction, Exchange
 from foxtrot.util.object import AccountData, PositionData
 
@@ -13,17 +14,17 @@ from .ib_mappings import ACCOUNTFIELD_IB2VT, EXCHANGE_IB2VT
 
 class AccountManager:
     """Manages account data and position updates."""
-    
+
     def __init__(self, adapter_name: str):
         """Initialize account manager."""
         self.adapter_name = adapter_name
-        
+
         # Account storage
         self.accounts: dict[str, AccountData] = {}
-        
+
         # Account name
         self.account: str = ""
-    
+
     def set_account(self, accountsList: str, client, write_log_callback) -> None:
         """Set the trading account and request updates."""
         if not self.account:
@@ -33,8 +34,8 @@ class AccountManager:
 
         write_log_callback(f"Currently used trading account: {self.account}")
         client.reqAccountUpdates(True, self.account)
-    
-    def process_account_value(self, key: str, val: str, currency: str, 
+
+    def process_account_value(self, key: str, val: str, currency: str,
                             accountName: str) -> None:
         """Process account value updates."""
         if not currency or key not in ACCOUNTFIELD_IB2VT:
@@ -51,12 +52,12 @@ class AccountManager:
 
         name: str = ACCOUNTFIELD_IB2VT[key]
         setattr(account, name, float(val))
-    
-    def process_portfolio_update(self, contract: Contract, position: Decimal, 
-                               marketPrice: float, marketValue: float, 
-                               averageCost: float, unrealizedPNL: float, 
-                               realizedPNL: float, accountName: str, 
-                               contract_manager, on_position_callback, 
+
+    def process_portfolio_update(self, contract: Contract, position: Decimal,
+                               marketPrice: float, marketValue: float,
+                               averageCost: float, unrealizedPNL: float,
+                               realizedPNL: float, accountName: str,
+                               contract_manager, on_position_callback,
                                write_log_callback) -> None:
         """Process position updates."""
         if contract.exchange:
@@ -87,12 +88,12 @@ class AccountManager:
             adapter_name=self.adapter_name,
         )
         on_position_callback(pos)
-    
+
     def process_account_time(self, timeStamp: str, on_account_callback) -> None:
         """Process account update time and send account data."""
         for account in self.accounts.values():
             on_account_callback(copy(account))
-    
+
     def get_account(self) -> str:
         """Get current trading account."""
         return self.account

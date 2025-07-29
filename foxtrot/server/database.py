@@ -1,14 +1,11 @@
-from abc import ABC
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
 from importlib import import_module
 from types import ModuleType
 
-from util.constants import Exchange
-from util.constants import Interval
-from util.object import BarData
-from util.object import TickData
+from util.constants import Exchange, Interval
+from util.object import BarData, TickData
 from util.settings import SETTINGS
 from util.utility import ZoneInfo
 

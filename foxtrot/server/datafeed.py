@@ -2,9 +2,7 @@ from collections.abc import Callable
 from importlib import import_module
 from types import ModuleType
 
-from util.object import BarData
-from util.object import HistoryRequest
-from util.object import TickData
+from util.object import BarData, HistoryRequest, TickData
 from util.settings import SETTINGS
 
 

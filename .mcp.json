@@ -9,8 +9,8 @@
         "task-master-ai"
       ],
       "env": {
-        "ANTHROPIC_API_KEY": "sk-ant-api03-sM0Rm1bTt55_aq3utk6gJlkcxY5kAIrQY3JiAcK3qHmelfTKFpK6kfs\naqmiYt8Sex-mqZP4cTZgPeWgtS9DlAw-Cj2oaAAA",
-        "OPENAI_API_KEY": "sk-proj-lPDJH9XCe39symQmd9IwTx9mCubLlf_p6QjyRd_xNtLq30HX3I7GT1oIDMxyhSp\n2DogwUgQLTDT3BlbkFJZJFWS9fbzaKZ3aDHMboKkLLPMHN48n1PD_kVjWZXDrYO-ZSMbXuZ-XFmRMsqhhwhqkIkXnfswA"
+        "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY}",
+        "OPENAI_API_KEY": "${OPENAI_API_KEY}"
       }
     },
     "sequential-thinking": {
@@ -29,8 +29,12 @@
         "@codacy/codacy-mcp"
       ],
       "env": {
-        "CODACY_ACCOUNT_TOKEN": "pvd3huyOUlan46rDFFY2"
+        "CODACY_ACCOUNT_TOKEN": "${CODACY_ACCOUNT_TOKEN}"
       }
+    },
+    "mcp-deepwiki": {
+      "command": "npx",
+      "args": ["-y", "mcp-deepwiki@latest"]
     }
   }
 }

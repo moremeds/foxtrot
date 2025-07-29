@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from threading import Condition
 
 from ibapi.common import BarData as IbBarData
+
 from foxtrot.util.constants import Product
 from foxtrot.util.object import BarData, HistoryRequest
 from foxtrot.util.utility import ZoneInfo
@@ -17,18 +18,18 @@ LOCAL_TZ = ZoneInfo("Asia/Shanghai")
 
 class HistoricalDataManager:
     """Manages historical data queries and processing."""
-    
+
     def __init__(self, adapter_name: str):
         """Initialize historical data manager."""
         self.adapter_name = adapter_name
-        
+
         # Historical data state
         self.history_req: HistoryRequest | None = None
         self.history_condition: Condition = Condition()
         self.history_buf: list[BarData] = []
         self.history_reqid: int = 0
-    
-    def query_history(self, req: HistoryRequest, client, contract_manager, 
+
+    def query_history(self, req: HistoryRequest, client, contract_manager,
                      write_log_callback) -> list[BarData]:
         """Query historical data from IB."""
         contract = contract_manager.get_contract(req.vt_symbol)
@@ -90,8 +91,8 @@ class HistoricalDataManager:
         self.history_req = None
 
         return history
-    
-    def process_historical_data(self, reqId: int, ib_bar: IbBarData, 
+
+    def process_historical_data(self, reqId: int, ib_bar: IbBarData,
                               write_log_callback) -> None:
         """Process historical bar data."""
         # Daily and weekly data format is %Y%m%d
@@ -137,13 +138,13 @@ class HistoricalDataManager:
             bar.volume = 0
 
         self.history_buf.append(bar)
-    
+
     def process_historical_data_end(self, reqId: int, start: str, end: str) -> None:
         """Process end of historical data."""
         self.history_condition.acquire()
         self.history_condition.notify()
         self.history_condition.release()
-    
+
     def _get_next_reqid(self) -> int:
         """Get next request ID - this should be managed by the main API client."""
         # This is a placeholder - actual implementation should be in the main API client

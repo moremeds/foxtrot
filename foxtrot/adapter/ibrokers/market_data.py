@@ -7,6 +7,7 @@ from datetime import datetime
 from ibapi.common import TickAttrib, TickerId
 from ibapi.contract import Contract
 from ibapi.ticktype import TickType, TickTypeEnum
+
 from foxtrot.util.constants import Exchange
 from foxtrot.util.object import SubscribeRequest, TickData
 from foxtrot.util.utility import ZoneInfo
@@ -19,16 +20,16 @@ LOCAL_TZ = ZoneInfo("Asia/Shanghai")
 
 class MarketDataManager:
     """Manages market data subscriptions and tick processing."""
-    
+
     def __init__(self, adapter_name: str):
         """Initialize market data manager."""
         self.adapter_name = adapter_name
-        
+
         # Tick data storage
         self.ticks: dict[int, TickData] = {}
         self.subscribed: dict[str, SubscribeRequest] = {}
-    
-    def subscribe(self, req: SubscribeRequest, client, contract_manager, 
+
+    def subscribe(self, req: SubscribeRequest, client, contract_manager,
                  write_log_callback, data_ready: bool) -> bool:
         """Subscribe to tick data updates."""
         if req.exchange not in EXCHANGE_VT2IB:
@@ -72,7 +73,7 @@ class MarketDataManager:
 
         self.ticks[tick_reqid] = tick
         return True
-    
+
     def unsubscribe(self, req: SubscribeRequest, client) -> None:
         """Unsubscribe from tick data updates."""
         # Remove subscription record
@@ -89,7 +90,7 @@ class MarketDataManager:
 
         # Send unsubscribe request
         client.cancelMktData(cancel_id)
-    
+
     def query_tick(self, vt_symbol: str, client, contract_manager, write_log_callback) -> None:
         """Query tick data."""
         contract = contract_manager.get_contract(vt_symbol)
@@ -114,9 +115,9 @@ class MarketDataManager:
         tick.extra = {}
 
         self.ticks[reqid] = tick
-    
-    def process_tick_price(self, reqId: TickerId, tickType: TickType, price: float, 
-                          attrib: TickAttrib, contract_manager, on_tick_callback, 
+
+    def process_tick_price(self, reqId: TickerId, tickType: TickType, price: float,
+                          attrib: TickAttrib, contract_manager, on_tick_callback,
                           write_log_callback) -> None:
         """Process tick price updates."""
         if tickType not in TICKFIELD_IB2VT:
@@ -143,8 +144,8 @@ class MarketDataManager:
             tick.datetime = datetime.now(LOCAL_TZ)
 
         on_tick_callback(copy(tick))
-    
-    def process_tick_size(self, reqId: TickerId, tickType: TickType, size, 
+
+    def process_tick_size(self, reqId: TickerId, tickType: TickType, size,
                          on_tick_callback, write_log_callback) -> None:
         """Process tick size updates."""
         if tickType not in TICKFIELD_IB2VT:
@@ -159,8 +160,8 @@ class MarketDataManager:
         setattr(tick, name, float(size))
 
         on_tick_callback(copy(tick))
-    
-    def process_tick_string(self, reqId: TickerId, tickType: TickType, value: str, 
+
+    def process_tick_string(self, reqId: TickerId, tickType: TickType, value: str,
                            on_tick_callback, write_log_callback) -> None:
         """Process tick string updates."""
         if tickType != TickTypeEnum.LAST_TIMESTAMP:
@@ -175,10 +176,10 @@ class MarketDataManager:
         tick.datetime = dt.replace(tzinfo=LOCAL_TZ)
 
         on_tick_callback(copy(tick))
-    
-    def process_tick_option_computation(self, reqId: TickerId, tickType: TickType, 
+
+    def process_tick_option_computation(self, reqId: TickerId, tickType: TickType,
                                        impliedVol: float, delta: float, optPrice: float,
-                                       gamma: float, vega: float, theta: float, 
+                                       gamma: float, vega: float, theta: float,
                                        undPrice: float, write_log_callback) -> None:
         """Process tick option data."""
         tick: TickData | None = self.ticks.get(reqId, None)
@@ -206,7 +207,7 @@ class MarketDataManager:
             tick.extra[f"{prefix}_gamma"] = 0
             tick.extra[f"{prefix}_theta"] = 0
             tick.extra[f"{prefix}_vega"] = 0
-    
+
     def process_tick_snapshot_end(self, reqId: int, write_log_callback) -> None:
         """Process end of market data snapshot."""
         tick: TickData | None = self.ticks.get(reqId, None)
@@ -215,7 +216,7 @@ class MarketDataManager:
             return
 
         write_log_callback(f"{tick.vt_symbol} market data snapshot query successful")
-    
+
     def resubscribe_on_ready(self, client) -> None:
         """Resubscribe to all symbols when data connection is ready."""
         reqs: list[SubscribeRequest] = list(self.subscribed.values())
@@ -223,7 +224,7 @@ class MarketDataManager:
         for req in reqs:
             # Note: This would need the full subscribe method called externally
             pass
-    
+
     def _get_next_reqid(self) -> int:
         """Get next request ID - this should be managed by the main API client."""
         # This is a placeholder - actual implementation should be in the main API client

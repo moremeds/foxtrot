@@ -6,34 +6,34 @@ from copy import copy
 from datetime import datetime
 
 from ibapi.contract import Contract, ContractDetails
+
 from foxtrot.util.constants import Exchange, Product
 from foxtrot.util.object import ContractData
 from foxtrot.util.utility import get_file_path
 
-from .ib_mappings import (EXCHANGE_IB2VT, EXCHANGE_VT2IB, JOIN_SYMBOL, 
-                          OPTION_IB2VT, PRODUCT_IB2VT)
+from .ib_mappings import EXCHANGE_IB2VT, EXCHANGE_VT2IB, JOIN_SYMBOL, OPTION_IB2VT, PRODUCT_IB2VT
 
 
 class ContractManager:
     """Manages contract data and IB contract utilities."""
-    
+
     def __init__(self, adapter_name: str):
         """Initialize contract manager."""
         self.adapter_name = adapter_name
-        
+
         # Contract storage
         self.contracts: dict[str, ContractData] = {}
         self.ib_contracts: dict[str, Contract] = {}
-        
+
         # Data persistence
         self.data_filename = "ib_contract_data.db"
         self.data_filepath = str(get_file_path(self.data_filename))
-        
+
         # Request tracking
         self.reqid_symbol_map: dict[int, str] = {}
         self.reqid_underlying_map: dict[int, Contract] = {}
-    
-    def process_contract_details(self, reqId: int, contractDetails: ContractDetails, 
+
+    def process_contract_details(self, reqId: int, contractDetails: ContractDetails,
                                on_contract_callback, write_log_callback) -> None:
         """Process contract details from IB."""
         # Extract contract information
@@ -85,7 +85,7 @@ class ContractManager:
 
             self.contracts[contract.vt_symbol] = contract
             self.ib_contracts[contract.vt_symbol] = ib_contract
-    
+
     def process_contract_details_end(self, reqId: int, write_log_callback) -> None:
         """Process end of contract details."""
         # Only process option queries
@@ -102,7 +102,7 @@ class ContractManager:
 
         # Save option contracts to a file
         self.save_contract_data()
-    
+
     def load_contract_data(self, on_contract_callback, write_log_callback) -> None:
         """Load local contract data."""
         f = shelve.open(self.data_filepath)
@@ -114,7 +114,7 @@ class ContractManager:
             on_contract_callback(contract)
 
         write_log_callback("Successfully loaded local cached contract information")
-    
+
     def save_contract_data(self) -> None:
         """Save contract data to a local file."""
         # Before saving, ensure that all contract data interface names are set to IB to avoid issues with other modules
@@ -128,7 +128,7 @@ class ContractManager:
         f["contracts"] = contracts
         f["ib_contracts"] = self.ib_contracts
         f.close()
-    
+
     def generate_symbol(self, ib_contract: Contract) -> str:
         """Generate a contract symbol."""
         # Generate a string-style symbol
@@ -158,7 +158,7 @@ class ContractManager:
     def get_contract(self, vt_symbol: str) -> ContractData | None:
         """Get contract data by vt_symbol."""
         return self.contracts.get(vt_symbol)
-    
+
     def get_ib_contract(self, vt_symbol: str) -> Contract | None:
         """Get IB contract by vt_symbol."""
         return self.ib_contracts.get(vt_symbol)

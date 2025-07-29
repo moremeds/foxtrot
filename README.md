@@ -17,7 +17,7 @@ Foxtrot is an event-driven trading platform framework built with Python. It prov
 Install dependencies using Poetry:
 
 ```bash
-poetry install
+poetry install --no-root
 ```
 
 ## Project Structure
@@ -27,6 +27,10 @@ poetry install
 - `foxtrot/core/` - Core event system
 - `foxtrot/server/` - Main engine and server components
 - `foxtrot/util/` - Utilities and data structures
+- `foxtrot/testing/` - Testing utilities and tools
+  - `foxtrot/testing/ibrokers/` - Interactive Brokers testing tools
+- `tests/` - Unit and integration tests
+- `examples/` - Example scripts and usage demonstrations
 
 ## Configuration
 

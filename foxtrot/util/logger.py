@@ -1,10 +1,6 @@
 import sys
 from datetime import datetime
-from logging import CRITICAL
-from logging import DEBUG
-from logging import ERROR
-from logging import INFO
-from logging import WARNING
+from logging import CRITICAL, DEBUG, ERROR, INFO, WARNING
 from pathlib import Path
 
 from loguru import logger
