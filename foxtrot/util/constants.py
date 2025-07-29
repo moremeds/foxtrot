@@ -140,6 +140,11 @@ class Exchange(Enum):
     BYBIT = "BYBIT"         # Bybit
     GATEIO = "GATEIO"       # Gate.io
     COINBASE = "COINBASE"   # Coinbase
+    BITGET = "BITGET"       # Bitget
+    MEXC = "MEXC"           # MEXC
+    GATE = "GATE"           # Gate
+    KUCOIN = "KUCOIN"       # KuCoin
+    BINANCEUSDM = "BINANCEUSDM" # Binance USD-M Futures
 
     # Special Function
     LOCAL = "LOCAL"         # For local generated data

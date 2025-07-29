@@ -1,0 +1,186 @@
+"""
+Crypto Order Manager - Handles order lifecycle management.
+"""
+
+from datetime import datetime
+from typing import TYPE_CHECKING, Dict, Optional
+import threading
+
+import traceback
+
+from foxtrot.util.object import OrderData, OrderRequest, CancelRequest, TradeData
+from foxtrot.util.constants import Direction, Exchange, OrderType, Status
+
+if TYPE_CHECKING:
+    from .crypto_adapter import CryptoAdapter
+
+
+class OrderManager:
+    """
+    Manager for Crypto order operations.
+    """
+
+    def __init__(self, adapter: "CryptoAdapter"):
+        """Initialize the order manager."""
+        self.adapter = adapter
+        self._orders: Dict[str, OrderData] = {}
+        self._order_lock = threading.Lock()
+        self._local_order_id = 0
+
+    def send_order(self, req: OrderRequest) -> str:
+        """
+        Send an order to the exchange.
+        """
+        try:
+            if not self.adapter.exchange:
+                print("Exchange not connected")
+                return ""
+
+            with self._order_lock:
+                self._local_order_id += 1
+                local_orderid = f"{self.adapter.adapter_name}_{self._local_order_id}"
+
+            ccxt_symbol = self._convert_symbol_to_ccxt(req.symbol)
+            if not ccxt_symbol:
+                print(f"Invalid symbol: {req.symbol}")
+                return ""
+
+            side = "buy" if req.direction == Direction.LONG else "sell"
+            order_type = self._convert_order_type_to_ccxt(req.type)
+
+            order = OrderData(
+                adapter_name=self.adapter.adapter_name,
+                symbol=req.symbol,
+                exchange=Exchange[self.adapter.exchange_name.upper()],
+                orderid=local_orderid,
+                type=req.type,
+                direction=req.direction,
+                volume=req.volume,
+                price=req.price,
+                status=Status.SUBMITTING,
+                datetime=datetime.now()
+            )
+
+            with self._order_lock:
+                self._orders[local_orderid] = order
+
+            if order_type == "market":
+                result = self.adapter.exchange.create_market_order(
+                    ccxt_symbol, side, req.volume
+                )
+            else:
+                result = self.adapter.exchange.create_limit_order(
+                    ccxt_symbol, side, req.volume, req.price
+                )
+
+            if result:
+                order.orderid = str(result.get('id', local_orderid))
+                order.status = self._convert_status_from_ccxt(result.get('status', 'open'))
+
+                with self._order_lock:
+                    self._orders[local_orderid] = order
+
+                print(f"Order sent successfully: {local_orderid}")
+                return local_orderid
+            else:
+                print("Failed to send order - no response")
+                return ""
+
+        except Exception as e:
+            print(f"Failed to send order for symbol {req.symbol}: {str(e)}")
+            traceback.print_exc()
+            return ""
+
+    def cancel_order(self, req: CancelRequest) -> bool:
+        """
+        Cancel an order.
+        """
+        try:
+            if not self.adapter.exchange:
+                return False
+
+            with self._order_lock:
+                order = self._orders.get(req.orderid)
+
+            if not order:
+                print(f"Order not found: {req.orderid}")
+                return False
+
+            ccxt_symbol = self._convert_symbol_to_ccxt(order.symbol)
+            if not ccxt_symbol:
+                return False
+
+            result = self.adapter.exchange.cancel_order(order.orderid, ccxt_symbol)
+
+            if result:
+                order.status = Status.CANCELLED
+                with self._order_lock:
+                    self._orders[req.orderid] = order
+
+                print(f"Order cancelled: {req.orderid}")
+                return True
+            else:
+                return False
+
+        except Exception as e:
+            print(f"Failed to cancel order: {str(e)}")
+            return False
+
+    def query_order(self, orderid: str) -> Optional[OrderData]:
+        """
+        Query order status.
+        """
+        with self._order_lock:
+            return self._orders.get(orderid)
+
+    def _convert_symbol_to_ccxt(self, vt_symbol: str) -> str:
+        """
+        Convert VT symbol format to CCXT format.
+        """
+        try:
+            if '.' not in vt_symbol:
+                return ""
+
+            symbol = vt_symbol.split('.')[0]
+
+            if len(symbol) < 3:
+                return ""
+
+            if symbol.endswith('USDT') and len(symbol) > 4:
+                base = symbol[:-4]
+                return f"{base}/USDT"
+            elif symbol.endswith('BTC') and len(symbol) > 3:
+                base = symbol[:-3]
+                return f"{base}/BTC"
+            elif symbol.endswith('ETH') and len(symbol) > 3:
+                base = symbol[:-3]
+                return f"{base}/ETH"
+            else:
+                return f"{symbol}/USDT"
+        except Exception:
+            return ""
+
+    def _convert_order_type_to_ccxt(self, order_type: OrderType) -> str:
+        """
+        Convert VT order type to CCXT format.
+        """
+        if order_type == OrderType.MARKET:
+            return "market"
+        elif order_type == OrderType.LIMIT:
+            return "limit"
+        else:
+            return "limit"
+
+    def _convert_status_from_ccxt(self, ccxt_status: str) -> Status:
+        """
+        Convert CCXT order status to VT format.
+        """
+        status_map = {
+            'open': Status.NOTTRADED,
+            'closed': Status.ALLTRADED,
+            'canceled': Status.CANCELLED,
+            'cancelled': Status.CANCELLED,
+            'partial': Status.PARTTRADED,
+            'expired': Status.CANCELLED,
+        }
+        return status_map.get(ccxt_status.lower(), Status.SUBMITTING)

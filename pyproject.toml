@@ -65,6 +65,7 @@ foxtrot-gui = "foxtrot.gui:main"
 # Entry points for plugin system
 [project.entry-points."foxtrot.adapters"]
 ibrokers = "foxtrot.adapter.ibrokers:IBrokersAdapter"
+crypto = "foxtrot.adapter.crypto:CryptoAdapter"
 
 [project.entry-points."foxtrot.strategies"]
 base = "foxtrot.strategy:BaseStrategy"
