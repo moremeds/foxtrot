@@ -9,9 +9,9 @@ import threading
 from typing import TYPE_CHECKING, Set, Optional
 import time
 
+from datetime import datetime
 from foxtrot.util.object import TickData, SubscribeRequest
 from foxtrot.util.constants import Exchange
-# datetime import removed - using datetime.now() directly
 
 if TYPE_CHECKING:
     from .api_client import BinanceApiClient

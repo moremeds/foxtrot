@@ -77,17 +77,22 @@ class BinanceApiClient:
             api_key = settings.get("API Key", "")
             secret = settings.get("Secret", "")
             sandbox = settings.get("Sandbox", False)
+            options = settings.get("options", {})
             
             if not api_key or not secret:
                 self._log_error("Missing API credentials")
                 return False
                 
-            self.exchange = ccxt.binance({
+            exchange_config = {
                 "apiKey": api_key,
                 "secret": secret,
-                "sandbox": sandbox,
                 "enableRateLimit": True,
-            })
+            }
+            if options:
+                exchange_config["options"] = options
+
+            self.exchange = ccxt.binance(exchange_config)
+            self.exchange.set_sandbox_mode(sandbox)
             
             # Initialize managers
             self.initialize_managers()
