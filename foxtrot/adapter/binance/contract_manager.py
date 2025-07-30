@@ -128,7 +128,7 @@ class BinanceContractManager:
                         stop_supported=True,  # Binance supports stop orders
                         net_position=True,  # Spot trading uses net positions
                         history_data=True,  # Historical data available
-                        gateway_name=self.api_client.adapter_name
+                        adapter_name=self.api_client.adapter_name
                     )
                     
                     self._contracts[vt_symbol] = contract

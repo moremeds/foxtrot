@@ -38,7 +38,7 @@ dependencies = [
     "deap>=1.4.2,<2.0",
     "ccxt>=4.4.96,<5.0",
     "loguru>=0.7.3,<1.0",
-    "textual>=0.45.0,<1.0",
+    "textual>=5.0.0,<6.0",
 ]
 
 [project.optional-dependencies]

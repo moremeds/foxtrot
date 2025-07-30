@@ -134,10 +134,17 @@ class TUIDataMonitor(Container, TUIEventMixin):
         if not self.data_table:
             return
         
+        # Clear existing columns to prevent duplicates
+        self.data_table.clear(columns=True)
+        
         # Add columns based on headers configuration
         for header_key, header_config in self.headers.items():
             display_name = header_config.get("display", header_key)
-            self.data_table.add_column(display_name, key=header_key)
+            try:
+                self.data_table.add_column(display_name, key=header_key)
+            except Exception as e:
+                # Log error but continue
+                await self._log_error(f"Failed to add column {header_key}: {e}")
         
         # Configure table settings
         if get_settings().layout.auto_resize_columns:

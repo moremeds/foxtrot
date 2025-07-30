@@ -64,7 +64,16 @@ class BinanceAdapter(BaseAdapter):
         Returns:
             True if connection successful, False otherwise
         """
-        return self.api_client.connect(setting)
+        success = self.api_client.connect(setting)
+        if success:
+            # Load and publish contracts to MainEngine OMS
+            self._load_all_contracts()
+            
+            # Query initial account and position data
+            self.query_account()
+            self.query_position()
+            
+        return success
 
     def close(self) -> None:
         """Close connection and cleanup resources."""
@@ -173,3 +182,36 @@ class BinanceAdapter(BaseAdapter):
     def connected(self) -> bool:
         """Check if adapter is connected."""
         return self.api_client.connected
+    
+    def _load_all_contracts(self) -> None:
+        """Load all available contracts and publish them to MainEngine OMS."""
+        if not self.api_client.contract_manager:
+            return
+            
+        try:
+            # Force load markets if not already loaded
+            if not self.api_client.contract_manager._markets_loaded:
+                self.api_client.contract_manager._load_markets()
+            
+            # Publish all contracts to MainEngine OMS via events
+            for contract in self.api_client.contract_manager._contracts.values():
+                # Create a copy to ensure immutability as required by BaseAdapter
+                contract_copy = ContractData(
+                    symbol=contract.symbol,
+                    exchange=contract.exchange,
+                    name=contract.name,
+                    product=contract.product,
+                    size=contract.size,
+                    pricetick=contract.pricetick,
+                    min_volume=contract.min_volume,
+                    stop_supported=contract.stop_supported,
+                    net_position=contract.net_position,
+                    history_data=contract.history_data,
+                    adapter_name=contract.adapter_name
+                )
+                self.on_contract(contract_copy)
+                
+            self.write_log(f"Loaded {len(self.api_client.contract_manager._contracts)} contracts")
+            
+        except Exception as e:
+            self.write_log(f"Failed to load contracts: {str(e)}")

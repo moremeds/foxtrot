@@ -128,7 +128,7 @@ class TUILogMonitor(TUIDataMonitor):
             if self.level_filter and log_data.level != self.level_filter:
                 return
             
-            if self.gateway_filter and log_data.gateway_name != self.gateway_filter:
+            if self.gateway_filter and log_data.adapter_name != self.gateway_filter:
                 return
             
             # Process the log entry
@@ -164,7 +164,7 @@ class TUILogMonitor(TUIDataMonitor):
         formatted_time = self._format_log_time(data.time)
         formatted_level = data.level
         formatted_message = self._format_log_message(data.msg)
-        formatted_gateway = data.gateway_name or "SYSTEM"
+        formatted_gateway = data.adapter_name or "SYSTEM"
         
         # Insert the new log entry at the top
         row_values = [formatted_time, formatted_level, formatted_message, formatted_gateway]
@@ -228,8 +228,7 @@ class TUILogMonitor(TUIDataMonitor):
         log_data = LogData(
             msg=message,
             level=level,
-            time=datetime.now(),
-            gateway_name="SYSTEM"
+            adapter_name="SYSTEM"
         )
         
         # Insert directly without going through event system
