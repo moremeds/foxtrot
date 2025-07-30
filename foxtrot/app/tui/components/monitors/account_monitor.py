@@ -17,7 +17,7 @@ from foxtrot.server.engine import MainEngine
 from foxtrot.util.event_type import EVENT_ACCOUNT
 from foxtrot.util.object import AccountData
 
-from ...utils.colors import ColorType, get_color_manager
+from ...utils.colors import get_color_manager
 from ...utils.formatters import TUIFormatter
 from ..base_monitor import TUIDataMonitor
 
@@ -176,8 +176,7 @@ class TUIAccountMonitor(TUIDataMonitor):
 
     def compose(self):
         """Create the account monitor layout with account summary."""
-        for widget in super().compose():
-            yield widget
+        yield from super().compose()
 
     async def on_mount(self) -> None:
         """Called when the account monitor is mounted."""
@@ -213,7 +212,7 @@ class TUIAccountMonitor(TUIDataMonitor):
 
         if cell_type == "percentage":
             # Format percentage changes
-            if isinstance(content, (int, float)) and content != 0:
+            if isinstance(content, int | float) and content != 0:
                 return TUIFormatter.format_percentage(content, show_sign=True)
             return "-"
 
@@ -226,6 +225,7 @@ class TUIAccountMonitor(TUIDataMonitor):
             if isinstance(content, str) and len(content) > config.get("width", 20):
                 return TUIFormatter.truncate_text(content, config.get("width", 20))
             return str(content)
+        return None
 
     async def _apply_row_styling(self, row_index: int, data: AccountData) -> None:
         """
@@ -242,21 +242,21 @@ class TUIAccountMonitor(TUIDataMonitor):
             # Balance-based color coding
             if data.available < self.balance_warning_threshold:
                 # Low balance warning
-                balance_color = ColorType.WARNING
+                pass
             else:
-                balance_color = ColorType.SUCCESS
+                pass
 
             # P&L-based color coding
-            pnl_color = self.color_manager.get_pnl_color(data.net_pnl)
+            self.color_manager.get_pnl_color(data.net_pnl)
 
             # Margin-based warnings
             if hasattr(data, "margin") and data.margin > 0:
                 margin_ratio = data.margin / max(data.balance, 1)
                 if margin_ratio > self.margin_warning_threshold:
                     # High margin usage warning
-                    margin_color = ColorType.ERROR
+                    pass
                 else:
-                    margin_color = ColorType.NEUTRAL
+                    pass
 
             # Apply styling based on account properties
             # This would integrate with Textual's styling system
@@ -312,14 +312,12 @@ class TUIAccountMonitor(TUIDataMonitor):
             True if account passes all filters
         """
         # Currency filter
-        if self.currency_filter:
-            if account_data.currency != self.currency_filter:
-                return False
+        if self.currency_filter and account_data.currency != self.currency_filter:
+            return False
 
         # Gateway filter
-        if self.gateway_filter:
-            if account_data.gateway_name != self.gateway_filter:
-                return False
+        if self.gateway_filter and account_data.gateway_name != self.gateway_filter:
+            return False
 
         # Minimum balance filter
         if self.min_balance_filter is not None:
@@ -472,7 +470,7 @@ class TUIAccountMonitor(TUIDataMonitor):
             message: The message to add
         """
         if self.title_bar:
-            current_time = datetime.now().strftime("%H:%M:%S")
+            datetime.now().strftime("%H:%M:%S")
             await self._update_statistics_display()
 
     # Account analysis methods

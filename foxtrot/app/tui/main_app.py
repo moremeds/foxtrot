@@ -11,7 +11,7 @@ from typing import Any
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Container, Horizontal, Vertical
-from textual.widgets import Button, Footer, Header, Static
+from textual.widgets import Footer, Header, Static
 
 import foxtrot
 from foxtrot.core.event_engine import EventEngine
@@ -27,7 +27,6 @@ from .components.monitors.trade_monitor import create_trade_monitor
 from .components.trading_panel import TUITradingPanel
 from .config.settings import TUISettings
 from .integration.event_adapter import EventEngineAdapter
-from .components.dialogs.modal import get_modal_manager
 
 
 class FoxtrotTUIApp(App[None]):
@@ -45,35 +44,35 @@ class FoxtrotTUIApp(App[None]):
         grid-size: 3 3;
         grid-gutter: 1;
     }
-    
+
     .trading-panel {
         column-span: 1;
         row-span: 3;
         border: solid $primary;
         padding: 1;
     }
-    
+
     .monitor-panel {
         border: solid $accent;
         padding: 1;
     }
-    
+
     .top-monitors {
         column-span: 2;
         row-span: 2;
     }
-    
+
     .bottom-monitors {
         column-span: 2;
         row-span: 1;
     }
-    
+
     .status-bar {
         background: $primary;
         color: $text;
         height: 1;
     }
-    
+
     .title-bar {
         background: $accent;
         color: $text;
@@ -118,7 +117,7 @@ class FoxtrotTUIApp(App[None]):
         self.position_monitor = create_position_monitor(main_engine, event_engine)
         self.account_monitor = create_account_monitor(main_engine, event_engine)
         self.log_monitor = TUILogMonitor(main_engine, event_engine)
-        
+
         # Trading panel component (will be initialized in on_mount after event adapter is ready)
         self.trading_panel: TUITradingPanel | None = None
 
@@ -208,21 +207,21 @@ class FoxtrotTUIApp(App[None]):
                 main_engine=self.main_engine,
                 event_engine=self.event_engine
             )
-            
+
             # Set up event adapter for the trading panel
             if self.event_adapter and hasattr(self.trading_panel, 'set_event_adapter'):
                 self.trading_panel.set_event_adapter(self.event_adapter)
-            
+
             # Replace the placeholder with the actual trading panel
             container = self.query_one("#trading-panel-container")
             placeholder = self.query_one("#trading-placeholder")
-            
+
             # Remove placeholder and mount trading panel
             await placeholder.remove()
             await container.mount(self.trading_panel)
-            
+
             self._log_message("INFO", "Interactive trading panel initialized successfully")
-            
+
         except Exception as e:
             self._log_message("ERROR", f"Failed to initialize trading panel: {e}")
             # Keep placeholder with error message
@@ -236,7 +235,7 @@ class FoxtrotTUIApp(App[None]):
         """Initialize all monitor components with event handling."""
         try:
             # The monitors are already created in __init__, just ensure they're ready
-            for monitor_name, monitor in self.monitors.items():
+            for _monitor_name, monitor in self.monitors.items():
                 if hasattr(monitor, "on_mount"):
                     # The monitors will be mounted automatically by Textual
                     pass
@@ -330,12 +329,12 @@ class FoxtrotTUIApp(App[None]):
         self.screen.focus_previous()
 
     # Trading panel integration handlers
-    
+
     async def on_trading_panel_order_submitted(self, message) -> None:
         """Handle order submitted message from trading panel."""
         if hasattr(message, 'order_data') and hasattr(message, 'order_id'):
             self._log_message("INFO", f"Order submitted: {message.order_id}")
-    
+
     async def on_trading_panel_cancel_all_requested(self, message) -> None:
         """Handle cancel all requested message from trading panel."""
         self._log_message("INFO", "Cancel all orders requested from trading panel")
@@ -361,11 +360,11 @@ class FoxtrotTUIApp(App[None]):
                 # Update the interactive trading panel with tick information
                 if self.trading_panel.symbol_input:
                     self.trading_panel.symbol_input.value = tick_data.symbol
-                
+
                 # Update market data if available
                 if hasattr(self.trading_panel, 'market_data') and self.trading_panel.market_data:
                     await self.trading_panel.market_data.update_symbol(tick_data.symbol)
-                
+
                 self._log_message("INFO", f"Updated trading panel with {tick_data.symbol}")
             else:
                 self._log_message("INFO", f"Trading panel not ready for tick update: {tick_data.symbol}")
@@ -379,15 +378,15 @@ class FoxtrotTUIApp(App[None]):
                 # Update the interactive trading panel with position information
                 if self.trading_panel.symbol_input:
                     self.trading_panel.symbol_input.value = position_data.symbol
-                
+
                 if self.trading_panel.volume_input:
                     self.trading_panel.volume_input.value = str(abs(position_data.volume))
-                
+
                 # Set direction based on position volume
                 if self.trading_panel.direction_radio:
-                    direction = "BUY" if position_data.volume > 0 else "SELL"
+                    pass
                     # Set radio button selection (this might need adjustment based on actual RadioSet API)
-                
+
                 self._log_message("INFO", f"Updated trading panel with {position_data.symbol} position")
             else:
                 self._log_message("INFO", f"Trading panel not ready for position update: {position_data.symbol}")

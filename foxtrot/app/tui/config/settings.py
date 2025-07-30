@@ -186,7 +186,7 @@ class TUISettings:
 
         self.config_path = self.config_dir / self.config_file
         self.layout_path = self.config_dir / self.layout_file
-        
+
         # Apply environment variable overrides
         self._apply_env_overrides()
 
@@ -421,7 +421,7 @@ class TUISettings:
         """Reset all settings to default values."""
         self.__init__()
         logger.info("TUI settings reset to defaults")
-    
+
     def _apply_env_overrides(self) -> None:
         """Apply environment variable overrides to settings."""
         try:
@@ -433,37 +433,37 @@ class TUISettings:
                     logger.info(f"Theme set from environment: {theme_value}")
                 except ValueError:
                     logger.warning(f"Invalid theme in environment: {theme_value}")
-            
+
             # Auto-connect gateway override
             if "FOXTROT_PREFERRED_ADAPTER" in os.environ:
                 self.auto_connect_gateway = os.environ["FOXTROT_PREFERRED_ADAPTER"]
                 logger.info(f"Preferred adapter set from environment: {self.auto_connect_gateway}")
-            
+
             # Paper trading mode (affects confirmation settings)
             if "FOXTROT_PAPER_TRADING" in os.environ:
                 # In paper trading mode, we might want different confirmation settings
                 self.confirm_orders = os.environ.get("FOXTROT_PAPER_TRADING") != "1"
                 logger.info(f"Paper trading mode detected, confirm_orders set to: {self.confirm_orders}")
-            
+
         except Exception as e:
             logger.warning(f"Error applying environment overrides: {e}")
-    
+
     def get_env_info(self) -> dict[str, str]:
         """Get information about environment variable settings."""
         env_info = {}
-        
+
         if "FOXTROT_TUI_THEME" in os.environ:
             env_info["theme"] = os.environ["FOXTROT_TUI_THEME"]
-        
+
         if "FOXTROT_PREFERRED_ADAPTER" in os.environ:
             env_info["adapter"] = os.environ["FOXTROT_PREFERRED_ADAPTER"]
-        
+
         if "FOXTROT_PAPER_TRADING" in os.environ:
             env_info["paper_trading"] = "enabled"
-        
+
         if "TEXTUAL_DEBUG" in os.environ:
             env_info["debug_mode"] = "enabled"
-        
+
         return env_info
 
 

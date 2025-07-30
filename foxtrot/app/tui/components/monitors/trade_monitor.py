@@ -157,8 +157,7 @@ class TUITradeMonitor(TUIDataMonitor):
 
     def compose(self):
         """Create the trade monitor layout with statistics display."""
-        for widget in super().compose():
-            yield widget
+        yield from super().compose()
 
     async def on_mount(self) -> None:
         """Called when the trade monitor is mounted."""
@@ -205,6 +204,7 @@ class TUITradeMonitor(TUIDataMonitor):
             if isinstance(content, str) and len(content) > config.get("width", 20):
                 return TUIFormatter.truncate_text(content, config.get("width", 20))
             return str(content)
+        return None
 
     async def _apply_row_styling(self, row_index: int, data: TradeData) -> None:
         """
@@ -219,7 +219,7 @@ class TUITradeMonitor(TUIDataMonitor):
 
         try:
             # Direction-based color coding
-            direction_color = self.color_manager.get_direction_color(data.direction)
+            self.color_manager.get_direction_color(data.direction)
 
             # Highlight large trades if enabled
             if self.highlight_large_trades:
@@ -288,19 +288,16 @@ class TUITradeMonitor(TUIDataMonitor):
                 return False
 
         # Exchange filter
-        if self.exchange_filter is not None:
-            if trade_data.exchange != self.exchange_filter:
-                return False
+        if self.exchange_filter is not None and trade_data.exchange != self.exchange_filter:
+            return False
 
         # Date filter
-        if self.date_filter is not None:
-            if trade_data.datetime.date() != self.date_filter:
-                return False
+        if self.date_filter is not None and trade_data.datetime.date() != self.date_filter:
+            return False
 
         # Gateway filter
-        if self.gateway_filter:
-            if trade_data.gateway_name != self.gateway_filter:
-                return False
+        if self.gateway_filter and trade_data.gateway_name != self.gateway_filter:
+            return False
 
         # Session filter
         if self.show_session_only:
@@ -388,7 +385,7 @@ class TUITradeMonitor(TUIDataMonitor):
             message: The message to add
         """
         if self.title_bar:
-            current_time = datetime.now().strftime("%H:%M:%S")
+            datetime.now().strftime("%H:%M:%S")
             await self._update_statistics_display()
 
     # Trade analysis methods

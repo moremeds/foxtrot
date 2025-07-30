@@ -219,7 +219,7 @@ class TUIDataMonitor(Container, TUIEventMixin):
                 row_cells[header_key] = {"content": content, "data": data, "config": header_config}
 
         # Add row to table (at the top)
-        row_key = self.data_table.add_row(*row_values, key=None)
+        self.data_table.add_row(*row_values, key=None)
 
         # Store cell references if we have a data key
         if self.data_key:
@@ -287,21 +287,20 @@ class TUIDataMonitor(Container, TUIEventMixin):
         cell_type = config.get("cell", "default")
 
         if cell_type == "float":
-            if isinstance(content, (int, float)):
+            if isinstance(content, int | float):
                 precision = config.get("precision", 2)
                 return f"{content:.{precision}f}"
 
         elif cell_type == "percent":
-            if isinstance(content, (int, float)):
+            if isinstance(content, int | float):
                 return f"{content:.2%}"
 
         elif cell_type == "datetime":
             if isinstance(content, datetime):
                 return content.strftime("%H:%M:%S")
 
-        elif cell_type == "enum":
-            if hasattr(content, "value"):
-                return str(content.value)
+        elif cell_type == "enum" and hasattr(content, "value"):
+            return str(content.value)
 
         return str(content)
 
@@ -329,9 +328,8 @@ class TUIDataMonitor(Container, TUIEventMixin):
         # This is a simplified implementation
         # In practice, we'd need to maintain a key-to-row mapping
         for row_index, data in self.row_data.items():
-            if hasattr(data, self.data_key):
-                if getattr(data, self.data_key) == key:
-                    return row_index
+            if hasattr(data, self.data_key) and getattr(data, self.data_key) == key:
+                return row_index
         return None
 
     def _disable_sorting(self) -> None:

@@ -15,7 +15,7 @@ from foxtrot.server.engine import MainEngine
 from foxtrot.util.event_type import EVENT_TICK
 from foxtrot.util.object import TickData
 
-from ...utils.colors import ColorType, get_color_manager
+from ...utils.colors import get_color_manager
 from ...utils.formatters import TUIFormatter
 from ..base_monitor import TUIDataMonitor
 
@@ -164,8 +164,7 @@ class TUITickMonitor(TUIDataMonitor):
 
     def compose(self):
         """Create the tick monitor layout with enhanced information."""
-        for widget in super().compose():
-            yield widget
+        yield from super().compose()
 
     async def on_mount(self) -> None:
         """Called when the tick monitor is mounted."""
@@ -215,6 +214,7 @@ class TUITickMonitor(TUIDataMonitor):
             if isinstance(content, str) and len(content) > config.get("width", 20):
                 return TUIFormatter.truncate_text(content, config.get("width", 20))
             return str(content)
+        return None
 
     async def _apply_row_styling(self, row_index: int, data: TickData) -> None:
         """
@@ -235,14 +235,12 @@ class TUITickMonitor(TUIDataMonitor):
             if vt_symbol in self.previous_prices:
                 previous_price = self.previous_prices[vt_symbol]
 
-                if current_price > previous_price:
-                    price_color = ColorType.PROFIT
-                elif current_price < previous_price:
-                    price_color = ColorType.LOSS
+                if current_price > previous_price or current_price < previous_price:
+                    pass
                 else:
-                    price_color = ColorType.NEUTRAL
+                    pass
             else:
-                price_color = ColorType.NEUTRAL
+                pass
 
             # Update previous price
             self.previous_prices[vt_symbol] = current_price
@@ -293,16 +291,11 @@ class TUITickMonitor(TUIDataMonitor):
                 return False
 
         # Exchange filter
-        if self.exchange_filter:
-            if tick_data.exchange.value != self.exchange_filter:
-                return False
+        if self.exchange_filter and tick_data.exchange.value != self.exchange_filter:
+            return False
 
         # Volume filter
-        if self.min_volume_filter is not None:
-            if tick_data.volume < self.min_volume_filter:
-                return False
-
-        return True
+        return not (self.min_volume_filter is not None and tick_data.volume < self.min_volume_filter)
 
     async def _update_tick_statistics(self, tick_data: TickData) -> None:
         """
@@ -411,10 +404,7 @@ class TUITickMonitor(TUIDataMonitor):
         if self.show_change_indicators:
             options.append("CHANGES")
 
-        if options:
-            title = f"Tick Monitor [{', '.join(options)}]"
-        else:
-            title = "Tick Monitor"
+        title = f"Tick Monitor [{', '.join(options)}]" if options else "Tick Monitor"
 
         self.title_bar.update(title)
 

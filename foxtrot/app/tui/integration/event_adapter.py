@@ -8,16 +8,18 @@ This module provides a thread-safe bridge between the foxtrot EventEngine
 import asyncio
 from collections import defaultdict
 from collections.abc import Callable
+import contextlib
+from datetime import datetime
 from functools import partial
 import logging
-from typing import Any, Dict, Optional
-import weakref
+import threading
+from typing import Any
 import uuid
-from datetime import datetime
+import weakref
 
 from foxtrot.core.event_engine import Event, EventEngine
 from foxtrot.util.event_type import *
-from foxtrot.util.object import OrderData, CancelRequest
+from foxtrot.util.object import CancelRequest, OrderData
 
 # Set up logging for debugging
 logger = logging.getLogger(__name__)
@@ -66,10 +68,20 @@ class EventEngineAdapter:
 
         # Weak references to TUI components for cleanup
         self.component_refs: set[weakref.ReferenceType] = set()
-        
+
         # Command tracking for responses
-        self.pending_commands: Dict[str, asyncio.Future] = {}
+        self.pending_commands: dict[str, asyncio.Future] = {}
         self.command_timeout = 30.0  # seconds
+
+        # Thread synchronization locks for shared mutable state
+        self._handlers_lock = threading.RLock()  # Re-entrant lock for nested calls
+        self._callbacks_lock = threading.RLock()
+        self._event_types_lock = threading.RLock()
+        self._component_refs_lock = threading.RLock()
+        self._pending_commands_lock = threading.RLock()
+
+        # Register the command response handler
+        self.register(EVENT_ORDER, self._handle_command_response)
 
     async def start(self, loop: asyncio.AbstractEventLoop) -> None:
         """
@@ -99,10 +111,8 @@ class EventEngineAdapter:
         # Cancel batch processing
         if self.batch_task and not self.batch_task.done():
             self.batch_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self.batch_task
-            except asyncio.CancelledError:
-                pass
 
         # Unregister all event handlers from EventEngine
         for event_type in list(self.registered_event_types):
@@ -134,16 +144,19 @@ class EventEngineAdapter:
 
             handler = async_wrapper
 
-        # Add handler to our registry
-        self.handlers[event_type].append(handler)
+        # Thread-safe handler registration
+        with self._handlers_lock:
+            self.handlers[event_type].append(handler)
 
-        # Track component reference for cleanup
+        # Thread-safe component reference tracking
         if component is not None:
-            self.component_refs.add(weakref.ref(component))
+            with self._component_refs_lock:
+                self.component_refs.add(weakref.ref(component))
 
-        # Register with EventEngine if this is the first handler for this event type
-        if event_type not in self.registered_event_types:
-            self._register_engine_callback(event_type)
+        # Thread-safe event type registration
+        with self._event_types_lock:
+            if event_type not in self.registered_event_types:
+                self._register_engine_callback(event_type)
 
         logger.debug(f"Registered handler for event type: {event_type}")
 
@@ -155,35 +168,55 @@ class EventEngineAdapter:
             event_type: The event type to unregister from
             handler: The specific handler to remove
         """
-        if event_type in self.handlers:
-            try:
-                self.handlers[event_type].remove(handler)
+        # Thread-safe handler unregistration
+        with self._handlers_lock:
+            if event_type in self.handlers:
+                try:
+                    self.handlers[event_type].remove(handler)
 
-                # If no handlers left for this event type, unregister from EventEngine
-                if not self.handlers[event_type]:
-                    self._unregister_engine_callback(event_type)
-                    del self.handlers[event_type]
+                    # If no handlers left for this event type, unregister from EventEngine
+                    if not self.handlers[event_type]:
+                        self._unregister_engine_callback(event_type)
+                        del self.handlers[event_type]
 
-                logger.debug(f"Unregistered handler for event type: {event_type}")
-            except ValueError:
-                logger.warning(f"Handler not found for event type: {event_type}")
+                    logger.debug(f"Unregistered handler for event type: {event_type}")
+                except ValueError:
+                    logger.warning(f"Handler not found for event type: {event_type}")
 
     def _register_engine_callback(self, event_type: str) -> None:
         """Register a callback with the EventEngine for the given event type."""
         callback = partial(self._on_engine_event, event_type)
-        self._engine_callbacks[event_type] = callback
+
+        # Thread-safe callback registration
+        with self._callbacks_lock:
+            self._engine_callbacks[event_type] = callback
+
+        # Register with EventEngine
         self.event_engine.register(event_type, callback)
-        self.registered_event_types.add(event_type)
+
+        # Thread-safe event type tracking
+        with self._event_types_lock:
+            self.registered_event_types.add(event_type)
 
         logger.debug(f"Registered EventEngine callback for: {event_type}")
 
     def _unregister_engine_callback(self, event_type: str) -> None:
         """Unregister the callback from EventEngine for the given event type."""
-        if event_type in self._engine_callbacks:
-            callback = self._engine_callbacks[event_type]
+        callback = None
+
+        # Thread-safe callback retrieval and removal
+        with self._callbacks_lock:
+            if event_type in self._engine_callbacks:
+                callback = self._engine_callbacks[event_type]
+                del self._engine_callbacks[event_type]
+
+        # Unregister from EventEngine if callback was found
+        if callback:
             self.event_engine.unregister(event_type, callback)
-            del self._engine_callbacks[event_type]
-            self.registered_event_types.discard(event_type)
+
+            # Thread-safe event type removal
+            with self._event_types_lock:
+                self.registered_event_types.discard(event_type)
 
             logger.debug(f"Unregistered EventEngine callback for: {event_type}")
 
@@ -195,6 +228,10 @@ class EventEngineAdapter:
         """
         if not self.is_started or not self.loop:
             return
+
+        # Handle specific order events for command responses
+        if event.type.startswith(EVENT_ORDER) and event.type != EVENT_ORDER:
+            self._handle_command_response(event)
 
         # Thread-safe call to asyncio
         if not self.loop.is_closed():
@@ -267,7 +304,9 @@ class EventEngineAdapter:
 
         # Process each event type
         for event_type, type_events in events_by_type.items():
-            handlers = self.handlers.get(event_type, [])
+            # Thread-safe handler retrieval
+            with self._handlers_lock:
+                handlers = list(self.handlers.get(event_type, []))  # Create a copy
 
             for handler in handlers:
                 for event in type_events:
@@ -284,7 +323,8 @@ class EventEngineAdapter:
 
     def cleanup_dead_references(self) -> None:
         """Clean up dead weak references to components."""
-        self.component_refs = {ref for ref in self.component_refs if ref() is not None}
+        with self._component_refs_lock:
+            self.component_refs = {ref for ref in self.component_refs if ref() is not None}
 
     def get_stats(self) -> dict[str, Any]:
         """
@@ -293,41 +333,56 @@ class EventEngineAdapter:
         Returns:
             Dictionary containing adapter statistics
         """
+        # Thread-safe statistics gathering
+        with self._event_types_lock:
+            registered_event_types_count = len(self.registered_event_types)
+
+        with self._handlers_lock:
+            total_handlers = sum(len(handlers) for handlers in self.handlers.values())
+
+        with self._component_refs_lock:
+            component_refs_count = len(self.component_refs)
+
+        with self._pending_commands_lock:
+            pending_commands_count = len(self.pending_commands)
+
         return {
             "is_started": self.is_started,
-            "registered_event_types": len(self.registered_event_types),
-            "total_handlers": sum(len(handlers) for handlers in self.handlers.values()),
+            "registered_event_types": registered_event_types_count,
+            "total_handlers": total_handlers,
             "queue_size": self.batch_queue.qsize() if self.batch_queue else 0,
             "batch_interval": self.batch_interval,
-            "component_refs": len(self.component_refs),
-            "pending_commands": len(self.pending_commands),
+            "component_refs": component_refs_count,
+            "pending_commands": pending_commands_count,
         }
-    
+
     # Command Publishing Methods
-    
-    async def publish_order(self, order_data: Dict[str, Any]) -> str:
+
+    async def publish_order(self, order_data: dict[str, Any]) -> str:
         """
         Publish an order command to the MainEngine.
-        
+
         Args:
             order_data: Dictionary containing order information
-            
+
         Returns:
             Order ID for tracking
-            
+
         Raises:
             RuntimeError: If adapter is not started
             asyncio.TimeoutError: If command times out
         """
         if not self.is_started:
             raise RuntimeError("EventEngineAdapter is not started")
-        
+
         # Generate unique order ID
         order_id = f"TUI_{uuid.uuid4().hex[:8]}_{int(datetime.now().timestamp())}"
-        
+
         # Create OrderData object
-        from foxtrot.util.constants import Exchange as ExchangeEnum, Direction as DirectionEnum, OrderType as OrderTypeEnum
-        
+        from foxtrot.util.constants import Direction as DirectionEnum
+        from foxtrot.util.constants import Exchange as ExchangeEnum
+        from foxtrot.util.constants import OrderType as OrderTypeEnum
+
         order_obj = OrderData(
             symbol=order_data["symbol"],
             exchange=ExchangeEnum.SMART,  # Default exchange
@@ -338,53 +393,58 @@ class EventEngineAdapter:
             price=float(order_data.get("price", 0.0)),
             adapter_name="TUI"
         )
-        
+
         # Create event
         event = Event(EVENT_ORDER, order_obj)
-        
+
         # Create future for response tracking
         response_future = asyncio.Future()
-        self.pending_commands[order_id] = response_future
-        
+
+        # Thread-safe pending command registration
+        with self._pending_commands_lock:
+            self.pending_commands[order_id] = response_future
+
         try:
             # Publish event to EventEngine
             self.event_engine.put(event)
-            
+
             # Wait for response or timeout
             await asyncio.wait_for(response_future, timeout=self.command_timeout)
-            
+
             logger.info(f"Order published successfully: {order_id}")
             return order_id
-            
+
         except asyncio.TimeoutError:
-            # Clean up pending command
-            self.pending_commands.pop(order_id, None)
+            # Thread-safe cleanup of pending command
+            with self._pending_commands_lock:
+                self.pending_commands.pop(order_id, None)
             logger.error(f"Order command timed out: {order_id}")
             raise
         except Exception as e:
-            # Clean up pending command
-            self.pending_commands.pop(order_id, None)
+            # Thread-safe cleanup of pending command
+            with self._pending_commands_lock:
+                self.pending_commands.pop(order_id, None)
             logger.error(f"Failed to publish order: {e}")
             raise
-    
+
     async def cancel_order(self, order_id: str, symbol: str, exchange: str = "") -> bool:
         """
         Cancel an existing order.
-        
+
         Args:
             order_id: ID of order to cancel
             symbol: Symbol of the order
             exchange: Exchange where order was placed
-            
+
         Returns:
             True if cancel request was submitted successfully
-            
+
         Raises:
             RuntimeError: If adapter is not started
         """
         if not self.is_started:
             raise RuntimeError("EventEngineAdapter is not started")
-        
+
         try:
             # Create cancel request
             cancel_req = CancelRequest(
@@ -392,128 +452,138 @@ class EventEngineAdapter:
                 symbol=symbol,
                 exchange=exchange
             )
-            
+
             # Create event
             event = Event(EVENT_ORDER_CANCEL, cancel_req)
-            
+
             # Publish event to EventEngine
             self.event_engine.put(event)
-            
+
             logger.info(f"Cancel request published: {order_id}")
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to publish cancel request: {e}")
             return False
-    
+
     async def cancel_all_orders(self) -> bool:
         """
         Cancel all open orders.
-        
+
         Returns:
             True if cancel all request was submitted successfully
-            
+
         Raises:
             RuntimeError: If adapter is not started
         """
         if not self.is_started:
             raise RuntimeError("EventEngineAdapter is not started")
-        
+
         try:
             # Create cancel all event
             event = Event(EVENT_ORDER_CANCEL_ALL, {})
-            
+
             # Publish event to EventEngine
             self.event_engine.put(event)
-            
+
             logger.info("Cancel all orders request published")
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to publish cancel all request: {e}")
             return False
-    
+
     async def request_account_info(self) -> bool:
         """
         Request account information update.
-        
+
         Returns:
             True if request was submitted successfully
         """
         if not self.is_started:
             raise RuntimeError("EventEngineAdapter is not started")
-        
+
         try:
             # Create account info request event
             event = Event(EVENT_ACCOUNT_REQUEST, {})
-            
+
             # Publish event to EventEngine
             self.event_engine.put(event)
-            
+
             logger.info("Account info request published")
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to request account info: {e}")
             return False
-    
+
     async def request_position_info(self) -> bool:
         """
         Request position information update.
-        
+
         Returns:
             True if request was submitted successfully
         """
         if not self.is_started:
             raise RuntimeError("EventEngineAdapter is not started")
-        
+
         try:
             # Create position info request event
             event = Event(EVENT_POSITION_REQUEST, {})
-            
+
             # Publish event to EventEngine
             self.event_engine.put(event)
-            
+
             logger.info("Position info request published")
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to request position info: {e}")
             return False
-    
+
     def _handle_command_response(self, event: Event) -> None:
         """
         Handle command response events.
-        
+
         Args:
             event: Response event from MainEngine
         """
         # Extract order ID from event data
-        if hasattr(event.data, 'orderid'):
+        order_id = None
+        if hasattr(event.data, 'vt_orderid'):
+            order_id = event.data.vt_orderid.split('.')[-1]
+        elif hasattr(event.data, 'orderid'):
             order_id = event.data.orderid
-            
-            # Check if we have a pending command for this order
-            if order_id in self.pending_commands:
-                future = self.pending_commands.pop(order_id)
-                
-                if not future.done():
-                    future.set_result(event.data)
-                    logger.debug(f"Command response handled: {order_id}")
-    
+
+        if order_id:
+            # Thread-safe pending command handling
+            future = None
+            with self._pending_commands_lock:
+                if order_id in self.pending_commands:
+                    future = self.pending_commands.pop(order_id)
+
+            if future and not future.done():
+                future.set_result(event.data)
+                logger.debug(f"Command response handled: {order_id}")
+
     def cleanup_expired_commands(self) -> None:
         """Clean up expired command futures."""
         current_time = datetime.now().timestamp()
         expired_commands = []
-        
-        for order_id, future in self.pending_commands.items():
-            if future.done() or (current_time - float(order_id.split('_')[-1]) > self.command_timeout):
-                expired_commands.append(order_id)
-        
+
+        # Thread-safe identification of expired commands
+        with self._pending_commands_lock:
+            for order_id, future in self.pending_commands.items():
+                if future.done() or (current_time - float(order_id.split('_')[-1]) > self.command_timeout):
+                    expired_commands.append(order_id)
+
+        # Thread-safe cleanup of expired commands
         for order_id in expired_commands:
-            future = self.pending_commands.pop(order_id, None)
+            with self._pending_commands_lock:
+                future = self.pending_commands.pop(order_id, None)
             if future and not future.done():
                 future.cancel()
-        
+
         if expired_commands:
             logger.debug(f"Cleaned up {len(expired_commands)} expired commands")
 
@@ -562,96 +632,96 @@ class TUIEventMixin:
     def cleanup_events(self) -> None:
         """Clean up event handlers (call when component is destroyed)."""
         self.unregister_all_handlers()
-    
+
     # Command Publishing Convenience Methods
-    
-    async def publish_order(self, order_data: Dict[str, Any]) -> Optional[str]:
+
+    async def publish_order(self, order_data: dict[str, Any]) -> str | None:
         """
         Publish an order through the event adapter.
-        
+
         Args:
             order_data: Order information dictionary
-            
+
         Returns:
             Order ID if successful, None if failed
         """
         if not self._event_adapter:
             logger.error("Event adapter not set. Cannot publish order.")
             return None
-        
+
         try:
             return await self._event_adapter.publish_order(order_data)
         except Exception as e:
             logger.error(f"Failed to publish order from component: {e}")
             return None
-    
+
     async def cancel_order(self, order_id: str, symbol: str, exchange: str = "") -> bool:
         """
         Cancel an order through the event adapter.
-        
+
         Args:
             order_id: Order ID to cancel
             symbol: Symbol of the order
             exchange: Exchange where order was placed
-            
+
         Returns:
             True if cancel request was successful
         """
         if not self._event_adapter:
             logger.error("Event adapter not set. Cannot cancel order.")
             return False
-        
+
         try:
             return await self._event_adapter.cancel_order(order_id, symbol, exchange)
         except Exception as e:
             logger.error(f"Failed to cancel order from component: {e}")
             return False
-    
+
     async def cancel_all_orders(self) -> bool:
         """
         Cancel all orders through the event adapter.
-        
+
         Returns:
             True if cancel all request was successful
         """
         if not self._event_adapter:
             logger.error("Event adapter not set. Cannot cancel all orders.")
             return False
-        
+
         try:
             return await self._event_adapter.cancel_all_orders()
         except Exception as e:
             logger.error(f"Failed to cancel all orders from component: {e}")
             return False
-    
+
     async def request_account_info(self) -> bool:
         """
         Request account information update.
-        
+
         Returns:
             True if request was successful
         """
         if not self._event_adapter:
             logger.error("Event adapter not set. Cannot request account info.")
             return False
-        
+
         try:
             return await self._event_adapter.request_account_info()
         except Exception as e:
             logger.error(f"Failed to request account info from component: {e}")
             return False
-    
+
     async def request_position_info(self) -> bool:
         """
         Request position information update.
-        
+
         Returns:
             True if request was successful
         """
         if not self._event_adapter:
             logger.error("Event adapter not set. Cannot request position info.")
             return False
-        
+
         try:
             return await self._event_adapter.request_position_info()
         except Exception as e:

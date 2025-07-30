@@ -361,36 +361,33 @@ def get_themed_color(color_type: ColorType) -> str:
 def get_color_for_value(value: float | int | None, reference_value: float | int | None = None) -> ColorType:
     """
     Get appropriate color for a numeric value based on its positivity/negativity.
-    
+
     Args:
         value: The numeric value to get color for
         reference_value: Optional reference value for comparison (if provided, compares value vs reference)
-        
+
     Returns:
         Appropriate color type for the value
     """
     if value is None:
         return ColorType.NEUTRAL
-    
+
     try:
         num_value = float(value)
-        
+
         if reference_value is not None:
             ref_value = float(reference_value)
             if num_value > ref_value:
                 return ColorType.PROFIT
-            elif num_value < ref_value:
+            if num_value < ref_value:
                 return ColorType.LOSS
-            else:
-                return ColorType.NEUTRAL
-        else:
-            # Simple positive/negative logic
-            if num_value > 0:
-                return ColorType.PROFIT
-            elif num_value < 0:
-                return ColorType.LOSS
-            else:
-                return ColorType.NEUTRAL
-                
+            return ColorType.NEUTRAL
+        # Simple positive/negative logic
+        if num_value > 0:
+            return ColorType.PROFIT
+        if num_value < 0:
+            return ColorType.LOSS
+        return ColorType.NEUTRAL
+
     except (ValueError, TypeError):
         return ColorType.NEUTRAL

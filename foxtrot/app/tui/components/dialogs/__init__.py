@@ -6,12 +6,12 @@ confirmations, and data entry in the TUI interface.
 """
 
 from .base import BaseDialog, DialogResult, DialogType
-from .confirmation import OrderConfirmationDialog, CancelConfirmationDialog
+from .confirmation import CancelConfirmationDialog, OrderConfirmationDialog
 from .modal import ModalManager
 
 __all__ = [
     "BaseDialog",
-    "DialogResult", 
+    "DialogResult",
     "DialogType",
     "OrderConfirmationDialog",
     "CancelConfirmationDialog",

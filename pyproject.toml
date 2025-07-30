@@ -46,6 +46,7 @@ dev = [
     "pytest>=8.4.1",
     "pytest-cov>=6.0.0",
     "pytest-timeout>=2.3.1",
+    "pytest-asyncio>=0.21.0",
     "black>=25.1.0",
     "ruff>=0.12.5",
     "mypy>=1.17.0",
@@ -137,6 +138,7 @@ textual = "^0.45.0"
 pytest = "^8.4.1"
 pytest-cov = "^6.0.0"
 pytest-timeout = "^2.3.1"
+pytest-asyncio = "^0.21.0"
 black = "^25.1.0"
 ruff = "^0.12.5"
 mypy = "^1.17.0"
@@ -235,6 +237,7 @@ testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+asyncio_mode = "auto"
 addopts = [
     "-v",
     "--strict-markers",
@@ -248,6 +251,7 @@ markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",
     "unit: marks tests as unit tests",
+    "asyncio: marks tests as asyncio tests",
 ]
 filterwarnings = [
     "error",
@@ -283,6 +287,7 @@ exclude_lines = [
 dev = [
     "loguru>=0.7.3",
     "pytest>=8.4.1",
+    "pytest-asyncio>=1.1.0",
     "pytest-cov>=6.2.1",
     "python-dotenv>=1.1.1",
 ]

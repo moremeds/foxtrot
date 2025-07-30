@@ -169,8 +169,7 @@ class TUIPositionMonitor(TUIDataMonitor):
 
     def compose(self):
         """Create the position monitor layout with portfolio summary."""
-        for widget in super().compose():
-            yield widget
+        yield from super().compose()
 
     async def on_mount(self) -> None:
         """Called when the position monitor is mounted."""
@@ -211,7 +210,7 @@ class TUIPositionMonitor(TUIDataMonitor):
 
         if cell_type == "percentage":
             # Format P&L percentage
-            if isinstance(content, (int, float)) and content != 0:
+            if isinstance(content, int | float) and content != 0:
                 return TUIFormatter.format_percentage(content / 100, show_sign=True)
             return "-"
 
@@ -227,6 +226,7 @@ class TUIPositionMonitor(TUIDataMonitor):
             if isinstance(content, str) and len(content) > config.get("width", 20):
                 return TUIFormatter.truncate_text(content, config.get("width", 20))
             return str(content)
+        return None
 
     async def _apply_row_styling(self, row_index: int, data: PositionData) -> None:
         """
@@ -241,10 +241,10 @@ class TUIPositionMonitor(TUIDataMonitor):
 
         try:
             # P&L-based color coding
-            pnl_color = self.color_manager.get_pnl_color(data.pnl)
+            self.color_manager.get_pnl_color(data.pnl)
 
             # Direction-based color coding
-            direction_color = self.color_manager.get_direction_color(data.direction)
+            self.color_manager.get_direction_color(data.direction)
 
             # Highlight large positions if enabled
             if self.highlight_large_positions:
@@ -327,14 +327,12 @@ class TUIPositionMonitor(TUIDataMonitor):
                 return False
 
         # Gateway filter
-        if self.gateway_filter:
-            if position_data.gateway_name != self.gateway_filter:
-                return False
+        if self.gateway_filter and position_data.gateway_name != self.gateway_filter:
+            return False
 
         # P&L filter
-        if self.min_pnl_filter is not None:
-            if position_data.pnl < self.min_pnl_filter:
-                return False
+        if self.min_pnl_filter is not None and position_data.pnl < self.min_pnl_filter:
+            return False
 
         # Position value filter
         if self.min_value_filter is not None:
@@ -343,11 +341,7 @@ class TUIPositionMonitor(TUIDataMonitor):
                 return False
 
         # Active positions only filter
-        if self.show_only_active:
-            if position_data.volume == 0:
-                return False
-
-        return True
+        return not (self.show_only_active and position_data.volume == 0)
 
     async def _update_position_tracking(self, position_data: PositionData) -> None:
         """
@@ -491,7 +485,7 @@ class TUIPositionMonitor(TUIDataMonitor):
             message: The message to add
         """
         if self.title_bar:
-            current_time = datetime.now().strftime("%H:%M:%S")
+            datetime.now().strftime("%H:%M:%S")
             await self._update_statistics_display()
 
     # Position analysis methods

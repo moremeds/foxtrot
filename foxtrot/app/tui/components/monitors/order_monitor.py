@@ -174,8 +174,7 @@ class TUIOrderMonitor(TUIDataMonitor):
 
     def compose(self):
         """Create the order monitor layout."""
-        for widget in super().compose():
-            yield widget
+        yield from super().compose()
 
     async def on_mount(self) -> None:
         """Called when the order monitor is mounted."""
@@ -228,6 +227,7 @@ class TUIOrderMonitor(TUIDataMonitor):
             if isinstance(content, str) and len(content) > config.get("width", 20):
                 return TUIFormatter.truncate_text(content, config.get("width", 20))
             return str(content)
+        return None
 
     async def _apply_row_styling(self, row_index: int, data: OrderData) -> None:
         """
@@ -242,10 +242,10 @@ class TUIOrderMonitor(TUIDataMonitor):
 
         try:
             # Status-based color coding
-            status_color = self.color_manager.get_status_color(data.status)
+            self.color_manager.get_status_color(data.status)
 
             # Direction-based color coding
-            direction_color = self.color_manager.get_direction_color(data.direction)
+            self.color_manager.get_direction_color(data.direction)
 
             # Apply styling based on order properties
             # This would integrate with Textual's styling system
@@ -294,9 +294,8 @@ class TUIOrderMonitor(TUIDataMonitor):
             True if order passes all filters
         """
         # Status filter
-        if self.status_filter is not None:
-            if order_data.status != self.status_filter:
-                return False
+        if self.status_filter is not None and order_data.status != self.status_filter:
+            return False
 
         # Symbol filter
         if self.symbol_filter:
@@ -309,9 +308,8 @@ class TUIOrderMonitor(TUIDataMonitor):
                 return False
 
         # Gateway filter
-        if self.gateway_filter:
-            if order_data.gateway_name != self.gateway_filter:
-                return False
+        if self.gateway_filter and order_data.gateway_name != self.gateway_filter:
+            return False
 
         # Active orders only filter
         if self.show_only_active:
@@ -439,9 +437,8 @@ class TUIOrderMonitor(TUIDataMonitor):
             symbol: Optional symbol filter for cancellation
         """
         try:
-            cancelled_count = 0
 
-            for order_id in list(self.active_orders):
+            for _order_id in list(self.active_orders):
                 # Get order data from storage (implementation depends on data management)
                 # For now, we'll use the main engine's cancel all functionality
                 pass

@@ -94,8 +94,7 @@ class TUILogMonitor(TUIDataMonitor):
     def compose(self):
         """Create the log monitor layout with additional controls."""
         # Use the base compose but add log-specific title
-        for widget in super().compose():
-            yield widget
+        yield from super().compose()
 
     async def on_mount(self) -> None:
         """Called when the log monitor is mounted."""

@@ -40,7 +40,7 @@ class TUIFormatter:
 
         try:
             # Convert to Decimal for precise formatting
-            if isinstance(price, (int, float)):
+            if isinstance(price, int | float):
                 decimal_price = Decimal(str(price))
             else:
                 decimal_price = Decimal(price)
@@ -384,8 +384,8 @@ def format_currency(
 
 
 def format_price(
-    price: float | int | Decimal | None, 
-    precision: int = 4, 
+    price: float | int | Decimal | None,
+    precision: int = 4,
     show_sign: bool = False
 ) -> str:
     """Convenience function for formatting prices."""
@@ -398,8 +398,8 @@ def format_volume(volume: float | int | None) -> str:
 
 
 def format_percentage(
-    value: float | int | None, 
-    precision: int = 2, 
+    value: float | int | None,
+    precision: int = 2,
     show_sign: bool = True
 ) -> str:
     """Convenience function for formatting percentages."""

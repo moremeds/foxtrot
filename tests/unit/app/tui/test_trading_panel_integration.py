@@ -10,6 +10,7 @@ Tests that verify the interactive trading panel properly integrates with:
 
 import asyncio
 import pytest
+import pytest_asyncio
 from datetime import datetime
 from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -42,7 +43,7 @@ class TestTradingPanelIntegration:
         engine.get_all_positions = MagicMock(return_value=[])
         return engine
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def event_adapter(self, event_engine):
         """Create an event adapter for testing."""
         adapter = EventEngineAdapter(event_engine)
@@ -50,7 +51,7 @@ class TestTradingPanelIntegration:
         adapter.start = AsyncMock()
         return adapter
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def trading_panel(self, main_engine, event_engine):
         """Create a trading panel for testing."""
         panel = TUITradingPanel(
@@ -59,9 +60,12 @@ class TestTradingPanelIntegration:
         )
         # Mock the compose method to avoid Textual widget creation
         panel.compose = MagicMock()
+        
+        # Mock modal_manager since we can't initialize it without an app
+        panel.modal_manager = MagicMock()
+        
         return panel
 
-    @pytest.mark.asyncio
     async def test_trading_panel_initialization(self, trading_panel, main_engine, event_engine):
         """Test that trading panel initializes correctly with engines."""
         assert trading_panel.main_engine == main_engine
@@ -69,7 +73,7 @@ class TestTradingPanelIntegration:
         assert trading_panel.modal_manager is not None
         assert hasattr(trading_panel, '_form_validators')
 
-    @pytest.mark.asyncio
+    
     async def test_event_adapter_integration(self, trading_panel, event_adapter):
         """Test that trading panel integrates correctly with event adapter."""
         # Mock the event adapter methods
@@ -94,7 +98,7 @@ class TestTradingPanelIntegration:
         assert order_id == "test_order_id"
         event_adapter.publish_order.assert_called_once_with(order_data)
 
-    @pytest.mark.asyncio
+    
     async def test_input_validation_integration(self, trading_panel):
         """Test that input validation framework integrates correctly."""
         # Mock form validators
@@ -120,12 +124,11 @@ class TestTradingPanelIntegration:
 
         # Test form validation method
         with patch.object(trading_panel, '_validate_form') as mock_validate:
-            mock_validate.return_value = (True, [])
-            is_valid, errors = trading_panel._validate_form(valid_data)
+            mock_validate.return_value = True
+            is_valid = await trading_panel._validate_form()
             assert is_valid
-            assert len(errors) == 0
 
-    @pytest.mark.asyncio
+    
     async def test_validation_error_handling(self, trading_panel):
         """Test that validation errors are handled correctly."""
         # Mock form validators with validation errors
@@ -156,12 +159,11 @@ class TestTradingPanelIntegration:
 
         # Test form validation method
         with patch.object(trading_panel, '_validate_form') as mock_validate:
-            mock_validate.return_value = (False, ["Symbol is required", "Volume must be positive", "Invalid price format"])
-            is_valid, errors = trading_panel._validate_form(invalid_data)
+            mock_validate.return_value = False
+            is_valid = await trading_panel._validate_form()
             assert not is_valid
-            assert len(errors) == 3
 
-    @pytest.mark.asyncio
+    
     async def test_order_confirmation_dialog_integration(self, trading_panel):
         """Test that order confirmation dialog integrates correctly."""
         # Mock modal manager
@@ -188,7 +190,7 @@ class TestTradingPanelIntegration:
             confirmed = await trading_panel._confirm_order(order_data)
             assert confirmed
 
-    @pytest.mark.asyncio
+    
     async def test_order_submission_pipeline(self, trading_panel, event_adapter):
         """Test the complete order submission pipeline."""
         # Set up mocks
@@ -220,11 +222,12 @@ class TestTradingPanelIntegration:
                     order_id = await trading_panel._submit_order(order_data)
                     assert order_id == "test_order_123"
 
-    @pytest.mark.asyncio
+    
     async def test_market_data_integration(self, trading_panel):
         """Test that market data integration works correctly."""
         # Mock market data updates
         tick_data = TickData(
+            adapter_name="BINANCE",
             symbol="BTCUSDT.BINANCE",
             exchange=Exchange.BINANCE,
             datetime=datetime.now(),
@@ -232,8 +235,7 @@ class TestTradingPanelIntegration:
             last_price=50000.0,
             bid_price_1=49999.0,
             ask_price_1=50001.0,
-            volume=1000.0,
-            gateway_name="BINANCE"
+            volume=1000.0
         )
 
         # Test market data update method
@@ -241,7 +243,7 @@ class TestTradingPanelIntegration:
             await trading_panel._update_market_data(tick_data)
             mock_update.assert_called_once_with(tick_data)
 
-    @pytest.mark.asyncio
+    
     async def test_account_balance_integration(self, trading_panel, main_engine):
         """Test that account balance integration works correctly."""
         # Mock account data
@@ -252,10 +254,10 @@ class TestTradingPanelIntegration:
         # Test balance retrieval
         with patch.object(trading_panel, '_get_account_balance') as mock_balance:
             mock_balance.return_value = Decimal('10000.0')
-            balance = trading_panel._get_account_balance("test_account")
+            balance = await trading_panel._get_account_balance("test_account")
             assert balance == Decimal('10000.0')
 
-    @pytest.mark.asyncio
+    
     async def test_error_handling_integration(self, trading_panel, event_adapter):
         """Test that error handling works correctly throughout the system."""
         trading_panel.set_event_adapter(event_adapter)
@@ -277,11 +279,11 @@ class TestTradingPanelIntegration:
                 mock_submit.side_effect = Exception("Network error")
                 
                 try:
-                    await trading_panel._submit_order(order_data)
+                    await trading_panel._submit_order()
                 except Exception as e:
                     assert str(e) == "Network error"
 
-    @pytest.mark.asyncio
+    
     async def test_cancel_all_orders_integration(self, trading_panel, event_adapter):
         """Test that cancel all orders integration works correctly."""
         trading_panel.set_event_adapter(event_adapter)
@@ -293,7 +295,7 @@ class TestTradingPanelIntegration:
             result = await trading_panel._cancel_all_orders()
             assert result
 
-    @pytest.mark.asyncio
+    
     async def test_threading_safety(self, trading_panel, event_engine):
         """Test that threading safety is maintained in integration."""
         # Test that event engine calls are thread-safe
@@ -356,7 +358,7 @@ class TestTradingPanelEventIntegration:
         """Create a main engine with real event engine."""
         return MainEngine(event_engine)
 
-    @pytest.mark.asyncio
+    
     async def test_event_registration(self, main_engine, event_engine):
         """Test that trading panel registers for events correctly."""
         trading_panel = TUITradingPanel(
@@ -371,7 +373,7 @@ class TestTradingPanelEventIntegration:
         # (In real implementation, this would be done in on_mount)
         assert trading_panel.event_engine == event_engine
 
-    @pytest.mark.asyncio
+    
     async def test_tick_event_handling(self, main_engine, event_engine):
         """Test that trading panel handles tick events correctly."""
         trading_panel = TUITradingPanel(
@@ -384,12 +386,12 @@ class TestTradingPanelEventIntegration:
         
         # Create a tick event
         tick_data = TickData(
+            adapter_name="BINANCE",
             symbol="BTCUSDT.BINANCE",
             exchange=Exchange.BINANCE,
             datetime=datetime.now(),
             name="BTCUSDT",
-            last_price=50000.0,
-            gateway_name="BINANCE"
+            last_price=50000.0
         )
         
         # Test tick handling
