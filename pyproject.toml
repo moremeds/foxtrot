@@ -37,6 +37,8 @@ dependencies = [
     "ta-lib>=0.6.4,<1.0",
     "deap>=1.4.2,<2.0",
     "ccxt>=4.4.96,<5.0",
+    "loguru>=0.7.3,<1.0",
+    "textual>=0.45.0,<1.0",
 ]
 
 [project.optional-dependencies]
@@ -62,6 +64,7 @@ lint = [
 [project.scripts]
 foxtrot = "foxtrot.cli:main"
 foxtrot-gui = "foxtrot.gui:main"
+foxtrot-tui = "foxtrot.app.tui:main"
 
 # Entry points for plugin system
 [project.entry-points."foxtrot.adapters"]
@@ -128,6 +131,7 @@ pandas = "^2.2.3"
 ta-lib = "^0.6.4"
 deap = "^1.4.2"
 ccxt = "^4.4.96"
+textual = "^0.45.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.4.1"
@@ -277,6 +281,8 @@ exclude_lines = [
 
 [dependency-groups]
 dev = [
+    "loguru>=0.7.3",
     "pytest>=8.4.1",
     "pytest-cov>=6.2.1",
+    "python-dotenv>=1.1.1",
 ]
