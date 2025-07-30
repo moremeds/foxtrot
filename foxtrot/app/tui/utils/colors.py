@@ -5,15 +5,16 @@ This module provides color schemes, styling utilities, and theme management
 for consistent visual presentation across all TUI components.
 """
 
-from typing import Dict, Any, Optional, Tuple
-from enum import Enum
 from dataclasses import dataclass
+from enum import Enum
+from typing import Any
 
 from foxtrot.util.constants import Direction, Status
 
 
 class ColorType(Enum):
     """Types of colors used in the TUI."""
+
     BID = "bid"
     ASK = "ask"
     PROFIT = "profit"
@@ -34,8 +35,9 @@ class ColorType(Enum):
 @dataclass
 class ColorConfig:
     """Configuration for a specific color."""
+
     foreground: str
-    background: Optional[str] = None
+    background: str | None = None
     bold: bool = False
     dim: bool = False
     italic: bool = False
@@ -45,11 +47,11 @@ class ColorConfig:
 class TUIColorManager:
     """
     Centralized color management for TUI components.
-    
+
     Provides consistent color schemes, theme switching, and
     context-aware color selection for trading data visualization.
     """
-    
+
     # Default color schemes for different themes
     COLOR_SCHEMES = {
         "dark": {
@@ -69,7 +71,6 @@ class TUIColorManager:
             ColorType.INFO: ColorConfig("cyan"),
             ColorType.SUCCESS: ColorConfig("green"),
         },
-        
         "light": {
             ColorType.BID: ColorConfig("dark_green", bold=True),
             ColorType.ASK: ColorConfig("dark_red", bold=True),
@@ -87,7 +88,6 @@ class TUIColorManager:
             ColorType.INFO: ColorConfig("blue"),
             ColorType.SUCCESS: ColorConfig("dark_green"),
         },
-        
         "high_contrast": {
             ColorType.BID: ColorConfig("white", "green", bold=True),
             ColorType.ASK: ColorConfig("white", "red", bold=True),
@@ -105,7 +105,6 @@ class TUIColorManager:
             ColorType.INFO: ColorConfig("white", "blue"),
             ColorType.SUCCESS: ColorConfig("black", "green"),
         },
-        
         "trading_green": {
             ColorType.BID: ColorConfig("bright_green", bold=True),
             ColorType.ASK: ColorConfig("red", bold=True),
@@ -122,54 +121,54 @@ class TUIColorManager:
             ColorType.ERROR: ColorConfig("bright_red", bold=True),
             ColorType.INFO: ColorConfig("green"),
             ColorType.SUCCESS: ColorConfig("bright_green"),
-        }
+        },
     }
-    
+
     def __init__(self, theme: str = "dark"):
         """
         Initialize color manager with specified theme.
-        
+
         Args:
             theme: Theme name (dark, light, high_contrast, trading_green)
         """
         self.current_theme = theme
         self._load_theme(theme)
-    
+
     def _load_theme(self, theme: str) -> None:
         """Load color scheme for specified theme."""
         if theme not in self.COLOR_SCHEMES:
             theme = "dark"  # Fallback to dark theme
-        
+
         self.colors = self.COLOR_SCHEMES[theme].copy()
         self.current_theme = theme
-    
+
     def get_color(self, color_type: ColorType) -> ColorConfig:
         """
         Get color configuration for specified type.
-        
+
         Args:
             color_type: Type of color to retrieve
-            
+
         Returns:
             Color configuration object
         """
         return self.colors.get(color_type, ColorConfig("white"))
-    
+
     def get_color_string(self, color_type: ColorType) -> str:
         """
         Get color as string for Textual styling.
-        
+
         Args:
             color_type: Type of color to retrieve
-            
+
         Returns:
             Color string compatible with Textual
         """
         config = self.get_color(color_type)
-        
+
         # Build color string for Textual
         parts = []
-        
+
         if config.bold:
             parts.append("bold")
         if config.dim:
@@ -178,75 +177,72 @@ class TUIColorManager:
             parts.append("italic")
         if config.underline:
             parts.append("underline")
-        
+
         # Add foreground color
         parts.append(config.foreground)
-        
+
         # Add background color if specified
         if config.background:
             parts.append(f"on {config.background}")
-        
+
         return " ".join(parts)
-    
+
     def get_price_color(self, current_price: float, previous_price: float) -> ColorType:
         """
         Get appropriate color for price based on price movement.
-        
+
         Args:
             current_price: Current price value
             previous_price: Previous price value
-            
+
         Returns:
             Appropriate color type
         """
         if current_price > previous_price:
             return ColorType.PROFIT
-        elif current_price < previous_price:
+        if current_price < previous_price:
             return ColorType.LOSS
-        else:
-            return ColorType.NEUTRAL
-    
+        return ColorType.NEUTRAL
+
     def get_pnl_color(self, pnl_value: float) -> ColorType:
         """
         Get appropriate color for P&L value.
-        
+
         Args:
             pnl_value: P&L value
-            
+
         Returns:
             Appropriate color type
         """
         if pnl_value > 0:
             return ColorType.PROFIT
-        elif pnl_value < 0:
+        if pnl_value < 0:
             return ColorType.LOSS
-        else:
-            return ColorType.NEUTRAL
-    
+        return ColorType.NEUTRAL
+
     def get_direction_color(self, direction: Direction) -> ColorType:
         """
         Get appropriate color for trading direction.
-        
+
         Args:
             direction: Trading direction
-            
+
         Returns:
             Appropriate color type
         """
         if direction == Direction.LONG:
             return ColorType.LONG
-        elif direction == Direction.SHORT:
+        if direction == Direction.SHORT:
             return ColorType.SHORT
-        else:
-            return ColorType.NEUTRAL
-    
+        return ColorType.NEUTRAL
+
     def get_status_color(self, status: Status) -> ColorType:
         """
         Get appropriate color for order/trade status.
-        
+
         Args:
             status: Order or trade status
-            
+
         Returns:
             Appropriate color type
         """
@@ -258,67 +254,64 @@ class TUIColorManager:
             Status.CANCELLED: ColorType.CANCELLED,
             Status.REJECTED: ColorType.REJECTED,
         }
-        
+
         return status_color_map.get(status, ColorType.NEUTRAL)
-    
+
     def switch_theme(self, theme: str) -> None:
         """
         Switch to a different theme.
-        
+
         Args:
             theme: New theme name
         """
         self._load_theme(theme)
-    
+
     def get_available_themes(self) -> list[str]:
         """Get list of available themes."""
         return list(self.COLOR_SCHEMES.keys())
-    
+
     def create_rich_text(
-        self, 
-        text: str, 
-        color_type: ColorType,
-        additional_styles: Optional[list[str]] = None
+        self, text: str, color_type: ColorType, additional_styles: list[str] | None = None
     ) -> str:
         """
         Create rich text markup for Textual display.
-        
+
         Args:
             text: Text content
             color_type: Color type to apply
             additional_styles: Additional style attributes
-            
+
         Returns:
             Rich text markup string
         """
         color_string = self.get_color_string(color_type)
-        
+
         if additional_styles:
             color_string += " " + " ".join(additional_styles)
-        
+
         return f"[{color_string}]{text}[/]"
-    
-    def get_bid_ask_colors(self) -> Tuple[str, str]:
+
+    def get_bid_ask_colors(self) -> tuple[str, str]:
         """
         Get bid and ask colors as strings.
-        
+
         Returns:
             Tuple of (bid_color, ask_color) strings
         """
         bid_color = self.get_color_string(ColorType.BID)
         ask_color = self.get_color_string(ColorType.ASK)
         return bid_color, ask_color
-    
+
     def customize_color(
-        self, 
-        color_type: ColorType, 
+        self,
+        color_type: ColorType,
         foreground: str,
-        background: Optional[str] = None,
-        **kwargs: Any
+        background: str | None = None,
+        **kwargs: Any,
     ) -> None:
         """
         Customize a specific color in the current theme.
-        
+
         Args:
             color_type: Color type to customize
             foreground: Foreground color
@@ -326,18 +319,16 @@ class TUIColorManager:
             **kwargs: Additional color attributes
         """
         self.colors[color_type] = ColorConfig(
-            foreground=foreground,
-            background=background,
-            **kwargs
+            foreground=foreground, background=background, **kwargs
         )
-    
+
     def reset_theme(self) -> None:
         """Reset current theme to default colors."""
         self._load_theme(self.current_theme)
 
 
 # Global color manager instance
-_color_manager: Optional[TUIColorManager] = None
+_color_manager: TUIColorManager | None = None
 
 
 def get_color_manager() -> TUIColorManager:
@@ -357,11 +348,49 @@ def reset_color_manager() -> None:
 def get_themed_color(color_type: ColorType) -> str:
     """
     Convenience function to get themed color string.
-    
+
     Args:
         color_type: Color type to retrieve
-        
+
     Returns:
         Color string for current theme
     """
     return get_color_manager().get_color_string(color_type)
+
+
+def get_color_for_value(value: float | int | None, reference_value: float | int | None = None) -> ColorType:
+    """
+    Get appropriate color for a numeric value based on its positivity/negativity.
+    
+    Args:
+        value: The numeric value to get color for
+        reference_value: Optional reference value for comparison (if provided, compares value vs reference)
+        
+    Returns:
+        Appropriate color type for the value
+    """
+    if value is None:
+        return ColorType.NEUTRAL
+    
+    try:
+        num_value = float(value)
+        
+        if reference_value is not None:
+            ref_value = float(reference_value)
+            if num_value > ref_value:
+                return ColorType.PROFIT
+            elif num_value < ref_value:
+                return ColorType.LOSS
+            else:
+                return ColorType.NEUTRAL
+        else:
+            # Simple positive/negative logic
+            if num_value > 0:
+                return ColorType.PROFIT
+            elif num_value < 0:
+                return ColorType.LOSS
+            else:
+                return ColorType.NEUTRAL
+                
+    except (ValueError, TypeError):
+        return ColorType.NEUTRAL

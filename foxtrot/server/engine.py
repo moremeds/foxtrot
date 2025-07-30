@@ -1,11 +1,11 @@
-import os
-import smtplib
-import traceback
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from email.message import EmailMessage
+import os
 from queue import Empty, Queue
+import smtplib
 from threading import Thread
+import traceback
 from typing import TypeVar
 
 from foxtrot.adapter.base_adapter import BaseAdapter
@@ -86,14 +86,14 @@ class MainEngine:
         self.apps: dict[str, BaseApp] = {}
         self.exchanges: list[Exchange] = []
 
-        os.chdir(TRADER_DIR)    # Change working directory
-        self.init_engines()     # Initialize function engines
+        os.chdir(TRADER_DIR)  # Change working directory
+        self.init_engines()  # Initialize function engines
 
     def add_engine(self, engine_class: type[EngineType]) -> EngineType:
         """
         Add function engine.
         """
-        engine: EngineType = engine_class(self, self.event_engine)      # type: ignore
+        engine: EngineType = engine_class(self, self.event_engine)  # type: ignore
         self.engines[engine.engine_name] = engine
         return engine
 
@@ -148,8 +148,12 @@ class MainEngine:
         self.get_all_quotes: Callable[[], list[QuoteData]] = oms_engine.get_all_quotes
         self.get_all_active_orders: Callable[[], list[OrderData]] = oms_engine.get_all_active_orders
         self.get_all_active_quotes: Callable[[], list[QuoteData]] = oms_engine.get_all_active_quotes
-        self.update_order_request: Callable[[OrderRequest, str, str], None] = oms_engine.update_order_request
-        self.convert_order_request: Callable[[OrderRequest, str, bool, bool], list[OrderRequest]] = oms_engine.convert_order_request
+        self.update_order_request: Callable[[OrderRequest, str, str], None] = (
+            oms_engine.update_order_request
+        )
+        self.convert_order_request: Callable[
+            [OrderRequest, str, bool, bool], list[OrderRequest]
+        ] = oms_engine.convert_order_request
         self.get_converter: Callable[[str], OffsetConverter | None] = oms_engine.get_converter
 
         email_engine: EmailEngine = self.add_engine(EmailEngine)
@@ -231,8 +235,7 @@ class MainEngine:
         adapter: BaseAdapter | None = self.get_adapter(adapter_name)
         if adapter:
             return adapter.send_order(req)  # type: ignore
-        else:
-            return ""
+        return ""
 
     def cancel_order(self, req: CancelRequest, adapter_name: str) -> None:
         """
@@ -249,8 +252,7 @@ class MainEngine:
         adapter: BaseAdapter | None = self.get_adapter(adapter_name)
         if adapter:
             return adapter.send_quote(req)  # type: ignore
-        else:
-            return ""
+        return ""
 
     def cancel_quote(self, req: CancelRequest, adapter_name: str) -> None:
         """
@@ -267,8 +269,7 @@ class MainEngine:
         adapter: BaseAdapter | None = self.get_adapter(adapter_name)
         if adapter:
             return adapter.query_history(req)  # type: ignore
-        else:
-            return []
+        return []
 
     def close(self) -> None:
         """
@@ -527,11 +528,7 @@ class OmsEngine(BaseEngine):
             converter.update_order_request(req, vt_orderid)
 
     def convert_order_request(
-        self,
-        req: OrderRequest,
-        adapter_name: str,
-        lock: bool,
-        net: bool = False
+        self, req: OrderRequest, adapter_name: str, lock: bool, net: bool = False
     ) -> list[OrderRequest]:
         """
         Convert original order request according to given mode.

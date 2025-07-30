@@ -1,6 +1,7 @@
 """
 Historical data management for Interactive Brokers.
 """
+
 from datetime import datetime, timedelta
 from threading import Condition
 
@@ -29,8 +30,9 @@ class HistoricalDataManager:
         self.history_buf: list[BarData] = []
         self.history_reqid: int = 0
 
-    def query_history(self, req: HistoryRequest, client, contract_manager,
-                     write_log_callback) -> list[BarData]:
+    def query_history(
+        self, req: HistoryRequest, client, contract_manager, write_log_callback
+    ) -> list[BarData]:
         """Query historical data from IB."""
         contract = contract_manager.get_contract(req.vt_symbol)
         if not contract:
@@ -59,7 +61,7 @@ class HistoricalDataManager:
         if days < 365:
             duration: str = f"{days} D"
         else:
-            duration = f"{delta.days/365:.0f} Y"
+            duration = f"{delta.days / 365:.0f} Y"
 
         bar_size: str = INTERVAL_VT2IB[req.interval]
 
@@ -70,30 +72,20 @@ class HistoricalDataManager:
 
         self.history_reqid = reqid
         client.reqHistoricalData(
-            reqid,
-            ib_contract,
-            end_str,
-            duration,
-            bar_size,
-            bar_type,
-            0,
-            1,
-            False,
-            []
+            reqid, ib_contract, end_str, duration, bar_size, bar_type, 0, 1, False, []
         )
 
-        self.history_condition.acquire()    # Wait for asynchronous data to be returned
+        self.history_condition.acquire()  # Wait for asynchronous data to be returned
         self.history_condition.wait(600)
         self.history_condition.release()
 
         history: list[BarData] = self.history_buf
-        self.history_buf = []       # Create a new buffer list
+        self.history_buf = []  # Create a new buffer list
         self.history_req = None
 
         return history
 
-    def process_historical_data(self, reqId: int, ib_bar: IbBarData,
-                              write_log_callback) -> None:
+    def process_historical_data(self, reqId: int, ib_bar: IbBarData, write_log_callback) -> None:
         """Process historical bar data."""
         # Daily and weekly data format is %Y%m%d
         time_str: str = ib_bar.date
@@ -132,7 +124,7 @@ class HistoricalDataManager:
             high_price=ib_bar.high,
             low_price=ib_bar.low,
             close_price=ib_bar.close,
-            adapter_name=self.adapter_name
+            adapter_name=self.adapter_name,
         )
         if bar.volume < 0:
             bar.volume = 0

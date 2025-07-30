@@ -1,6 +1,7 @@
 """
 Market data handling for Interactive Brokers.
 """
+
 from copy import copy
 from datetime import datetime
 
@@ -29,8 +30,9 @@ class MarketDataManager:
         self.ticks: dict[int, TickData] = {}
         self.subscribed: dict[str, SubscribeRequest] = {}
 
-    def subscribe(self, req: SubscribeRequest, client, contract_manager,
-                 write_log_callback, data_ready: bool) -> bool:
+    def subscribe(
+        self, req: SubscribeRequest, client, contract_manager, write_log_callback, data_ready: bool
+    ) -> bool:
         """Subscribe to tick data updates."""
         if req.exchange not in EXCHANGE_VT2IB:
             write_log_callback(f"Unsupported exchange {req.exchange}")
@@ -67,7 +69,7 @@ class MarketDataManager:
             symbol=req.symbol,
             exchange=req.exchange,
             datetime=datetime.now(LOCAL_TZ),
-            adapter_name=self.adapter_name
+            adapter_name=self.adapter_name,
         )
         tick.extra = {}
 
@@ -95,12 +97,16 @@ class MarketDataManager:
         """Query tick data."""
         contract = contract_manager.get_contract(vt_symbol)
         if not contract:
-            write_log_callback(f"Failed to query tick data, could not find contract data for {vt_symbol}")
+            write_log_callback(
+                f"Failed to query tick data, could not find contract data for {vt_symbol}"
+            )
             return
 
         ib_contract = contract_manager.get_ib_contract(vt_symbol)
         if not ib_contract:
-            write_log_callback(f"Failed to query tick data, could not find IB contract data for {vt_symbol}")
+            write_log_callback(
+                f"Failed to query tick data, could not find IB contract data for {vt_symbol}"
+            )
             return
 
         reqid = self._get_next_reqid()
@@ -110,15 +116,22 @@ class MarketDataManager:
             symbol=contract.symbol,
             exchange=contract.exchange,
             datetime=datetime.now(LOCAL_TZ),
-            adapter_name=self.adapter_name
+            adapter_name=self.adapter_name,
         )
         tick.extra = {}
 
         self.ticks[reqid] = tick
 
-    def process_tick_price(self, reqId: TickerId, tickType: TickType, price: float,
-                          attrib: TickAttrib, contract_manager, on_tick_callback,
-                          write_log_callback) -> None:
+    def process_tick_price(
+        self,
+        reqId: TickerId,
+        tickType: TickType,
+        price: float,
+        attrib: TickAttrib,
+        contract_manager,
+        on_tick_callback,
+        write_log_callback,
+    ) -> None:
         """Process tick price updates."""
         if tickType not in TICKFIELD_IB2VT:
             return
@@ -145,8 +158,9 @@ class MarketDataManager:
 
         on_tick_callback(copy(tick))
 
-    def process_tick_size(self, reqId: TickerId, tickType: TickType, size,
-                         on_tick_callback, write_log_callback) -> None:
+    def process_tick_size(
+        self, reqId: TickerId, tickType: TickType, size, on_tick_callback, write_log_callback
+    ) -> None:
         """Process tick size updates."""
         if tickType not in TICKFIELD_IB2VT:
             return
@@ -161,8 +175,9 @@ class MarketDataManager:
 
         on_tick_callback(copy(tick))
 
-    def process_tick_string(self, reqId: TickerId, tickType: TickType, value: str,
-                           on_tick_callback, write_log_callback) -> None:
+    def process_tick_string(
+        self, reqId: TickerId, tickType: TickType, value: str, on_tick_callback, write_log_callback
+    ) -> None:
         """Process tick string updates."""
         if tickType != TickTypeEnum.LAST_TIMESTAMP:
             return
@@ -177,14 +192,25 @@ class MarketDataManager:
 
         on_tick_callback(copy(tick))
 
-    def process_tick_option_computation(self, reqId: TickerId, tickType: TickType,
-                                       impliedVol: float, delta: float, optPrice: float,
-                                       gamma: float, vega: float, theta: float,
-                                       undPrice: float, write_log_callback) -> None:
+    def process_tick_option_computation(
+        self,
+        reqId: TickerId,
+        tickType: TickType,
+        impliedVol: float,
+        delta: float,
+        optPrice: float,
+        gamma: float,
+        vega: float,
+        theta: float,
+        undPrice: float,
+        write_log_callback,
+    ) -> None:
         """Process tick option data."""
         tick: TickData | None = self.ticks.get(reqId, None)
         if not tick:
-            write_log_callback(f"tickOptionComputation function received an unsolicited push, reqId: {reqId}")
+            write_log_callback(
+                f"tickOptionComputation function received an unsolicited push, reqId: {reqId}"
+            )
             return
 
         prefix: str = TICKFIELD_IB2VT[tickType]
@@ -212,7 +238,9 @@ class MarketDataManager:
         """Process end of market data snapshot."""
         tick: TickData | None = self.ticks.get(reqId, None)
         if not tick:
-            write_log_callback(f"tickSnapshotEnd function received an unsolicited push, reqId: {reqId}")
+            write_log_callback(
+                f"tickSnapshotEnd function received an unsolicited push, reqId: {reqId}"
+            )
             return
 
         write_log_callback(f"{tick.vt_symbol} market data snapshot query successful")

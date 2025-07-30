@@ -3,7 +3,7 @@ LEGACY FILE - REFACTORED INTO MODULES
 
 This file has been refactored into the following modules:
 - adapter.py: Main IBAdapter interface
-- api_client.py: Core IbApi coordination  
+- api_client.py: Core IbApi coordination
 - market_data.py: Market data handling
 - order_manager.py: Order management
 - account_manager.py: Account/position management
@@ -23,10 +23,10 @@ ES-2020006-C-2430-50-USD-FOP  GLOBEX
 ConId is also supported for symbol.
 """
 
-import shelve
 from copy import copy
 from datetime import datetime, timedelta
 from decimal import Decimal
+import shelve
 from threading import Condition, Thread
 
 from ibapi.client import EClient
@@ -41,8 +41,8 @@ from ibapi.ticktype import TickType, TickTypeEnum
 from ibapi.wrapper import EWrapper
 
 from foxtrot.adapter.base_adapter import BaseAdapter
-from foxtrot.core.event_engine import EventEngine
 from foxtrot.core.event import EVENT_TIMER, Event
+from foxtrot.core.event_engine import EventEngine
 from foxtrot.util.constants import Direction, Exchange, OrderType, Product, Status
 from foxtrot.util.object import (
     AccountData,
@@ -85,11 +85,11 @@ class IBAdapter(BaseAdapter):
 
     default_name: str = "IB"
 
-    default_setting: dict[str, str|int ] = {
+    default_setting: dict[str, str | int] = {
         "TWS Address": "127.0.0.1",
         "TWS Port": 7497,
         "Client ID": 1,
-        "Trading Account": ""
+        "Trading Account": "",
     }
 
     exchanges: list[Exchange] = list(EXCHANGE_VT2IB.keys())
@@ -130,11 +130,9 @@ class IBAdapter(BaseAdapter):
 
     def query_account(self) -> None:
         """Query account balance"""
-        pass
 
     def query_position(self) -> None:
         """Query holdings"""
-        pass
 
     def query_history(self, req: HistoryRequest) -> list[BarData]:
         """Query historical data"""
@@ -183,8 +181,8 @@ class IbApi(EWrapper):
         self.history_condition: Condition = Condition()
         self.history_buf: list[BarData] = []
 
-        self.reqid_symbol_map: dict[int, str] = {}              # reqid: subscribe tick symbol
-        self.reqid_underlying_map: dict[int, Contract] = {}     # reqid: query option underlying
+        self.reqid_symbol_map: dict[int, str] = {}  # reqid: subscribe tick symbol
+        self.reqid_underlying_map: dict[int, Contract] = {}  # reqid: query option underlying
 
         self.client: EClient = EClient(self)
 
@@ -222,11 +220,7 @@ class IbApi(EWrapper):
         self.adapter.write_log(msg)
 
     def error(
-        self,
-        reqId: TickerId,
-        errorCode: int,
-        errorString: str,
-        advancedOrderRejectJson: str = ""
+        self, reqId: TickerId, errorCode: int, errorString: str, advancedOrderRejectJson: str = ""
     ) -> None:
         """Callback for error requests"""
         super().error(reqId, errorCode, errorString)
@@ -251,7 +245,9 @@ class IbApi(EWrapper):
             for req in reqs:
                 self.subscribe(req)
 
-    def tickPrice(self, reqId: TickerId, tickType: TickType, price: float, attrib: TickAttrib) -> None:
+    def tickPrice(
+        self, reqId: TickerId, tickType: TickType, price: float, attrib: TickAttrib
+    ) -> None:
         """Callback for tick price updates"""
         super().tickPrice(reqId, tickType, price, attrib)
 
@@ -260,7 +256,9 @@ class IbApi(EWrapper):
 
         tick: TickData | None = self.ticks.get(reqId, None)
         if not tick:
-            self.adapter.write_log(f"tickPrice function received an unsolicited push, reqId: {reqId}")
+            self.adapter.write_log(
+                f"tickPrice function received an unsolicited push, reqId: {reqId}"
+            )
             return
 
         name: str = TICKFIELD_IB2VT[tickType]
@@ -289,7 +287,9 @@ class IbApi(EWrapper):
 
         tick: TickData | None = self.ticks.get(reqId, None)
         if not tick:
-            self.adapter.write_log(f"tickSize function received an unsolicited push, reqId: {reqId}")
+            self.adapter.write_log(
+                f"tickSize function received an unsolicited push, reqId: {reqId}"
+            )
             return
 
         name: str = TICKFIELD_IB2VT[tickType]
@@ -306,7 +306,9 @@ class IbApi(EWrapper):
 
         tick: TickData | None = self.ticks.get(reqId, None)
         if not tick:
-            self.adapter.write_log(f"tickString function received an unsolicited push, reqId: {reqId}")
+            self.adapter.write_log(
+                f"tickString function received an unsolicited push, reqId: {reqId}"
+            )
             return
 
         dt: datetime = datetime.fromtimestamp(int(value))
@@ -326,7 +328,7 @@ class IbApi(EWrapper):
         gamma: float,
         vega: float,
         theta: float,
-        undPrice: float
+        undPrice: float,
     ) -> None:
         """Callback for tick option data pushes"""
         super().tickOptionComputation(
@@ -345,7 +347,9 @@ class IbApi(EWrapper):
 
         tick: TickData | None = self.ticks.get(reqId, None)
         if not tick:
-            self.adapter.write_log(f"tickOptionComputation function received an unsolicited push, reqId: {reqId}")
+            self.adapter.write_log(
+                f"tickOptionComputation function received an unsolicited push, reqId: {reqId}"
+            )
             return
 
         prefix: str = TICKFIELD_IB2VT[tickType]
@@ -375,7 +379,9 @@ class IbApi(EWrapper):
 
         tick: TickData | None = self.ticks.get(reqId, None)
         if not tick:
-            self.adapter.write_log(f"tickSnapshotEnd function received an unsolicited push, reqId: {reqId}")
+            self.adapter.write_log(
+                f"tickSnapshotEnd function received an unsolicited push, reqId: {reqId}"
+            )
             return
 
         self.adapter.write_log(f"{tick.vt_symbol} market data snapshot query successful")
@@ -410,14 +416,14 @@ class IbApi(EWrapper):
         )
 
         orderid: str = str(orderId)
-        order: OrderData = self.orders.get(orderid, None) # type: ignore
+        order: OrderData = self.orders.get(orderid, None)  # type: ignore
         if not order:
             return
 
         order.traded = float(filled)
 
         # Filter out "canceling" status
-        order_status: Status = STATUS_IB2VT.get(status, None) # type: ignore
+        order_status: Status = STATUS_IB2VT.get(status, None)  # type: ignore
         if order_status:
             order.status = order_status
 
@@ -441,7 +447,7 @@ class IbApi(EWrapper):
             dt = datetime.now()
 
         # Prioritize using locally cached order records to resolve issues with exchange information changing when SMART is used
-        order: OrderData = self.orders.get(orderid, None) # type: ignore
+        order: OrderData = self.orders.get(orderid, None)  # type: ignore
         if not order:
             order = OrderData(
                 symbol=self.generate_symbol(ib_contract),
@@ -470,12 +476,9 @@ class IbApi(EWrapper):
             return
 
         accountid: str = f"{accountName}.{currency}"
-        account: AccountData = self.accounts.get(accountid, None) # type: ignore
+        account: AccountData = self.accounts.get(accountid, None)  # type: ignore
         if not account:
-            account = AccountData(
-                accountid=accountid,
-                adapter_name=self.adapter_name
-            )
+            account = AccountData(accountid=accountid, adapter_name=self.adapter_name)
             self.accounts[accountid] = account
 
         name: str = ACCOUNTFIELD_IB2VT[key]
@@ -505,11 +508,11 @@ class IbApi(EWrapper):
         )
 
         if contract.exchange:
-            exchange: Exchange = EXCHANGE_IB2VT.get(contract.exchange, None) # type: ignore
+            exchange: Exchange = EXCHANGE_IB2VT.get(contract.exchange, None)  # type: ignore
         elif contract.primaryExchange:
-            exchange = EXCHANGE_IB2VT.get(contract.primaryExchange, None) # type: ignore
+            exchange = EXCHANGE_IB2VT.get(contract.primaryExchange, None)  # type: ignore
         else:
-            exchange = Exchange.SMART   # Use smart routing by default
+            exchange = Exchange.SMART  # Use smart routing by default
 
         if not exchange:
             msg: str = f"Unsupported exchange holding exists: {self.generate_symbol(contract)} {contract.exchange} {contract.primaryExchange}"
@@ -558,7 +561,7 @@ class IbApi(EWrapper):
             symbol = str(ib_contract.conId)
 
         # Filter out unsupported types
-        product: Product = PRODUCT_IB2VT.get(ib_contract.secType, None) # type: ignore
+        product: Product = PRODUCT_IB2VT.get(ib_contract.secType, None)  # type: ignore
         if not product:
             return
 
@@ -584,8 +587,12 @@ class IbApi(EWrapper):
             contract.option_type = OPTION_IB2VT.get(ib_contract.right, None)
             contract.option_strike = ib_contract.strike
             contract.option_index = str(ib_contract.strike)
-            contract.option_expiry = datetime.strptime(ib_contract.lastTradeDateOrContractMonth, "%Y%m%d")
-            contract.option_underlying = underlying_symbol + "_" + ib_contract.lastTradeDateOrContractMonth
+            contract.option_expiry = datetime.strptime(
+                ib_contract.lastTradeDateOrContractMonth, "%Y%m%d"
+            )
+            contract.option_underlying = (
+                underlying_symbol + "_" + ib_contract.lastTradeDateOrContractMonth
+            )
 
         if contract.vt_symbol not in self.contracts:
             self.adapter.on_contract(contract)
@@ -639,7 +646,7 @@ class IbApi(EWrapper):
 
         # Prioritize using locally cached order records to resolve issues with exchange information changing when SMART is used
         orderid: str = str(execution.orderId)
-        order: OrderData = self.orders.get(orderid, None) # type: ignore
+        order: OrderData = self.orders.get(orderid, None)  # type: ignore
 
         if order:
             symbol: str = order.symbol
@@ -714,7 +721,7 @@ class IbApi(EWrapper):
             high_price=ib_bar.high,
             low_price=ib_bar.low,
             close_price=ib_bar.close,
-            adapter_name=self.adapter_name
+            adapter_name=self.adapter_name,
         )
         if bar.volume < 0:
             bar.volume = 0
@@ -727,13 +734,7 @@ class IbApi(EWrapper):
         self.history_condition.notify()
         self.history_condition.release()
 
-    def connect(
-        self,
-        host: str,
-        port: int,
-        clientid: int,
-        account: str
-    ) -> None:
+    def connect(self, host: str, port: int, clientid: int, account: str) -> None:
         """Connect to TWS"""
         if self.status:
             return
@@ -836,7 +837,7 @@ class IbApi(EWrapper):
             symbol=req.symbol,
             exchange=req.exchange,
             datetime=datetime.now(LOCAL_TZ),
-            adapter_name=self.adapter_name
+            adapter_name=self.adapter_name,
         )
         tick.extra = {}
 
@@ -923,9 +924,9 @@ class IbApi(EWrapper):
         if days < 365:
             duration: str = f"{days} D"
         else:
-            duration = f"{delta.days/365:.0f} Y"
+            duration = f"{delta.days / 365:.0f} Y"
 
-        bar_size: str = INTERVAL_VT2IB[req.interval]    # type: ignore
+        bar_size: str = INTERVAL_VT2IB[req.interval]  # type: ignore
 
         if contract.product in [Product.SPOT, Product.FOREX]:
             bar_type: str = "MIDPOINT"
@@ -934,24 +935,15 @@ class IbApi(EWrapper):
 
         self.history_reqid = self.reqid
         self.client.reqHistoricalData(
-            self.reqid,
-            ib_contract,
-            end_str,
-            duration,
-            bar_size,
-            bar_type,
-            0,
-            1,
-            False,
-            []
+            self.reqid, ib_contract, end_str, duration, bar_size, bar_type, 0, 1, False, []
         )
 
-        self.history_condition.acquire()    # Wait for asynchronous data to be returned
+        self.history_condition.acquire()  # Wait for asynchronous data to be returned
         self.history_condition.wait(600)
         self.history_condition.release()
 
         history: list[BarData] = self.history_buf
-        self.history_buf = []       # Create a new buffer list
+        self.history_buf = []  # Create a new buffer list
         self.history_req = None
 
         return history
@@ -1015,12 +1007,16 @@ class IbApi(EWrapper):
 
         contract: ContractData | None = self.contracts.get(vt_symbol, None)
         if not contract:
-            self.adapter.write_log(f"Failed to query tick data, could not find contract data for {vt_symbol}")
+            self.adapter.write_log(
+                f"Failed to query tick data, could not find contract data for {vt_symbol}"
+            )
             return
 
         ib_contract: Contract = self.ib_contracts.get(vt_symbol, None)
         if not contract:
-            self.adapter.write_log(f"Failed to query tick data, could not find IB contract data for {vt_symbol}")
+            self.adapter.write_log(
+                f"Failed to query tick data, could not find IB contract data for {vt_symbol}"
+            )
             return
 
         self.reqid += 1
@@ -1030,7 +1026,7 @@ class IbApi(EWrapper):
             symbol=contract.symbol,
             exchange=contract.exchange,
             datetime=datetime.now(LOCAL_TZ),
-            adapter_name=self.adapter_name
+            adapter_name=self.adapter_name,
         )
         tick.extra = {}
 

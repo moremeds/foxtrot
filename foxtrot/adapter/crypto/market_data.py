@@ -2,13 +2,13 @@
 Crypto Market Data Manager - Handles real-time market data streaming.
 """
 
-import threading
-from typing import TYPE_CHECKING, Set, Optional, List
-import time
 from datetime import datetime
+import threading
+import time
+from typing import TYPE_CHECKING
 
-from foxtrot.util.object import TickData, SubscribeRequest, BarData, HistoryRequest
 from foxtrot.util.constants import Exchange
+from foxtrot.util.object import BarData, HistoryRequest, SubscribeRequest, TickData
 
 if TYPE_CHECKING:
     from .crypto_adapter import CryptoAdapter
@@ -22,8 +22,8 @@ class MarketData:
     def __init__(self, adapter: "CryptoAdapter"):
         """Initialize the market data manager."""
         self.adapter = adapter
-        self._subscribed_symbols: Set[str] = set()
-        self._ws_thread: Optional[threading.Thread] = None
+        self._subscribed_symbols: set[str] = set()
+        self._ws_thread: threading.Thread | None = None
         self._active = False
 
     def subscribe(self, req: SubscribeRequest) -> bool:
@@ -69,14 +69,13 @@ class MarketData:
                     self._stop_websocket()
 
                 return True
-            else:
-                return False
+            return False
 
         except Exception as e:
             print(f"Failed to unsubscribe from {symbol}: {str(e)}")
             return False
 
-    def query_history(self, req: HistoryRequest) -> List[BarData]:
+    def query_history(self, req: HistoryRequest) -> list[BarData]:
         """
         Query historical data.
         """
@@ -148,7 +147,7 @@ class MarketData:
         finally:
             self._active = False
 
-    def _fetch_tick_data(self, symbol: str) -> Optional[TickData]:
+    def _fetch_tick_data(self, symbol: str) -> TickData | None:
         """
         Fetch current tick data for a symbol.
         """
@@ -170,21 +169,21 @@ class MarketData:
                 exchange=Exchange(self.adapter.default_name),
                 datetime=datetime.now(),
                 name=ccxt_symbol,
-                volume=ticker.get('baseVolume', 0),
-                turnover=ticker.get('quoteVolume', 0),
-                open_price=ticker.get('open', 0),
-                high_price=ticker.get('high', 0),
-                low_price=ticker.get('low', 0),
-                last_price=ticker.get('last', 0),
+                volume=ticker.get("baseVolume", 0),
+                turnover=ticker.get("quoteVolume", 0),
+                open_price=ticker.get("open", 0),
+                high_price=ticker.get("high", 0),
+                low_price=ticker.get("low", 0),
+                last_price=ticker.get("last", 0),
                 last_volume=0,
                 limit_up=0,
                 limit_down=0,
                 open_interest=0,
-                pre_close=ticker.get('previousClose', 0),
-                bid_price_1=ticker.get('bid', 0),
+                pre_close=ticker.get("previousClose", 0),
+                bid_price_1=ticker.get("bid", 0),
                 bid_volume_1=0,
-                ask_price_1=ticker.get('ask', 0),
-                ask_volume_1=0
+                ask_price_1=ticker.get("ask", 0),
+                ask_volume_1=0,
             )
 
             return tick
@@ -198,21 +197,20 @@ class MarketData:
         Convert VT symbol format to CCXT format.
         """
         try:
-            symbol = vt_symbol.split('.')[0]
+            symbol = vt_symbol.split(".")[0]
 
             if len(symbol) < 4:
                 return ""
 
-            if symbol.endswith('USDT') and len(symbol) > 4:
+            if symbol.endswith("USDT") and len(symbol) > 4:
                 base = symbol[:-4]
                 return f"{base}/USDT"
-            elif symbol.endswith('BTC') and len(symbol) > 3:
+            if symbol.endswith("BTC") and len(symbol) > 3:
                 base = symbol[:-3]
                 return f"{base}/BTC"
-            elif symbol.endswith('ETH') and len(symbol) > 3:
+            if symbol.endswith("ETH") and len(symbol) > 3:
                 base = symbol[:-3]
                 return f"{base}/ETH"
-            else:
-                return ""
+            return ""
         except Exception:
             return ""

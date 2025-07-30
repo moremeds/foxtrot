@@ -5,13 +5,12 @@ Tests the main adapter facade to ensure it properly delegates
 to the BinanceApiClient and maintains the BaseAdapter interface.
 """
 
-import pytest
 from unittest.mock import Mock, patch
 
 from foxtrot.adapter.binance import BinanceAdapter
 from foxtrot.core.event_engine import EventEngine
-from foxtrot.util.constants import Exchange, Direction, OrderType
-from foxtrot.util.object import OrderRequest, CancelRequest, SubscribeRequest
+from foxtrot.util.constants import Direction, Exchange, OrderType
+from foxtrot.util.object import CancelRequest, OrderRequest, SubscribeRequest
 
 
 class TestBinanceAdapter:
@@ -28,7 +27,7 @@ class TestBinanceAdapter:
         assert self.adapter.event_engine == self.event_engine
         assert self.adapter.default_name == "BINANCE"
         assert Exchange.BINANCE in self.adapter.exchanges
-        assert hasattr(self.adapter, 'api_client')
+        assert hasattr(self.adapter, "api_client")
 
     def test_default_settings(self):
         """Test default settings configuration."""
@@ -41,23 +40,19 @@ class TestBinanceAdapter:
         }
         assert self.adapter.default_setting == expected_settings
 
-    @patch('foxtrot.adapter.binance.api_client.BinanceApiClient.connect')
+    @patch("foxtrot.adapter.binance.api_client.BinanceApiClient.connect")
     def test_connect_delegates_to_api_client(self, mock_connect):
         """Test that connect method delegates to api_client."""
         mock_connect.return_value = True
-        
-        settings = {
-            "API Key": "test_key",
-            "Secret": "test_secret",
-            "Sandbox": True
-        }
-        
+
+        settings = {"API Key": "test_key", "Secret": "test_secret", "Sandbox": True}
+
         result = self.adapter.connect(settings)
-        
+
         assert result is True
         mock_connect.assert_called_once_with(settings)
 
-    @patch('foxtrot.adapter.binance.api_client.BinanceApiClient.close')
+    @patch("foxtrot.adapter.binance.api_client.BinanceApiClient.close")
     def test_close_delegates_to_api_client(self, mock_close):
         """Test that close method delegates to api_client."""
         self.adapter.close()
@@ -66,16 +61,16 @@ class TestBinanceAdapter:
     def test_send_order_when_order_manager_none(self):
         """Test send_order returns empty string when order_manager is None."""
         self.adapter.api_client.order_manager = None
-        
+
         req = OrderRequest(
             symbol="BTCUSDT.BINANCE",
             exchange=Exchange.BINANCE,
             direction=Direction.LONG,
             type=OrderType.LIMIT,
             volume=0.001,
-            price=30000
+            price=30000,
         )
-        
+
         result = self.adapter.send_order(req)
         assert result == ""
 
@@ -84,27 +79,29 @@ class TestBinanceAdapter:
         mock_order_manager = Mock()
         mock_order_manager.send_order.return_value = "TEST_ORDER_123"
         self.adapter.api_client.order_manager = mock_order_manager
-        
+
         req = OrderRequest(
             symbol="BTCUSDT.BINANCE",
             exchange=Exchange.BINANCE,
             direction=Direction.LONG,
             type=OrderType.LIMIT,
             volume=0.001,
-            price=30000
+            price=30000,
         )
-        
+
         result = self.adapter.send_order(req)
-        
+
         assert result == "TEST_ORDER_123"
         mock_order_manager.send_order.assert_called_once_with(req)
 
     def test_cancel_order_when_order_manager_none(self):
         """Test cancel_order returns False when order_manager is None."""
         self.adapter.api_client.order_manager = None
-        
-        req = CancelRequest(orderid="TEST_ORDER_123", symbol="BTCUSDT.BINANCE", exchange=Exchange.BINANCE)
-        
+
+        req = CancelRequest(
+            orderid="TEST_ORDER_123", symbol="BTCUSDT.BINANCE", exchange=Exchange.BINANCE
+        )
+
         result = self.adapter.cancel_order(req)
         assert result is False
 
@@ -113,20 +110,22 @@ class TestBinanceAdapter:
         mock_order_manager = Mock()
         mock_order_manager.cancel_order.return_value = True
         self.adapter.api_client.order_manager = mock_order_manager
-        
-        req = CancelRequest(orderid="TEST_ORDER_123", symbol="BTCUSDT.BINANCE", exchange=Exchange.BINANCE)
-        
+
+        req = CancelRequest(
+            orderid="TEST_ORDER_123", symbol="BTCUSDT.BINANCE", exchange=Exchange.BINANCE
+        )
+
         result = self.adapter.cancel_order(req)
-        
+
         assert result is True
         mock_order_manager.cancel_order.assert_called_once_with(req)
 
     def test_subscribe_when_market_data_none(self):
         """Test subscribe returns False when market_data is None."""
         self.adapter.api_client.market_data = None
-        
+
         req = SubscribeRequest(symbol="BTCUSDT.BINANCE", exchange=Exchange.BINANCE)
-        
+
         result = self.adapter.subscribe(req)
         assert result is False
 
@@ -135,18 +134,18 @@ class TestBinanceAdapter:
         mock_market_data = Mock()
         mock_market_data.subscribe.return_value = True
         self.adapter.api_client.market_data = mock_market_data
-        
+
         req = SubscribeRequest(symbol="BTCUSDT.BINANCE", exchange=Exchange.BINANCE)
-        
+
         result = self.adapter.subscribe(req)
-        
+
         assert result is True
         mock_market_data.subscribe.assert_called_once_with(req)
 
     def test_query_account_when_account_manager_none(self):
         """Test query_account returns early when account_manager is None."""
         self.adapter.api_client.account_manager = None
-        
+
         # Should not raise exception, just return early
         self.adapter.query_account()
 
@@ -156,12 +155,12 @@ class TestBinanceAdapter:
         mock_account_data = Mock()
         mock_account_manager.query_account.return_value = mock_account_data
         self.adapter.api_client.account_manager = mock_account_manager
-        
+
         # Mock the on_account callback
         self.adapter.on_account = Mock()
-        
+
         self.adapter.query_account()
-        
+
         mock_account_manager.query_account.assert_called_once()
         self.adapter.on_account.assert_called_once_with(mock_account_data)
 
@@ -169,14 +168,14 @@ class TestBinanceAdapter:
         """Test connected property delegates to api_client."""
         self.adapter.api_client.connected = True
         assert self.adapter.connected is True
-        
+
         self.adapter.api_client.connected = False
         assert self.adapter.connected is False
 
     def test_get_available_contracts_when_contract_manager_none(self):
         """Test get_available_contracts returns empty list when contract_manager is None."""
         self.adapter.api_client.contract_manager = None
-        
+
         result = self.adapter.get_available_contracts()
         assert result == []
 
@@ -186,8 +185,8 @@ class TestBinanceAdapter:
         mock_contracts = [Mock(), Mock()]
         mock_contract_manager.get_available_contracts.return_value = mock_contracts
         self.adapter.api_client.contract_manager = mock_contract_manager
-        
+
         result = self.adapter.get_available_contracts()
-        
+
         assert result == mock_contracts
         mock_contract_manager.get_available_contracts.assert_called_once()

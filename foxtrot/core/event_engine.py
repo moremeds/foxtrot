@@ -76,7 +76,9 @@ class EventEngine:
                     handler(event)
                 except Exception as e:
                     # Don't hold reference to exception object to prevent memory leaks
-                    error_msg = f"Handler failed for event {event.type}: {type(e).__name__}: {str(e)}"
+                    error_msg = (
+                        f"Handler failed for event {event.type}: {type(e).__name__}: {str(e)}"
+                    )
                     print(error_msg)
 
         if self._general_handlers:
@@ -103,20 +105,24 @@ class EventEngine:
         This method is idempotent - multiple calls are safe.
         """
         # If already active and threads are alive, do nothing
-        if (self._active and 
-            hasattr(self, '_thread') and self._thread.is_alive() and
-            hasattr(self, '_timer') and self._timer.is_alive()):
+        if (
+            self._active
+            and hasattr(self, "_thread")
+            and self._thread.is_alive()
+            and hasattr(self, "_timer")
+            and self._timer.is_alive()
+        ):
             return
-        
+
         self._active = True
-        
+
         # Create new threads only if needed (not alive or don't exist)
-        if not hasattr(self, '_thread') or not self._thread.is_alive():
+        if not hasattr(self, "_thread") or not self._thread.is_alive():
             self._thread = Thread(target=self._run)
-        
-        if not hasattr(self, '_timer') or not self._timer.is_alive():
+
+        if not hasattr(self, "_timer") or not self._timer.is_alive():
             self._timer = Thread(target=self._run_timer)
-        
+
         # Start threads only if they're not already running
         if not self._thread.is_alive():
             self._thread.start()
@@ -130,19 +136,19 @@ class EventEngine:
         """
         if not self._active:
             return  # Already stopped
-        
+
         self._active = False
-        
+
         # Join threads with timeout to prevent hanging in test environments
-        if hasattr(self, '_timer') and self._timer.is_alive():
+        if hasattr(self, "_timer") and self._timer.is_alive():
             self._timer.join(timeout=5.0)
             if self._timer.is_alive():
-                print(f"Warning: Timer thread didn't terminate within timeout")
-        
-        if hasattr(self, '_thread') and self._thread.is_alive():
+                print("Warning: Timer thread didn't terminate within timeout")
+
+        if hasattr(self, "_thread") and self._thread.is_alive():
             self._thread.join(timeout=5.0)
             if self._thread.is_alive():
-                print(f"Warning: Main thread didn't terminate within timeout")
+                print("Warning: Main thread didn't terminate within timeout")
 
     def put(self, event: Event) -> None:
         """
@@ -185,7 +191,7 @@ class EventEngine:
         """
         if handler in self._general_handlers:
             self._general_handlers.remove(handler)
-    
+
     def clear_handlers(self) -> None:
         """
         Clear all registered handlers - useful for testing and cleanup.

@@ -2,36 +2,35 @@
 Implements main window of the trading platform.
 """
 
-from types import ModuleType
-import webbrowser
+from collections.abc import Callable
 from functools import partial
 from importlib import import_module
+from types import ModuleType
 from typing import TypeVar
-from collections.abc import Callable
+import webbrowser
 
 import foxtrot
-from foxtrot.core.event_engine import EventEngine
 from foxtrot.app.app import BaseApp
+from foxtrot.core.event_engine import EventEngine
+from foxtrot.server.engine import MainEngine
+from foxtrot.util.utility import TRADER_DIR, get_icon_path
 
 from .qt import QtCore, QtGui, QtWidgets
 from .widget import (
-    BaseMonitor,
-    TickMonitor,
-    OrderMonitor,
-    TradeMonitor,
-    PositionMonitor,
+    AboutDialog,
     AccountMonitor,
-    LogMonitor,
     ActiveOrderMonitor,
+    BaseMonitor,
     ConnectDialog,
     ContractManager,
+    GlobalDialog,
+    LogMonitor,
+    OrderMonitor,
+    PositionMonitor,
+    TickMonitor,
+    TradeMonitor,
     TradingWidget,
-    AboutDialog,
-    GlobalDialog
 )
-from foxtrot.server.engine import MainEngine
-from foxtrot.util.utility import get_icon_path, TRADER_DIR
-
 
 WidgetType = TypeVar("WidgetType", bound="QtWidgets.QWidget")
 
@@ -48,7 +47,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.main_engine: MainEngine = main_engine
         self.event_engine: EventEngine = event_engine
 
-        self.window_title: str = ("Foxtrot - {}   [{}]").format(foxtrot.__version__, TRADER_DIR)
+        self.window_title: str = (f"Foxtrot - {foxtrot.__version__}   [{TRADER_DIR}]")
 
         self.widgets: dict[str, QtWidgets.QWidget] = {}
         self.monitors: dict[str, BaseMonitor] = {}
@@ -100,7 +99,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def init_menu(self) -> None:
         """"""
         bar: QtWidgets.QMenuBar = self.menuBar()
-        bar.setNativeMenuBar(False)     # for mac and linux
+        bar.setNativeMenuBar(False)  # for mac and linux
 
         # System menu
         sys_menu: QtWidgets.QMenu = bar.addMenu("System")
@@ -109,20 +108,12 @@ class MainWindow(QtWidgets.QMainWindow):
         for name in gateway_names:
             func: Callable = partial(self.connect_gateway, name)
             self.add_action(
-                sys_menu,
-                "Connect {}".format(name),
-                get_icon_path(__file__, "connect.ico"),
-                func
+                sys_menu, f"Connect {name}", get_icon_path(__file__, "connect.ico"), func
             )
 
         sys_menu.addSeparator()
 
-        self.add_action(
-            sys_menu,
-            "Exit",
-            get_icon_path(__file__, "exit.ico"),
-            self.close
-        )
+        self.add_action(sys_menu, "Exit", get_icon_path(__file__, "exit.ico"), self.close)
 
         # App menu
         app_menu: QtWidgets.QMenu = bar.addMenu("Apps")
@@ -149,29 +140,22 @@ class MainWindow(QtWidgets.QMainWindow):
             "Contract",
             get_icon_path(__file__, "contract.ico"),
             partial(self.open_widget, ContractManager, "contract"),
-            True
+            True,
         )
 
         self.add_action(
             help_menu,
             "Restore",
             get_icon_path(__file__, "restore.ico"),
-            self.restore_window_setting
+            self.restore_window_setting,
         )
 
         self.add_action(
-            help_menu,
-            "Test Email",
-            get_icon_path(__file__, "email.ico"),
-            self.send_test_email
+            help_menu, "Test Email", get_icon_path(__file__, "email.ico"), self.send_test_email
         )
 
         self.add_action(
-            help_menu,
-            "Forum",
-            get_icon_path(__file__, "forum.ico"),
-            self.open_forum,
-            True
+            help_menu, "Forum", get_icon_path(__file__, "forum.ico"), self.open_forum, True
         )
 
         self.add_action(
@@ -206,7 +190,7 @@ class MainWindow(QtWidgets.QMainWindow):
         action_name: str,
         icon_name: str,
         func: Callable,
-        toolbar: bool = False
+        toolbar: bool = False,
     ) -> None:
         """"""
         icon: QtGui.QIcon = QtGui.QIcon(icon_name)
@@ -221,22 +205,21 @@ class MainWindow(QtWidgets.QMainWindow):
             self.toolbar.addAction(action)
 
     def create_dock(
-        self,
-        widget_class: type[WidgetType],
-        name: str,
-        area: QtCore.Qt.DockWidgetArea
+        self, widget_class: type[WidgetType], name: str, area: QtCore.Qt.DockWidgetArea
     ) -> tuple[WidgetType, QtWidgets.QDockWidget]:
         """
         Initialize a dock widget.
         """
-        widget: WidgetType = widget_class(self.main_engine, self.event_engine)      # type: ignore
+        widget: WidgetType = widget_class(self.main_engine, self.event_engine)  # type: ignore
         if isinstance(widget, BaseMonitor):
             self.monitors[name] = widget
 
         dock: QtWidgets.QDockWidget = QtWidgets.QDockWidget(name)
         dock.setWidget(widget)
         dock.setObjectName(name)
-        dock.setFeatures(dock.DockWidgetFeature.DockWidgetFloatable | dock.DockWidgetFeature.DockWidgetMovable)
+        dock.setFeatures(
+            dock.DockWidgetFeature.DockWidgetFloatable | dock.DockWidgetFeature.DockWidgetMovable
+        )
         self.addDockWidget(area, dock)
         return widget, dock
 
@@ -280,7 +263,7 @@ class MainWindow(QtWidgets.QMainWindow):
         """
         widget: QtWidgets.QWidget | None = self.widgets.get(name, None)
         if not widget:
-            widget = widget_class(self.main_engine, self.event_engine)      # type: ignore
+            widget = widget_class(self.main_engine, self.event_engine)  # type: ignore
             self.widgets[name] = widget
 
         if isinstance(widget, QtWidgets.QDialog):
@@ -322,12 +305,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.main_engine.send_email("VeighNa Trader", "testing", None)
 
     def open_forum(self) -> None:
-        """
-        """
+        """ """
         webbrowser.open("https://www.vnpy.com/forum/")
 
     def edit_global_setting(self) -> None:
-        """
-        """
+        """ """
         dialog: GlobalDialog = GlobalDialog()
         dialog.exec()

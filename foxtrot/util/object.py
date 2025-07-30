@@ -215,9 +215,6 @@ class AccountData(BaseData):
         self.vt_accountid: str = f"{self.adapter_name}.{self.accountid}"
 
 
-
-
-
 @dataclass
 class LogData(BaseData):
     """
@@ -245,19 +242,19 @@ class ContractData(BaseData):
     size: float
     pricetick: float
 
-    min_volume: float = 1                   # minimum order volume
-    max_volume: float | None = None      # maximum order volume
-    stop_supported: bool = False            # whether server supports stop order
-    net_position: bool = False              # whether adaper uses net position volume
-    history_data: bool = False              # whether adaper provides bar history data
+    min_volume: float = 1  # minimum order volume
+    max_volume: float | None = None  # maximum order volume
+    stop_supported: bool = False  # whether server supports stop order
+    net_position: bool = False  # whether adaper uses net position volume
+    history_data: bool = False  # whether adaper provides bar history data
 
     option_strike: float | None = None
-    option_underlying: str | None = None     # vt_symbol of underlying contract
+    option_underlying: str | None = None  # vt_symbol of underlying contract
     option_type: OptionType | None = None
     option_listed: Datetime | None = None
     option_expiry: Datetime | None = None
     option_portfolio: str | None = None
-    option_index: str | None = None          # for identifying options with same strike price
+    option_index: str | None = None  # for identifying options with same strike price
 
     def __post_init__(self) -> None:
         """"""

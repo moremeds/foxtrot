@@ -1,6 +1,7 @@
 """
 Order management for Interactive Brokers.
 """
+
 from copy import copy
 from datetime import datetime
 from decimal import Decimal
@@ -49,8 +50,9 @@ class OrderManager:
         if not self.orderid:
             self.orderid = orderId
 
-    def send_order(self, req: OrderRequest, client, account: str,
-                  write_log_callback, on_order_callback) -> str:
+    def send_order(
+        self, req: OrderRequest, client, account: str, write_log_callback, on_order_callback
+    ) -> str:
         """Send an order to IB."""
         if req.exchange not in EXCHANGE_VT2IB:
             write_log_callback(f"Unsupported exchange: {req.exchange}")
@@ -97,8 +99,15 @@ class OrderManager:
         cancel: OrderCancel = OrderCancel()
         client.cancelOrder(int(req.orderid), cancel)
 
-    def process_order_status(self, orderId: OrderId, status: str, filled: Decimal,
-                           remaining: Decimal, avgFillPrice: float, on_order_callback) -> None:
+    def process_order_status(
+        self,
+        orderId: OrderId,
+        status: str,
+        filled: Decimal,
+        remaining: Decimal,
+        avgFillPrice: float,
+        on_order_callback,
+    ) -> None:
         """Process order status updates."""
         orderid: str = str(orderId)
         order: OrderData = self.orders.get(orderid, None)
@@ -114,9 +123,15 @@ class OrderManager:
 
         on_order_callback(copy(order))
 
-    def process_open_order(self, orderId: OrderId, ib_contract: Contract,
-                          ib_order: Order, orderState: OrderState,
-                          contract_manager, on_order_callback) -> None:
+    def process_open_order(
+        self,
+        orderId: OrderId,
+        ib_contract: Contract,
+        ib_order: Order,
+        orderState: OrderState,
+        contract_manager,
+        on_order_callback,
+    ) -> None:
         """Process new/updated order information."""
         orderid: str = str(orderId)
 
@@ -147,8 +162,15 @@ class OrderManager:
         self.orders[orderid] = order
         on_order_callback(copy(order))
 
-    def process_execution(self, reqId: int, contract: Contract, execution: Execution,
-                         contract_manager, on_trade_callback, write_log_callback) -> None:
+    def process_execution(
+        self,
+        reqId: int,
+        contract: Contract,
+        execution: Execution,
+        contract_manager,
+        on_trade_callback,
+        write_log_callback,
+    ) -> None:
         """Process trade execution data."""
         # Parse execution time
         time_str: str = execution.time

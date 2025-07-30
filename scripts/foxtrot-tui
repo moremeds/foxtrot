@@ -1,0 +1,110 @@
+#!/bin/bash
+#
+# Foxtrot TUI Launcher Script
+#
+# This script provides a convenient way to launch the Foxtrot TUI with
+# commonly used options and proper error handling.
+#
+
+# Get the directory of this script
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+
+# Change to project directory
+cd "$PROJECT_ROOT" || exit 1
+
+# Default options
+DEBUG=""
+THEME="dark"
+ADAPTER=""
+PAPER_TRADING=""
+CONFIG=""
+
+# Function to show usage
+show_usage() {
+    echo "Foxtrot TUI Launcher"
+    echo "Usage: $0 [OPTIONS]"
+    echo ""
+    echo "Options:"
+    echo "  -d, --debug          Enable debug mode"
+    echo "  -t, --theme THEME    Set color theme (dark, light, high_contrast, trading_green)"
+    echo "  -a, --adapter NAME   Set trading adapter (binance, ibrokers, crypto)"
+    echo "  -p, --paper          Enable paper trading mode"
+    echo "  -c, --config FILE    Use custom config file"
+    echo "  -h, --help           Show this help message"
+    echo ""
+    echo "Examples:"
+    echo "  $0                           # Run with default settings"
+    echo "  $0 --debug                   # Run in debug mode"
+    echo "  $0 --theme light --paper     # Light theme with paper trading"
+    echo "  $0 --adapter binance         # Use Binance adapter"
+}
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -d|--debug)
+            DEBUG="--debug"
+            shift
+            ;;
+        -t|--theme)
+            THEME="$2"
+            shift 2
+            ;;
+        -a|--adapter)
+            ADAPTER="--adapter $2"
+            shift 2
+            ;;
+        -p|--paper)
+            PAPER_TRADING="--paper-trading"
+            shift
+            ;;
+        -c|--config)
+            CONFIG="--config $2"
+            shift 2
+            ;;
+        -h|--help)
+            show_usage
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1" >&2
+            show_usage
+            exit 1
+            ;;
+    esac
+done
+
+# Check if required tools are available
+if ! command -v python3 &> /dev/null; then
+    echo "Error: python3 is not installed or not in PATH" >&2
+    exit 1
+fi
+
+# Check if the project is properly set up
+if [[ ! -f "$PROJECT_ROOT/run_tui.py" ]]; then
+    echo "Error: run_tui.py not found. Make sure you're in the correct directory." >&2
+    exit 1
+fi
+
+# Check if dependencies are installed
+if [[ ! -d "$PROJECT_ROOT/.venv" ]] && [[ ! -f "$PROJECT_ROOT/uv.lock" ]]; then
+    echo "Warning: Virtual environment not detected. Make sure dependencies are installed." >&2
+    echo "Run: uv sync" >&2
+    echo ""
+fi
+
+# Build the command
+CMD="python3 run_tui.py --theme $THEME $DEBUG $ADAPTER $PAPER_TRADING $CONFIG"
+
+# Show startup message
+echo "╔════════════════════════════════════════════════╗"
+echo "║        Foxtrot TUI - Trading Platform          ║"
+echo "║       Event-Driven Architecture                ║"
+echo "╚════════════════════════════════════════════════╝"
+echo ""
+echo "Starting with: $CMD"
+echo ""
+
+# Execute the command
+exec $CMD

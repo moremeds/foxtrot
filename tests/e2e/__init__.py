@@ -4,7 +4,7 @@ End-to-end test package for Foxtrot trading platform.
 This package contains comprehensive end-to-end tests that validate
 the complete system integration including:
 - MainEngine coordination
-- Adapter integration 
+- Adapter integration
 - Event system flow
 - Order management system (OMS)
 - Real broker/exchange connectivity

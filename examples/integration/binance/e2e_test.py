@@ -1,27 +1,32 @@
-
-import os
 import asyncio
-from foxtrot.adapter.binance.api_client import BinanceApiClient
-from foxtrot.util.object import OrderRequest, CancelRequest
-from foxtrot.util.constants import Direction, OrderType, Exchange
-from foxtrot.core.event_engine import EventEngine
+import os
+
 from dotenv import load_dotenv
+
+from foxtrot.adapter.binance.api_client import BinanceApiClient
+from foxtrot.core.event_engine import EventEngine
+from foxtrot.util.constants import Direction, Exchange, OrderType
+from foxtrot.util.object import OrderRequest
 
 # Load environment variables from .env file
 load_dotenv()
+
 
 async def get_top_5_traded_pairs(client):
     """Gets the top 5 most traded pairs by quote volume."""
     try:
         tickers = client.exchange.fetch_tickers()
         # Filter out non-USDT pairs and sort by quoteVolume
-        usdt_tickers = {k: v for k, v in tickers.items() if k.endswith('/USDT')}
-        sorted_tickers = sorted(usdt_tickers.values(), key=lambda x: x.get('quoteVolume', 0), reverse=True)
-        top_5 = [ticker['symbol'] for ticker in sorted_tickers[:5]]
+        usdt_tickers = {k: v for k, v in tickers.items() if k.endswith("/USDT")}
+        sorted_tickers = sorted(
+            usdt_tickers.values(), key=lambda x: x.get("quoteVolume", 0), reverse=True
+        )
+        top_5 = [ticker["symbol"] for ticker in sorted_tickers[:5]]
         return top_5
     except Exception as e:
         print(f"Error fetching top traded pairs: {e}")
         return []
+
 
 async def main():
     """
@@ -34,8 +39,10 @@ async def main():
 
     if not all([spot_api_key, spot_api_secret, futures_api_key, futures_api_secret]):
         print("Error: Binance testnet API keys not set.")
-        print("Please set BINANCE_TESTNET_SPOT_API_KEY, BINANCE_TESTNET_SPOT_SECRET_KEY, "
-              "BINANCE_TESTNET_FUTURES_API_KEY, and BINANCE_TESTNET_FUTURES_SECRET_KEY.")
+        print(
+            "Please set BINANCE_TESTNET_SPOT_API_KEY, BINANCE_TESTNET_SPOT_SECRET_KEY, "
+            "BINANCE_TESTNET_FUTURES_API_KEY, and BINANCE_TESTNET_FUTURES_SECRET_KEY."
+        )
         return
 
     # --- Initialize Clients ---
@@ -59,7 +66,7 @@ async def main():
         "Sandbox": True,
         "options": {
             "defaultType": "future",
-        }
+        },
     }
     futures_client.connect(futures_settings)
 
@@ -84,8 +91,8 @@ async def main():
         for pair in top_5_pairs:
             print(f"--- Placing Spot Trade for {pair} ---")
             market = spot_client.exchange.market(pair)
-            price = spot_client.exchange.fetch_ticker(pair)['last']
-            
+            price = spot_client.exchange.fetch_ticker(pair)["last"]
+
             # Calculate quantity for a notional value of ~11 USDT
             amount = 11 / price
             quantity = float(spot_client.exchange.amount_to_precision(pair, amount))
@@ -106,7 +113,7 @@ async def main():
                 print(f"Failed to place spot trade for {pair}")
             print("-" * 20)
 
-    # --- 3. Place a Futures Trade ---
+        # --- 3. Place a Futures Trade ---
         print("--- Placing Futures Trade ---")
         futures_order_req = OrderRequest(
             symbol="BTCUSDT.BINANCE",
@@ -127,7 +134,7 @@ async def main():
     finally:
         # --- 4. Flatten All Positions ---
         print("--- Flattening All Positions ---")
-        
+
         # Flatten Top 5 Pairs
         for pair in top_5_pairs:
             print(f"Flattening Spot Position for {pair}...")
@@ -158,8 +165,10 @@ async def main():
                     type=OrderType.MARKET,
                     volume=abs(float(position.volume)),
                 )
-                
-                flatten_futures_result = futures_client.order_manager.send_order(flatten_futures_req)
+
+                flatten_futures_result = futures_client.order_manager.send_order(
+                    flatten_futures_req
+                )
                 print(f"Flatten Futures Result: {flatten_futures_result}")
 
         print("--- Cleanup Complete ---")

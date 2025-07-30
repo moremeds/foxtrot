@@ -2,8 +2,7 @@
 Basic data structure used for crypto account in the trading platform.
 """
 
-from dataclasses import dataclass, field
-from typing import Any
+from dataclasses import dataclass
 
 from foxtrot.util.object import AccountData
 
@@ -14,6 +13,7 @@ class CryptoBalance:
     free: str
     locked: str
 
+
 @dataclass
 class CryptoUserAsset:
     asset: str
@@ -22,6 +22,7 @@ class CryptoUserAsset:
     interest: str
     locked: str
     netAsset: str
+
 
 @dataclass
 class CryptoIsolatedAsset:
@@ -35,6 +36,7 @@ class CryptoIsolatedAsset:
     netAssetOfBtc: str
     repayEnabled: bool
     totalAsset: str
+
 
 @dataclass
 class CryptoIsolatedSymbol:
@@ -51,6 +53,7 @@ class CryptoIsolatedSymbol:
     tradeEnabled: bool
     enabled: bool
 
+
 @dataclass
 class CryptoFuturesAsset:
     asset: str
@@ -66,6 +69,7 @@ class CryptoFuturesAsset:
     crossUnPnl: str
     availableBalance: str
 
+
 @dataclass
 class CryptoFuturesPosition:
     symbol: str
@@ -80,6 +84,7 @@ class CryptoFuturesPosition:
     maxNotional: str
     positionSide: str
 
+
 @dataclass
 class CryptoPayBalance:
     asset: str
@@ -87,6 +92,7 @@ class CryptoPayBalance:
     locked: str
     freeze: str
     withdrawing: str
+
 
 @dataclass
 class CryptoPortfolioMargin:
@@ -110,6 +116,7 @@ class CryptoAccountData(AccountData):
     """
     Crypto account data contains detailed information for various account types.
     """
+
     makerCommission: int | None = None
     takerCommission: int | None = None
     buyerCommission: int | None = None

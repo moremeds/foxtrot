@@ -34,7 +34,7 @@ DIRECTION_IB2VT["SLD"] = Direction.SHORT
 ORDERTYPE_VT2IB: dict[OrderType, str] = {
     OrderType.LIMIT: "LMT",
     OrderType.MARKET: "MKT",
-    OrderType.STOP: "STP"
+    OrderType.STOP: "STP",
 }
 ORDERTYPE_IB2VT: dict[str, OrderType] = {v: k for k, v in ORDERTYPE_VT2IB.items()}
 
@@ -67,7 +67,7 @@ EXCHANGE_VT2IB: dict[Exchange, str] = {
     Exchange.OTC: "PINK",
     Exchange.SGX: "SGX",
     Exchange.EUREX: "EUREX",
-    Exchange.LME: "LMEOTC"
+    Exchange.LME: "LMEOTC",
 }
 EXCHANGE_IB2VT: dict[str, Exchange] = {v: k for k, v in EXCHANGE_VT2IB.items()}
 
@@ -81,7 +81,7 @@ PRODUCT_IB2VT: dict[str, Product] = {
     "FOP": Product.OPTION,
     "CONTFUT": Product.FUTURES,
     "IND": Product.INDEX,
-    "CFD": Product.CFD
+    "CFD": Product.CFD,
 }
 
 # 期权类型映射
@@ -89,7 +89,7 @@ OPTION_IB2VT: dict[str, OptionType] = {
     "C": OptionType.CALL,
     "CALL": OptionType.CALL,
     "P": OptionType.PUT,
-    "PUT": OptionType.PUT
+    "PUT": OptionType.PUT,
 }
 
 # 货币类型映射
@@ -117,7 +117,7 @@ TICKFIELD_IB2VT: dict[int, str] = {
     12: "last",
     13: "model",
     14: "open_price",
-    86: "open_interest"
+    86: "open_interest",
 }
 
 # 账户类型映射

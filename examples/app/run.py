@@ -1,9 +1,9 @@
+from foxtrot.adapter.binance import BinanceAdapter as BinanceGateway
 from foxtrot.core.event_engine import EventEngine
 from foxtrot.server.engine import MainEngine
 from foxtrot.ui.mainwindow import MainWindow
 from foxtrot.ui.qt import create_qapp
 
-from foxtrot.adapter.binance import BinanceAdapter as BinanceGateway
 # from vnpy_ctptest import CtptestGateway
 # from vnpy_mini import MiniGateway
 # from vnpy_femas import FemasGateway
@@ -19,8 +19,8 @@ from foxtrot.adapter.binance import BinanceAdapter as BinanceGateway
 # from vnpy_tts import TtsGateway
 
 # from vnpy_paperaccount import PaperAccountApp
-#from vnpy_ctastrategy import CtaStrategyApp
-#from vnpy_ctabacktester import CtaBacktesterApp
+# from vnpy_ctastrategy import CtaStrategyApp
+# from vnpy_ctabacktester import CtaBacktesterApp
 # from vnpy_spreadtrading import SpreadTradingApp
 # from vnpy_algotrading import AlgoTradingApp
 # from vnpy_optionmaster import OptionMasterApp

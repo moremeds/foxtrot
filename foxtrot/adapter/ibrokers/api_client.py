@@ -1,6 +1,7 @@
 """
 Core IB API client that coordinates all manager components.
 """
+
 from datetime import datetime
 from threading import Thread
 
@@ -28,7 +29,7 @@ LOCAL_TZ = ZoneInfo("Asia/Shanghai")
 class IbApi(EWrapper):
     """
     IB API client that coordinates all trading operations.
-    
+
     This class acts as the central coordinator, delegating specific
     responsibilities to specialized managers while maintaining the
     EWrapper interface for IB callbacks.
@@ -114,10 +115,7 @@ class IbApi(EWrapper):
         self.status = True
         self.adapter.write_log("IB TWS connected successfully")
 
-        self.contract_manager.load_contract_data(
-            self.adapter.on_contract,
-            self.adapter.write_log
-        )
+        self.contract_manager.load_contract_data(self.adapter.on_contract, self.adapter.write_log)
 
         self.data_ready = False
 
@@ -141,13 +139,16 @@ class IbApi(EWrapper):
         msg: str = f"Server time: {time_string}"
         self.adapter.write_log(msg)
 
-    def error(self, reqId: TickerId, errorCode: int, errorString: str,
-             advancedOrderRejectJson: str = "") -> None:
+    def error(
+        self, reqId: TickerId, errorCode: int, errorString: str, advancedOrderRejectJson: str = ""
+    ) -> None:
         """Callback for error messages."""
         super().error(reqId, errorCode, errorString)
 
         # Handle historical data errors
-        if reqId == self.historical_data_manager.history_reqid and errorCode not in range(2000, 3000):
+        if reqId == self.historical_data_manager.history_reqid and errorCode not in range(
+            2000, 3000
+        ):
             self.historical_data_manager.history_condition.acquire()
             self.historical_data_manager.history_condition.notify()
             self.historical_data_manager.history_condition.release()
@@ -163,12 +164,19 @@ class IbApi(EWrapper):
 
     # ===== Market Data Callbacks =====
 
-    def tickPrice(self, reqId: TickerId, tickType: TickType, price: float, attrib: TickAttrib) -> None:
+    def tickPrice(
+        self, reqId: TickerId, tickType: TickType, price: float, attrib: TickAttrib
+    ) -> None:
         """Callback for tick price updates."""
         super().tickPrice(reqId, tickType, price, attrib)
         self.market_data_manager.process_tick_price(
-            reqId, tickType, price, attrib, self.contract_manager,
-            self.adapter.on_tick, self.adapter.write_log
+            reqId,
+            tickType,
+            price,
+            attrib,
+            self.contract_manager,
+            self.adapter.on_tick,
+            self.adapter.write_log,
         )
 
     def tickSize(self, reqId: TickerId, tickType: TickType, size) -> None:
@@ -185,15 +193,45 @@ class IbApi(EWrapper):
             reqId, tickType, value, self.adapter.on_tick, self.adapter.write_log
         )
 
-    def tickOptionComputation(self, reqId: TickerId, tickType: TickType, tickAttrib: int,
-                            impliedVol: float, delta: float, optPrice: float, pvDividend: float,
-                            gamma: float, vega: float, theta: float, undPrice: float) -> None:
+    def tickOptionComputation(
+        self,
+        reqId: TickerId,
+        tickType: TickType,
+        tickAttrib: int,
+        impliedVol: float,
+        delta: float,
+        optPrice: float,
+        pvDividend: float,
+        gamma: float,
+        vega: float,
+        theta: float,
+        undPrice: float,
+    ) -> None:
         """Callback for option computation data."""
-        super().tickOptionComputation(reqId, tickType, tickAttrib, impliedVol, delta,
-                                     optPrice, pvDividend, gamma, vega, theta, undPrice)
+        super().tickOptionComputation(
+            reqId,
+            tickType,
+            tickAttrib,
+            impliedVol,
+            delta,
+            optPrice,
+            pvDividend,
+            gamma,
+            vega,
+            theta,
+            undPrice,
+        )
         self.market_data_manager.process_tick_option_computation(
-            reqId, tickType, impliedVol, delta, optPrice, gamma, vega, theta, undPrice,
-            self.adapter.write_log
+            reqId,
+            tickType,
+            impliedVol,
+            delta,
+            optPrice,
+            gamma,
+            vega,
+            theta,
+            undPrice,
+            self.adapter.write_log,
         )
 
     def tickSnapshotEnd(self, reqId: int) -> None:
@@ -203,31 +241,57 @@ class IbApi(EWrapper):
 
     # ===== Order Management Callbacks =====
 
-    def orderStatus(self, orderId: OrderId, status: str, filled, remaining,
-                   avgFillPrice: float, permId: int, parentId: int, lastFillPrice: float,
-                   clientId: int, whyHeld: str, mktCapPrice: float) -> None:
+    def orderStatus(
+        self,
+        orderId: OrderId,
+        status: str,
+        filled,
+        remaining,
+        avgFillPrice: float,
+        permId: int,
+        parentId: int,
+        lastFillPrice: float,
+        clientId: int,
+        whyHeld: str,
+        mktCapPrice: float,
+    ) -> None:
         """Callback for order status updates."""
-        super().orderStatus(orderId, status, filled, remaining, avgFillPrice,
-                           permId, parentId, lastFillPrice, clientId, whyHeld, mktCapPrice)
+        super().orderStatus(
+            orderId,
+            status,
+            filled,
+            remaining,
+            avgFillPrice,
+            permId,
+            parentId,
+            lastFillPrice,
+            clientId,
+            whyHeld,
+            mktCapPrice,
+        )
         self.order_manager.process_order_status(
             orderId, status, filled, remaining, avgFillPrice, self.adapter.on_order
         )
 
-    def openOrder(self, orderId: OrderId, ib_contract: Contract, ib_order: Order,
-                 orderState: OrderState) -> None:
+    def openOrder(
+        self, orderId: OrderId, ib_contract: Contract, ib_order: Order, orderState: OrderState
+    ) -> None:
         """Callback for open orders."""
         super().openOrder(orderId, ib_contract, ib_order, orderState)
         self.order_manager.process_open_order(
-            orderId, ib_contract, ib_order, orderState,
-            self.contract_manager, self.adapter.on_order
+            orderId, ib_contract, ib_order, orderState, self.contract_manager, self.adapter.on_order
         )
 
     def execDetails(self, reqId: int, contract: Contract, execution: Execution) -> None:
         """Callback for execution details."""
         super().execDetails(reqId, contract, execution)
         self.order_manager.process_execution(
-            reqId, contract, execution, self.contract_manager,
-            self.adapter.on_trade, self.adapter.write_log
+            reqId,
+            contract,
+            execution,
+            self.contract_manager,
+            self.adapter.on_trade,
+            self.adapter.write_log,
         )
 
     # ===== Account Management Callbacks =====
@@ -237,16 +301,40 @@ class IbApi(EWrapper):
         super().updateAccountValue(key, val, currency, accountName)
         self.account_manager.process_account_value(key, val, currency, accountName)
 
-    def updatePortfolio(self, contract: Contract, position, marketPrice: float,
-                       marketValue: float, averageCost: float, unrealizedPNL: float,
-                       realizedPNL: float, accountName: str) -> None:
+    def updatePortfolio(
+        self,
+        contract: Contract,
+        position,
+        marketPrice: float,
+        marketValue: float,
+        averageCost: float,
+        unrealizedPNL: float,
+        realizedPNL: float,
+        accountName: str,
+    ) -> None:
         """Callback for portfolio updates."""
-        super().updatePortfolio(contract, position, marketPrice, marketValue,
-                               averageCost, unrealizedPNL, realizedPNL, accountName)
+        super().updatePortfolio(
+            contract,
+            position,
+            marketPrice,
+            marketValue,
+            averageCost,
+            unrealizedPNL,
+            realizedPNL,
+            accountName,
+        )
         self.account_manager.process_portfolio_update(
-            contract, position, marketPrice, marketValue, averageCost,
-            unrealizedPNL, realizedPNL, accountName, self.contract_manager,
-            self.adapter.on_position, self.adapter.write_log
+            contract,
+            position,
+            marketPrice,
+            marketValue,
+            averageCost,
+            unrealizedPNL,
+            realizedPNL,
+            accountName,
+            self.contract_manager,
+            self.adapter.on_position,
+            self.adapter.write_log,
         )
 
     def updateAccountTime(self, timeStamp: str) -> None:
@@ -277,9 +365,7 @@ class IbApi(EWrapper):
 
     def historicalData(self, reqId: int, ib_bar: IbBarData) -> None:
         """Callback for historical data."""
-        self.historical_data_manager.process_historical_data(
-            reqId, ib_bar, self.adapter.write_log
-        )
+        self.historical_data_manager.process_historical_data(reqId, ib_bar, self.adapter.write_log)
 
     def historicalDataEnd(self, reqId: int, start: str, end: str) -> None:
         """Callback for end of historical data."""
@@ -302,8 +388,7 @@ class IbApi(EWrapper):
 
         try:
             self.market_data_manager.subscribe(
-                req, self.client, self.contract_manager,
-                self.adapter.write_log, self.data_ready
+                req, self.client, self.contract_manager, self.adapter.write_log, self.data_ready
             )
         finally:
             self.market_data_manager._get_next_reqid = original_method
@@ -314,8 +399,11 @@ class IbApi(EWrapper):
             return ""
 
         return self.order_manager.send_order(
-            req, self.client, self.account_manager.get_account(),
-            self.adapter.write_log, self.adapter.on_order
+            req,
+            self.client,
+            self.account_manager.get_account(),
+            self.adapter.write_log,
+            self.adapter.on_order,
         )
 
     def cancel_order(self, req) -> None:
@@ -327,6 +415,7 @@ class IbApi(EWrapper):
 
     def query_history(self, req):
         """Query historical data."""
+
         # Update request ID generator for historical data manager
         def get_reqid():
             return self.get_next_reqid()

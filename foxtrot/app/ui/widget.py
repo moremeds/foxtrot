@@ -2,41 +2,42 @@
 Basic widgets for UI.
 """
 
-import csv
-import platform
-from enum import Enum
-from typing import cast, Any
 from copy import copy
-from tzlocal import get_localzone_name
+import csv
 from datetime import datetime
+from enum import Enum
 from importlib import metadata
+import platform
+from typing import Any, cast
 
-from .qt import QtCore, QtGui, QtWidgets, Qt
-from foxtrot.util.constants import Direction, Exchange, Offset, OrderType
-from foxtrot.server.engine import MainEngine
-from foxtrot.core.event_engine import Event, EventEngine
+from tzlocal import get_localzone_name
+
 from foxtrot.core.event import (
+    EVENT_ACCOUNT,
+    EVENT_LOG,
+    EVENT_ORDER,
+    EVENT_POSITION,
     EVENT_QUOTE,
     EVENT_TICK,
     EVENT_TRADE,
-    EVENT_ORDER,
-    EVENT_POSITION,
-    EVENT_ACCOUNT,
-    EVENT_LOG
 )
+from foxtrot.core.event_engine import Event, EventEngine
+from foxtrot.server.engine import MainEngine
+from foxtrot.util.constants import Direction, Exchange, Offset, OrderType
 from foxtrot.util.object import (
-    OrderRequest,
-    SubscribeRequest,
     CancelRequest,
     ContractData,
-    PositionData,
     OrderData,
+    OrderRequest,
+    PositionData,
     QuoteData,
-    TickData
+    SubscribeRequest,
+    TickData,
 )
-from foxtrot.util.utility import load_json, save_json, get_digits, ZoneInfo
 from foxtrot.util.settings import SETTING_FILENAME, SETTINGS
+from foxtrot.util.utility import ZoneInfo, get_digits, load_json, save_json
 
+from .qt import Qt, QtCore, QtGui, QtWidgets
 
 COLOR_LONG = QtGui.QColor("red")
 COLOR_SHORT = QtGui.QColor("green")
@@ -76,7 +77,7 @@ class BaseCell(QtWidgets.QTableWidgetItem):
         """
         return self._data
 
-    def __lt__(self, other: "BaseCell") -> bool:        # type: ignore
+    def __lt__(self, other: "BaseCell") -> bool:  # type: ignore
         """
         Sort by text content.
         """
@@ -223,7 +224,9 @@ class MsgCell(BaseCell):
     def __init__(self, content: str, data: Any) -> None:
         """"""
         super().__init__(content, data)
-        self.setTextAlignment(QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignVCenter)
+        self.setTextAlignment(
+            QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignVCenter
+        )
 
 
 class BaseMonitor(QtWidgets.QTableWidget):
@@ -358,8 +361,7 @@ class BaseMonitor(QtWidgets.QTableWidget):
         """
         Save table data into a csv file
         """
-        path, __ = QtWidgets.QFileDialog.getSaveFileName(
-            self, "Save Data", "", "CSV(*.csv)")
+        path, __ = QtWidgets.QFileDialog.getSaveFileName(self, "Save Data", "", "CSV(*.csv)")
 
         if not path:
             return
@@ -615,7 +617,7 @@ class ConnectDialog(QtWidgets.QDialog):
 
     def init_ui(self) -> None:
         """"""
-        self.setWindowTitle("Connect {}".format(self.adapter_name))
+        self.setWindowTitle(f"Connect {self.adapter_name}")
 
         # Default setting provides field name, field data type and field default value.
         default_setting: dict | None = self.main_engine.get_default_setting(self.adapter_name)
@@ -725,15 +727,13 @@ class TradingWidget(QtWidgets.QWidget):
         self.name_line.setReadOnly(True)
 
         self.direction_combo: QtWidgets.QComboBox = QtWidgets.QComboBox()
-        self.direction_combo.addItems(
-            [Direction.LONG.value, Direction.SHORT.value])
+        self.direction_combo.addItems([Direction.LONG.value, Direction.SHORT.value])
 
         self.offset_combo: QtWidgets.QComboBox = QtWidgets.QComboBox()
         self.offset_combo.addItems([offset.value for offset in Offset])
 
         self.order_type_combo: QtWidgets.QComboBox = QtWidgets.QComboBox()
-        self.order_type_combo.addItems(
-            [order_type.value for order_type in OrderType])
+        self.order_type_combo.addItems([order_type.value for order_type in OrderType])
 
         double_validator: QtGui.QDoubleValidator = QtGui.QDoubleValidator()
         double_validator.setBottom(0)
@@ -790,15 +790,20 @@ class TradingWidget(QtWidgets.QWidget):
         self.bp5_label: QtWidgets.QLabel = self.create_label(bid_color)
 
         self.bv1_label: QtWidgets.QLabel = self.create_label(
-            bid_color, alignment=QtCore.Qt.AlignmentFlag.AlignRight)
+            bid_color, alignment=QtCore.Qt.AlignmentFlag.AlignRight
+        )
         self.bv2_label: QtWidgets.QLabel = self.create_label(
-            bid_color, alignment=QtCore.Qt.AlignmentFlag.AlignRight)
+            bid_color, alignment=QtCore.Qt.AlignmentFlag.AlignRight
+        )
         self.bv3_label: QtWidgets.QLabel = self.create_label(
-            bid_color, alignment=QtCore.Qt.AlignmentFlag.AlignRight)
+            bid_color, alignment=QtCore.Qt.AlignmentFlag.AlignRight
+        )
         self.bv4_label: QtWidgets.QLabel = self.create_label(
-            bid_color, alignment=QtCore.Qt.AlignmentFlag.AlignRight)
+            bid_color, alignment=QtCore.Qt.AlignmentFlag.AlignRight
+        )
         self.bv5_label: QtWidgets.QLabel = self.create_label(
-            bid_color, alignment=QtCore.Qt.AlignmentFlag.AlignRight)
+            bid_color, alignment=QtCore.Qt.AlignmentFlag.AlignRight
+        )
 
         self.ap1_label: QtWidgets.QLabel = self.create_label(ask_color)
         self.ap2_label: QtWidgets.QLabel = self.create_label(ask_color)
@@ -807,18 +812,25 @@ class TradingWidget(QtWidgets.QWidget):
         self.ap5_label: QtWidgets.QLabel = self.create_label(ask_color)
 
         self.av1_label: QtWidgets.QLabel = self.create_label(
-            ask_color, alignment=QtCore.Qt.AlignmentFlag.AlignRight)
+            ask_color, alignment=QtCore.Qt.AlignmentFlag.AlignRight
+        )
         self.av2_label: QtWidgets.QLabel = self.create_label(
-            ask_color, alignment=QtCore.Qt.AlignmentFlag.AlignRight)
+            ask_color, alignment=QtCore.Qt.AlignmentFlag.AlignRight
+        )
         self.av3_label: QtWidgets.QLabel = self.create_label(
-            ask_color, alignment=QtCore.Qt.AlignmentFlag.AlignRight)
+            ask_color, alignment=QtCore.Qt.AlignmentFlag.AlignRight
+        )
         self.av4_label: QtWidgets.QLabel = self.create_label(
-            ask_color, alignment=QtCore.Qt.AlignmentFlag.AlignRight)
+            ask_color, alignment=QtCore.Qt.AlignmentFlag.AlignRight
+        )
         self.av5_label: QtWidgets.QLabel = self.create_label(
-            ask_color, alignment=QtCore.Qt.AlignmentFlag.AlignRight)
+            ask_color, alignment=QtCore.Qt.AlignmentFlag.AlignRight
+        )
 
         self.lp_label: QtWidgets.QLabel = self.create_label()
-        self.return_label: QtWidgets.QLabel = self.create_label(alignment=QtCore.Qt.AlignmentFlag.AlignRight)
+        self.return_label: QtWidgets.QLabel = self.create_label(
+            alignment=QtCore.Qt.AlignmentFlag.AlignRight
+        )
 
         form: QtWidgets.QFormLayout = QtWidgets.QFormLayout()
         form.addRow(self.ap5_label, self.av5_label)
@@ -840,9 +852,7 @@ class TradingWidget(QtWidgets.QWidget):
         self.setLayout(vbox)
 
     def create_label(
-        self,
-        color: str = "",
-        alignment: int = QtCore.Qt.AlignmentFlag.AlignLeft
+        self, color: str = "", alignment: int = QtCore.Qt.AlignmentFlag.AlignLeft
     ) -> QtWidgets.QLabel:
         """
         Create label with certain font color.
@@ -937,9 +947,7 @@ class TradingWidget(QtWidgets.QWidget):
         self.price_line.setText("")
 
         # Subscribe tick data
-        req: SubscribeRequest = SubscribeRequest(
-            symbol=symbol, exchange=Exchange(exchange_value)
-        )
+        req: SubscribeRequest = SubscribeRequest(symbol=symbol, exchange=Exchange(exchange_value))
 
         self.main_engine.subscribe(req, adapter_name)
 
@@ -1003,7 +1011,7 @@ class TradingWidget(QtWidgets.QWidget):
             volume=volume,
             price=price,
             offset=Offset(str(self.offset_combo.currentText())),
-            reference="ManualTrading"
+            reference="ManualTrading",
         )
 
         adapter_name: str = str(self.adapter_combo.currentText())
@@ -1024,9 +1032,7 @@ class TradingWidget(QtWidgets.QWidget):
         data = cell.get_data()
 
         self.symbol_line.setText(data.symbol)
-        self.exchange_combo.setCurrentIndex(
-            self.exchange_combo.findText(data.exchange.value)
-        )
+        self.exchange_combo.setCurrentIndex(self.exchange_combo.findText(data.exchange.value))
 
         self.set_vt_symbol()
 
@@ -1035,18 +1041,14 @@ class TradingWidget(QtWidgets.QWidget):
                 direction: Direction = Direction.LONG
             elif data.direction == Direction.LONG:
                 direction = Direction.SHORT
-            else:       # Net position mode
+            else:  # Net position mode
                 if data.volume > 0:
                     direction = Direction.SHORT
                 else:
                     direction = Direction.LONG
 
-            self.direction_combo.setCurrentIndex(
-                self.direction_combo.findText(direction.value)
-            )
-            self.offset_combo.setCurrentIndex(
-                self.offset_combo.findText(Offset.CLOSE.value)
-            )
+            self.direction_combo.setCurrentIndex(self.direction_combo.findText(direction.value))
+            self.offset_combo.setCurrentIndex(self.offset_combo.findText(Offset.CLOSE.value))
             self.volume_line.setText(str(abs(data.volume)))
 
 
@@ -1106,7 +1108,9 @@ class ContractManager(QtWidgets.QWidget):
         self.resize(1000, 600)
 
         self.filter_line: QtWidgets.QLineEdit = QtWidgets.QLineEdit()
-        self.filter_line.setPlaceholderText("Enter contract code or exchange, leave blank to query all contracts")
+        self.filter_line.setPlaceholderText(
+            "Enter contract code or exchange, leave blank to query all contracts"
+        )
 
         self.button_show: QtWidgets.QPushButton = QtWidgets.QPushButton("Query")
         self.button_show.clicked.connect(self.show_contracts)
@@ -1285,7 +1289,7 @@ class GlobalDialog(QtWidgets.QDialog):
             self,
             "Notice",
             "The modification of global settings requires a restart to take effect!",
-            QtWidgets.QMessageBox.StandardButton.Ok
+            QtWidgets.QMessageBox.StandardButton.Ok,
         )
 
         save_json(SETTING_FILENAME, settings)

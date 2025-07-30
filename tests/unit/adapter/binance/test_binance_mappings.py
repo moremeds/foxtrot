@@ -5,23 +5,21 @@ Tests data transformation functions between CCXT and VT formats,
 error classification, and retry logic.
 """
 
-import pytest
-import ccxt
 
 from foxtrot.adapter.binance.binance_mappings import (
-    convert_symbol_to_ccxt,
-    convert_symbol_from_ccxt,
-    convert_direction_to_ccxt,
+    classify_error,
     convert_direction_from_ccxt,
-    convert_order_type_to_ccxt,
+    convert_direction_to_ccxt,
     convert_order_type_from_ccxt,
+    convert_order_type_to_ccxt,
     convert_status_from_ccxt,
     convert_status_to_ccxt,
-    classify_error,
+    convert_symbol_from_ccxt,
+    convert_symbol_to_ccxt,
     get_retry_delay,
     should_retry_error,
 )
-from foxtrot.util.constants import Direction, OrderType, Status, Exchange
+from foxtrot.util.constants import Direction, Exchange, OrderType, Status
 
 
 class TestBinanceMappings:
@@ -128,7 +126,7 @@ class TestBinanceMappings:
             Exception("Service unavailable"),
             Exception("Network error occurred"),
         ]
-        
+
         for error in network_errors:
             assert classify_error(error) == "network_error"
 
@@ -140,7 +138,7 @@ class TestBinanceMappings:
             Exception("Signature verification failed"),
             Exception("Timestamp out of range"),
         ]
-        
+
         for error in auth_errors:
             assert classify_error(error) == "auth_error"
 
@@ -151,7 +149,7 @@ class TestBinanceMappings:
             Exception("Too many requests"),
             Exception("HTTP 429 error"),
         ]
-        
+
         for error in rate_limit_errors:
             assert classify_error(error) == "rate_limit"
 
@@ -163,7 +161,7 @@ class TestBinanceMappings:
             Exception("Insufficient balance"),
             Exception("Below minimum order size"),
         ]
-        
+
         for error in invalid_errors:
             assert classify_error(error) == "invalid_request"
 
@@ -174,7 +172,7 @@ class TestBinanceMappings:
             Exception("Symbol not found"),
             Exception("Trading pair not available"),
         ]
-        
+
         for error in market_errors:
             assert classify_error(error) == "market_error"
 
@@ -200,7 +198,7 @@ class TestBinanceMappings:
     def test_get_retry_delay_no_retry_errors(self):
         """Test retry delay for errors that should not be retried."""
         no_retry_errors = ["auth_error", "invalid_request", "market_error"]
-        
+
         for error_type in no_retry_errors:
             assert get_retry_delay(error_type, 1) == 0
             assert get_retry_delay(error_type, 2) == 0
@@ -214,7 +212,7 @@ class TestBinanceMappings:
     def test_should_retry_error_retriable(self):
         """Test retry decision for retriable errors."""
         retriable_errors = ["network_error", "rate_limit", "unknown_error"]
-        
+
         for error_type in retriable_errors:
             assert should_retry_error(error_type, 1) is True
             assert should_retry_error(error_type, 2) is True
@@ -223,7 +221,7 @@ class TestBinanceMappings:
     def test_should_retry_error_non_retriable(self):
         """Test retry decision for non-retriable errors."""
         non_retriable_errors = ["auth_error", "invalid_request", "market_error"]
-        
+
         for error_type in non_retriable_errors:
             assert should_retry_error(error_type, 1) is False
             assert should_retry_error(error_type, 2) is False

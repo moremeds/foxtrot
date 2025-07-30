@@ -177,21 +177,18 @@ class BaseAdapter(ABC):
         response callback/change status instead of write_log
 
         """
-        pass
 
     @abstractmethod
     def close(self) -> None:
         """
         Close adapter connection.
         """
-        pass
 
     @abstractmethod
     def subscribe(self, req: SubscribeRequest) -> None:
         """
         Subscribe tick data update.
         """
-        pass
 
     @abstractmethod
     def send_order(self, req: OrderRequest) -> str:
@@ -209,7 +206,6 @@ class BaseAdapter(ABC):
 
         :return str vt_orderid for created OrderData
         """
-        pass
 
     @abstractmethod
     def cancel_order(self, req: CancelRequest) -> None:
@@ -218,7 +214,6 @@ class BaseAdapter(ABC):
         implementation should finish the tasks blow:
         * send request to server
         """
-        pass
 
     def send_quote(self, req: QuoteRequest) -> str:
         """
@@ -250,14 +245,12 @@ class BaseAdapter(ABC):
         """
         Query account balance.
         """
-        pass
 
     @abstractmethod
     def query_position(self) -> None:
         """
         Query holding positions.
         """
-        pass
 
     def query_history(self, req: HistoryRequest) -> list[BarData]:
         """

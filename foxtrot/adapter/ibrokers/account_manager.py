@@ -1,6 +1,7 @@
 """
 Account and position management for Interactive Brokers.
 """
+
 from copy import copy
 from decimal import Decimal
 
@@ -35,8 +36,7 @@ class AccountManager:
         write_log_callback(f"Currently used trading account: {self.account}")
         client.reqAccountUpdates(True, self.account)
 
-    def process_account_value(self, key: str, val: str, currency: str,
-                            accountName: str) -> None:
+    def process_account_value(self, key: str, val: str, currency: str, accountName: str) -> None:
         """Process account value updates."""
         if not currency or key not in ACCOUNTFIELD_IB2VT:
             return
@@ -44,28 +44,33 @@ class AccountManager:
         accountid: str = f"{accountName}.{currency}"
         account: AccountData = self.accounts.get(accountid, None)
         if not account:
-            account = AccountData(
-                accountid=accountid,
-                adapter_name=self.adapter_name
-            )
+            account = AccountData(accountid=accountid, adapter_name=self.adapter_name)
             self.accounts[accountid] = account
 
         name: str = ACCOUNTFIELD_IB2VT[key]
         setattr(account, name, float(val))
 
-    def process_portfolio_update(self, contract: Contract, position: Decimal,
-                               marketPrice: float, marketValue: float,
-                               averageCost: float, unrealizedPNL: float,
-                               realizedPNL: float, accountName: str,
-                               contract_manager, on_position_callback,
-                               write_log_callback) -> None:
+    def process_portfolio_update(
+        self,
+        contract: Contract,
+        position: Decimal,
+        marketPrice: float,
+        marketValue: float,
+        averageCost: float,
+        unrealizedPNL: float,
+        realizedPNL: float,
+        accountName: str,
+        contract_manager,
+        on_position_callback,
+        write_log_callback,
+    ) -> None:
         """Process position updates."""
         if contract.exchange:
             exchange: Exchange = EXCHANGE_IB2VT.get(contract.exchange, None)
         elif contract.primaryExchange:
             exchange = EXCHANGE_IB2VT.get(contract.primaryExchange, None)
         else:
-            exchange = Exchange.SMART   # Use smart routing by default
+            exchange = Exchange.SMART  # Use smart routing by default
 
         if not exchange:
             msg: str = f"Unsupported exchange holding exists: {contract_manager.generate_symbol(contract)} {contract.exchange} {contract.primaryExchange}"

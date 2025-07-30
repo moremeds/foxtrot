@@ -1,9 +1,10 @@
 """
 Main Interactive Brokers adapter implementation.
 """
+
 from foxtrot.adapter.base_adapter import BaseAdapter
-from foxtrot.core.event_engine import EventEngine
 from foxtrot.core.event import EVENT_TIMER, Event
+from foxtrot.core.event_engine import EventEngine
 from foxtrot.util.constants import Exchange
 from foxtrot.util.object import (
     BarData,
@@ -20,7 +21,7 @@ from .ib_mappings import EXCHANGE_VT2IB
 class IBAdapter(BaseAdapter):
     """
     Interactive Brokers trading adapter.
-    
+
     This adapter provides a clean interface to Interactive Brokers TWS/Gateway
     while delegating all complex operations to specialized manager classes.
     """
@@ -31,7 +32,7 @@ class IBAdapter(BaseAdapter):
         "TWS Address": "127.0.0.1",
         "TWS Port": 7497,
         "Client ID": 1,
-        "Trading Account": ""
+        "Trading Account": "",
     }
 
     exchanges: list[Exchange] = list(EXCHANGE_VT2IB.keys())
@@ -72,11 +73,9 @@ class IBAdapter(BaseAdapter):
 
     def query_account(self) -> None:
         """Query account balance."""
-        pass
 
     def query_position(self) -> None:
         """Query holdings."""
-        pass
 
     def query_history(self, req: HistoryRequest) -> list[BarData]:
         """Query historical data."""

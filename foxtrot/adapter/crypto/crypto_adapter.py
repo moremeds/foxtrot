@@ -2,24 +2,20 @@
 Crypto adapter facade - Clean interface implementing BaseAdapter.
 """
 
-from typing import Dict, List, Any
+from typing import Any
 
 import ccxt
+
 from foxtrot.adapter.base_adapter import BaseAdapter
 from foxtrot.core.event_engine import EventEngine
 from foxtrot.util.constants import Exchange
 from foxtrot.util.object import (
-    AccountData,
     BarData,
     CancelRequest,
     ContractData,
     HistoryRequest,
-    OrderData,
     OrderRequest,
-    PositionData,
     SubscribeRequest,
-    TickData,
-    TradeData,
 )
 
 from .account_manager import AccountManager
@@ -34,7 +30,7 @@ class CryptoAdapter(BaseAdapter):
 
     default_name: str = "CRYPTO"
 
-    default_setting: Dict[str, Any] = {
+    default_setting: dict[str, Any] = {
         "Exchange": "binance",
         "API Key": "",
         "Secret": "",
@@ -43,7 +39,7 @@ class CryptoAdapter(BaseAdapter):
         "Proxy Port": 0,
     }
 
-    exchanges: List[Exchange] = [
+    exchanges: list[Exchange] = [
         Exchange.BINANCE,
         Exchange.BYBIT,
         Exchange.OKX,
@@ -62,7 +58,7 @@ class CryptoAdapter(BaseAdapter):
         self.market_data: MarketData = None
         self.order_manager: OrderManager = None
 
-    def connect(self, setting: Dict[str, Any]) -> bool:
+    def connect(self, setting: dict[str, Any]) -> bool:
         """
         Connect to Crypto API.
         """
@@ -74,19 +70,21 @@ class CryptoAdapter(BaseAdapter):
         proxy_port = setting.get("Proxy Port", 0)
 
         exchange_class = getattr(ccxt, self.exchange_name)
-        self.exchange = exchange_class({
-            'apiKey': api_key,
-            'secret': secret,
-            'enableRateLimit': True,
-        })
+        self.exchange = exchange_class(
+            {
+                "apiKey": api_key,
+                "secret": secret,
+                "enableRateLimit": True,
+            }
+        )
 
         if sandbox:
             self.exchange.set_sandbox_mode(True)
 
         if proxy_host and proxy_port:
             self.exchange.proxies = {
-                'http': f'http://{proxy_host}:{proxy_port}',
-                'https': f'https://{proxy_host}:{proxy_port}',
+                "http": f"http://{proxy_host}:{proxy_port}",
+                "https": f"https://{proxy_host}:{proxy_port}",
             }
 
         try:
@@ -103,7 +101,6 @@ class CryptoAdapter(BaseAdapter):
 
     def close(self) -> None:
         """Close connection and cleanup resources."""
-        pass
 
     def subscribe(self, req: SubscribeRequest) -> bool:
         """
@@ -147,7 +144,7 @@ class CryptoAdapter(BaseAdapter):
         for position in positions:
             self.on_position(position)
 
-    def query_history(self, req: HistoryRequest) -> List[BarData]:
+    def query_history(self, req: HistoryRequest) -> list[BarData]:
         """
         Query historical data.
         """
@@ -163,7 +160,7 @@ class CryptoAdapter(BaseAdapter):
             return None
         return self.market_data.query_contract(symbol)
 
-    def get_available_contracts(self) -> List[ContractData]:
+    def get_available_contracts(self) -> list[ContractData]:
         """
         Get all available contracts.
         """

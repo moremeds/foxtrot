@@ -17,14 +17,18 @@ class BaseDatafeed:
         """
         return False
 
-    def query_bar_history(self, req: HistoryRequest, output: Callable[[str], None] = print) -> list[BarData]:
+    def query_bar_history(
+        self, req: HistoryRequest, output: Callable[[str], None] = print
+    ) -> list[BarData]:
         """
         Query history bar data.
         """
         output("Query K-line data failed: no correct configuration of data service")
         return []
 
-    def query_tick_history(self, req: HistoryRequest, output: Callable[[str], None] = print) -> list[TickData]:
+    def query_tick_history(
+        self, req: HistoryRequest, output: Callable[[str], None] = print
+    ) -> list[TickData]:
         """
         Query history tick data.
         """
@@ -48,7 +52,9 @@ def get_datafeed() -> BaseDatafeed:
     if not datafeed_name:
         datafeed = BaseDatafeed()
 
-        print("No data service configured, please modify the datafeed related content in the global configuration")
+        print(
+            "No data service configured, please modify the datafeed related content in the global configuration"
+        )
     else:
         module_name: str = f"vnpy_{datafeed_name}"
 
@@ -62,6 +68,8 @@ def get_datafeed() -> BaseDatafeed:
         except ModuleNotFoundError:
             datafeed = BaseDatafeed()
 
-            print(f"Can't load data service module, please run pip install {module_name} to try install")
+            print(
+                f"Can't load data service module, please run pip install {module_name} to try install"
+            )
 
     return datafeed

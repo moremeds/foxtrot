@@ -3,13 +3,12 @@ Crypto Order Manager - Handles order lifecycle management.
 """
 
 from datetime import datetime
-from typing import TYPE_CHECKING, Dict, Optional
 import threading
-
 import traceback
+from typing import TYPE_CHECKING
 
-from foxtrot.util.object import OrderData, OrderRequest, CancelRequest, TradeData
 from foxtrot.util.constants import Direction, Exchange, OrderType, Status
+from foxtrot.util.object import CancelRequest, OrderData, OrderRequest
 
 if TYPE_CHECKING:
     from .crypto_adapter import CryptoAdapter
@@ -23,7 +22,7 @@ class OrderManager:
     def __init__(self, adapter: "CryptoAdapter"):
         """Initialize the order manager."""
         self.adapter = adapter
-        self._orders: Dict[str, OrderData] = {}
+        self._orders: dict[str, OrderData] = {}
         self._order_lock = threading.Lock()
         self._local_order_id = 0
 
@@ -58,33 +57,30 @@ class OrderManager:
                 volume=req.volume,
                 price=req.price,
                 status=Status.SUBMITTING,
-                datetime=datetime.now()
+                datetime=datetime.now(),
             )
 
             with self._order_lock:
                 self._orders[local_orderid] = order
 
             if order_type == "market":
-                result = self.adapter.exchange.create_market_order(
-                    ccxt_symbol, side, req.volume
-                )
+                result = self.adapter.exchange.create_market_order(ccxt_symbol, side, req.volume)
             else:
                 result = self.adapter.exchange.create_limit_order(
                     ccxt_symbol, side, req.volume, req.price
                 )
 
             if result:
-                order.orderid = str(result.get('id', local_orderid))
-                order.status = self._convert_status_from_ccxt(result.get('status', 'open'))
+                order.orderid = str(result.get("id", local_orderid))
+                order.status = self._convert_status_from_ccxt(result.get("status", "open"))
 
                 with self._order_lock:
                     self._orders[local_orderid] = order
 
                 print(f"Order sent successfully: {local_orderid}")
                 return local_orderid
-            else:
-                print("Failed to send order - no response")
-                return ""
+            print("Failed to send order - no response")
+            return ""
 
         except Exception as e:
             print(f"Failed to send order for symbol {req.symbol}: {str(e)}")
@@ -119,14 +115,13 @@ class OrderManager:
 
                 print(f"Order cancelled: {req.orderid}")
                 return True
-            else:
-                return False
+            return False
 
         except Exception as e:
             print(f"Failed to cancel order: {str(e)}")
             return False
 
-    def query_order(self, orderid: str) -> Optional[OrderData]:
+    def query_order(self, orderid: str) -> OrderData | None:
         """
         Query order status.
         """
@@ -138,25 +133,24 @@ class OrderManager:
         Convert VT symbol format to CCXT format.
         """
         try:
-            if '.' not in vt_symbol:
+            if "." not in vt_symbol:
                 return ""
 
-            symbol = vt_symbol.split('.')[0]
+            symbol = vt_symbol.split(".")[0]
 
             if len(symbol) < 3:
                 return ""
 
-            if symbol.endswith('USDT') and len(symbol) > 4:
+            if symbol.endswith("USDT") and len(symbol) > 4:
                 base = symbol[:-4]
                 return f"{base}/USDT"
-            elif symbol.endswith('BTC') and len(symbol) > 3:
+            if symbol.endswith("BTC") and len(symbol) > 3:
                 base = symbol[:-3]
                 return f"{base}/BTC"
-            elif symbol.endswith('ETH') and len(symbol) > 3:
+            if symbol.endswith("ETH") and len(symbol) > 3:
                 base = symbol[:-3]
                 return f"{base}/ETH"
-            else:
-                return f"{symbol}/USDT"
+            return f"{symbol}/USDT"
         except Exception:
             return ""
 
@@ -166,21 +160,20 @@ class OrderManager:
         """
         if order_type == OrderType.MARKET:
             return "market"
-        elif order_type == OrderType.LIMIT:
+        if order_type == OrderType.LIMIT:
             return "limit"
-        else:
-            return "limit"
+        return "limit"
 
     def _convert_status_from_ccxt(self, ccxt_status: str) -> Status:
         """
         Convert CCXT order status to VT format.
         """
         status_map = {
-            'open': Status.NOTTRADED,
-            'closed': Status.ALLTRADED,
-            'canceled': Status.CANCELLED,
-            'cancelled': Status.CANCELLED,
-            'partial': Status.PARTTRADED,
-            'expired': Status.CANCELLED,
+            "open": Status.NOTTRADED,
+            "closed": Status.ALLTRADED,
+            "canceled": Status.CANCELLED,
+            "cancelled": Status.CANCELLED,
+            "partial": Status.PARTTRADED,
+            "expired": Status.CANCELLED,
         }
         return status_map.get(ccxt_status.lower(), Status.SUBMITTING)

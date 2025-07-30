@@ -1,9 +1,10 @@
 """
 Contract management and utility functions for Interactive Brokers.
 """
-import shelve
+
 from copy import copy
 from datetime import datetime
+import shelve
 
 from ibapi.contract import Contract, ContractDetails
 
@@ -33,8 +34,9 @@ class ContractManager:
         self.reqid_symbol_map: dict[int, str] = {}
         self.reqid_underlying_map: dict[int, Contract] = {}
 
-    def process_contract_details(self, reqId: int, contractDetails: ContractDetails,
-                               on_contract_callback, write_log_callback) -> None:
+    def process_contract_details(
+        self, reqId: int, contractDetails: ContractDetails, on_contract_callback, write_log_callback
+    ) -> None:
         """Process contract details from IB."""
         # Extract contract information
         ib_contract: Contract = contractDetails.contract
@@ -77,8 +79,12 @@ class ContractManager:
             contract.option_type = OPTION_IB2VT.get(ib_contract.right, None)
             contract.option_strike = ib_contract.strike
             contract.option_index = str(ib_contract.strike)
-            contract.option_expiry = datetime.strptime(ib_contract.lastTradeDateOrContractMonth, "%Y%m%d")
-            contract.option_underlying = underlying_symbol + "_" + ib_contract.lastTradeDateOrContractMonth
+            contract.option_expiry = datetime.strptime(
+                ib_contract.lastTradeDateOrContractMonth, "%Y%m%d"
+            )
+            contract.option_underlying = (
+                underlying_symbol + "_" + ib_contract.lastTradeDateOrContractMonth
+            )
 
         if contract.vt_symbol not in self.contracts:
             on_contract_callback(contract)

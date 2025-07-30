@@ -2,14 +2,13 @@
 
 Current market conditions (as of 2025):
 - BTC: $112,000
-- ETH: $3,800  
+- ETH: $3,800
 - BNB: $750
 - EUR/USD: 1.0850
 - SPY: $520
 """
 
 from datetime import datetime, timedelta
-from decimal import Decimal
 
 from foxtrot.util.constants import Direction, Exchange, OrderType, Status
 from foxtrot.util.object import (
@@ -37,8 +36,8 @@ class MarketDataFixtures:
         "EUR": 1.0850,  # EUR/USD
         "GBP": 1.2750,  # GBP/USD
         "JPY": 148.50,  # USD/JPY
-        "SPY": 520.0,   # S&P 500 ETF
-        "QQQ": 450.0,   # Nasdaq ETF
+        "SPY": 520.0,  # S&P 500 ETF
+        "QQQ": 450.0,  # Nasdaq ETF
         "AAPL": 195.0,
         "GOOGL": 150.0,
         "MSFT": 425.0,
@@ -47,10 +46,10 @@ class MarketDataFixtures:
 
     # Realistic spreads (in basis points)
     SPREADS_BPS = {
-        "BTC": 5,    # 0.05%
+        "BTC": 5,  # 0.05%
         "ETH": 5,
-        "EUR": 2,    # 0.02% for major forex
-        "SPY": 1,    # 0.01% for liquid ETFs
+        "EUR": 2,  # 0.02% for major forex
+        "SPY": 1,  # 0.01% for liquid ETFs
         "AAPL": 2,
     }
 
@@ -63,8 +62,9 @@ class MarketDataFixtures:
     }
 
     @classmethod
-    def get_tick_data(cls, symbol: str, exchange: Exchange = Exchange.BINANCE, 
-                      timestamp: datetime = None) -> TickData:
+    def get_tick_data(
+        cls, symbol: str, exchange: Exchange = Exchange.BINANCE, timestamp: datetime = None
+    ) -> TickData:
         """Generate realistic tick data for a symbol."""
         if timestamp is None:
             timestamp = datetime.now()
@@ -75,6 +75,7 @@ class MarketDataFixtures:
 
         # Add some realistic market noise (±0.1%)
         import random
+
         noise = base_price * random.uniform(-0.001, 0.001)
         last_price = base_price + noise
 
@@ -87,12 +88,12 @@ class MarketDataFixtures:
             volume=float(cls.VOLUMES_24H.get(symbol, 10000)),
             open_price=base_price * 0.995,  # -0.5% from base
             high_price=base_price * 1.002,  # +0.2% from base
-            low_price=base_price * 0.994,   # -0.6% from base
+            low_price=base_price * 0.994,  # -0.6% from base
             last_price=last_price,
             last_volume=random.uniform(0.01, 2.0) if symbol == "BTC" else random.uniform(1, 100),
-            bid_price_1=last_price - spread/2,
+            bid_price_1=last_price - spread / 2,
             bid_volume_1=random.uniform(0.1, 5.0) if symbol == "BTC" else random.uniform(10, 500),
-            ask_price_1=last_price + spread/2,
+            ask_price_1=last_price + spread / 2,
             ask_volume_1=random.uniform(0.1, 5.0) if symbol == "BTC" else random.uniform(10, 500),
             # Level 2 data
             bid_price_2=last_price - spread,
@@ -107,65 +108,79 @@ class MarketDataFixtures:
         )
 
     @classmethod
-    def get_bar_data(cls, symbol: str, exchange: Exchange = Exchange.BINANCE,
-                     interval: int = 60, count: int = 100, 
-                     end_time: datetime = None) -> list[BarData]:
+    def get_bar_data(
+        cls,
+        symbol: str,
+        exchange: Exchange = Exchange.BINANCE,
+        interval: int = 60,
+        count: int = 100,
+        end_time: datetime = None,
+    ) -> list[BarData]:
         """Generate realistic OHLCV bar data."""
         if end_time is None:
             end_time = datetime.now()
 
         bars = []
         base_price = cls.PRICES.get(symbol, 100.0)
-        
+
         # Generate bars backwards from end_time
         for i in range(count - 1, -1, -1):
             timestamp = end_time - timedelta(minutes=interval * i)
-            
+
             # Add trending and volatility
             trend = 0.0001 * (count - i)  # Slight upward trend
             volatility = 0.002 if symbol in ["BTC", "ETH"] else 0.001
-            
+
             # Random walk for realistic price movement
             import random
+
             change = random.normalvariate(trend, volatility)
-            
+
             open_price = base_price * (1 + change)
-            high_price = open_price * (1 + abs(random.normalvariate(0, volatility/2)))
-            low_price = open_price * (1 - abs(random.normalvariate(0, volatility/2)))
+            high_price = open_price * (1 + abs(random.normalvariate(0, volatility / 2)))
+            low_price = open_price * (1 - abs(random.normalvariate(0, volatility / 2)))
             close_price = random.uniform(low_price, high_price)
-            
+
             # Realistic volume patterns (higher during active hours)
             hour = timestamp.hour
             volume_multiplier = 1.5 if 9 <= hour <= 16 else 0.7  # Market hours
             base_volume = cls.VOLUMES_24H.get(symbol, 10000) / (24 * 60 / interval)
             volume = base_volume * volume_multiplier * random.uniform(0.5, 1.5)
-            
-            bars.append(BarData(
-                adapter_name="TEST",
-                symbol=symbol,
-                exchange=exchange,
-                datetime=timestamp,
-                interval=interval,
-                volume=volume,
-                open_price=open_price,
-                high_price=high_price,
-                low_price=low_price,
-                close_price=close_price,
-            ))
-            
+
+            bars.append(
+                BarData(
+                    adapter_name="TEST",
+                    symbol=symbol,
+                    exchange=exchange,
+                    datetime=timestamp,
+                    interval=interval,
+                    volume=volume,
+                    open_price=open_price,
+                    high_price=high_price,
+                    low_price=low_price,
+                    close_price=close_price,
+                )
+            )
+
             # Update base price for next bar
             base_price = close_price
 
         return bars
 
     @classmethod
-    def get_order_data(cls, symbol: str, order_type: OrderType = OrderType.LIMIT,
-                       direction: Direction = Direction.LONG, volume: float = None,
-                       price: float = None, status: Status = Status.NOTTRADED,
-                       exchange: Exchange = Exchange.BINANCE) -> OrderData:
+    def get_order_data(
+        cls,
+        symbol: str,
+        order_type: OrderType = OrderType.LIMIT,
+        direction: Direction = Direction.LONG,
+        volume: float = None,
+        price: float = None,
+        status: Status = Status.NOTTRADED,
+        exchange: Exchange = Exchange.BINANCE,
+    ) -> OrderData:
         """Generate realistic order data."""
         base_price = cls.PRICES.get(symbol, 100.0)
-        
+
         if price is None:
             if order_type == OrderType.LIMIT:
                 # Limit orders slightly off market
@@ -188,6 +203,7 @@ class MarketDataFixtures:
                 volume = random.uniform(1, 100)
 
         import time
+
         # Use time + random to ensure unique order IDs
         orderid = str(int(time.time() * 1000000 + random.randint(0, 9999)) % 1000000)
 
@@ -206,8 +222,9 @@ class MarketDataFixtures:
         )
 
     @classmethod
-    def get_trade_data(cls, order: OrderData, trade_price: float = None,
-                       trade_volume: float = None) -> TradeData:
+    def get_trade_data(
+        cls, order: OrderData, trade_price: float = None, trade_volume: float = None
+    ) -> TradeData:
         """Generate realistic trade data from an order."""
         if trade_price is None:
             # Realistic slippage
@@ -221,6 +238,7 @@ class MarketDataFixtures:
             trade_volume = order.volume
 
         import time
+
         tradeid = str(int(time.time() * 1000) % 1000000)
 
         return TradeData(
@@ -236,11 +254,12 @@ class MarketDataFixtures:
         )
 
     @classmethod
-    def get_position_data(cls, symbol: str, volume: float = None,
-                          exchange: Exchange = Exchange.BINANCE) -> PositionData:
+    def get_position_data(
+        cls, symbol: str, volume: float = None, exchange: Exchange = Exchange.BINANCE
+    ) -> PositionData:
         """Generate realistic position data."""
         base_price = cls.PRICES.get(symbol, 100.0)
-        
+
         if volume is None:
             # Realistic position sizes
             if symbol == "BTC":
@@ -265,12 +284,11 @@ class MarketDataFixtures:
         )
 
     @classmethod
-    def get_account_data(cls, currency: str = "USD", 
-                         balance: float = 100000.0) -> AccountData:
+    def get_account_data(cls, currency: str = "USD", balance: float = 100000.0) -> AccountData:
         """Generate realistic account data."""
         # Simulate some positions taking up margin
         frozen = balance * random.uniform(0.1, 0.3)
-        
+
         return AccountData(
             adapter_name="TEST",
             accountid=f"TEST-{currency}",

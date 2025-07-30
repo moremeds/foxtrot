@@ -1,7 +1,7 @@
-import sys
 from datetime import datetime
 from logging import CRITICAL, DEBUG, ERROR, INFO, WARNING
 from pathlib import Path
+import sys
 
 from loguru import logger
 
