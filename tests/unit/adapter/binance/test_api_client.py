@@ -19,6 +19,19 @@ class TestBinanceApiClient:
         """Set up test fixtures."""
         self.event_engine = Mock(spec=EventEngine)
         self.api_client = BinanceApiClient(self.event_engine, "TEST_BINANCE")
+    
+    def teardown_method(self):
+        """Clean up test fixtures to prevent memory leaks."""
+        # Close API client if it has resources
+        if hasattr(self.api_client, 'close'):
+            try:
+                self.api_client.close()
+            except Exception:
+                pass  # Ignore cleanup exceptions
+        
+        # Clear references to prevent memory leaks
+        self.api_client = None
+        self.event_engine = None
 
     def test_initialization(self):
         """Test API client initialization."""
@@ -59,9 +72,11 @@ class TestBinanceApiClient:
         mock_ccxt_binance.assert_called_once_with({
             "apiKey": "test_key",
             "secret": "test_secret",
-            "sandbox": True,
             "enableRateLimit": True,
         })
+        
+        # Verify sandbox mode was set
+        mock_exchange.set_sandbox_mode.assert_called_once_with(True)
         
         # Verify managers were initialized
         mock_initialize_managers.assert_called_once()
