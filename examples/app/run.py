@@ -1,8 +1,8 @@
 from foxtrot.adapter.binance import BinanceAdapter as BinanceGateway
+from foxtrot.app.ui.mainwindow import MainWindow
+from foxtrot.app.ui.qt import create_qapp
 from foxtrot.core.event_engine import EventEngine
 from foxtrot.server.engine import MainEngine
-from foxtrot.ui.mainwindow import MainWindow
-from foxtrot.ui.qt import create_qapp
 
 # from vnpy_ctptest import CtptestGateway
 # from vnpy_mini import MiniGateway

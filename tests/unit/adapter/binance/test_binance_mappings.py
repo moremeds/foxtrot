@@ -5,6 +5,7 @@ Tests data transformation functions between CCXT and VT formats,
 error classification, and retry logic.
 """
 
+import pytest
 
 from foxtrot.adapter.binance.binance_mappings import (
     classify_error,
@@ -25,17 +26,20 @@ from foxtrot.util.constants import Direction, Exchange, OrderType, Status
 class TestBinanceMappings:
     """Test cases for Binance mapping utilities."""
 
+    @pytest.mark.timeout(10)
     def test_convert_symbol_to_ccxt_usdt(self):
         """Test symbol conversion to CCXT format for USDT pairs."""
         assert convert_symbol_to_ccxt("BTCUSDT.BINANCE") == "BTC/USDT"
         assert convert_symbol_to_ccxt("ETHUSDT.BINANCE") == "ETH/USDT"
         assert convert_symbol_to_ccxt("ADAUSDT.BINANCE") == "ADA/USDT"
 
+    @pytest.mark.timeout(10)
     def test_convert_symbol_to_ccxt_other_stablecoins(self):
         """Test symbol conversion for other stablecoin pairs."""
         assert convert_symbol_to_ccxt("BTCBUSD.BINANCE") == "BTC/BUSD"
         assert convert_symbol_to_ccxt("ETHUSDC.BINANCE") == "ETH/USDC"
 
+    @pytest.mark.timeout(10)
     def test_convert_symbol_to_ccxt_crypto_pairs(self):
         """Test symbol conversion for crypto-to-crypto pairs."""
         assert convert_symbol_to_ccxt("ETHBTC.BINANCE") == "ETH/BTC"
@@ -43,32 +47,38 @@ class TestBinanceMappings:
         assert convert_symbol_to_ccxt("ADAETH.BINANCE") == "ADA/ETH"
         assert convert_symbol_to_ccxt("ADABNB.BINANCE") == "ADA/BNB"
 
+    @pytest.mark.timeout(10)
     def test_convert_symbol_to_ccxt_unknown_format(self):
         """Test symbol conversion for unknown format defaults to USDT."""
         assert convert_symbol_to_ccxt("UNKNOWN.BINANCE") == "UNKNOWN/USDT"
         assert convert_symbol_to_ccxt("XYZ.BINANCE") == "XYZ/USDT"
 
+    @pytest.mark.timeout(10)
     def test_convert_symbol_to_ccxt_invalid_input(self):
         """Test symbol conversion with invalid input."""
         assert convert_symbol_to_ccxt("") == ""
         assert convert_symbol_to_ccxt("INVALID") == ""  # No dot - invalid VT format
 
+    @pytest.mark.timeout(10)
     def test_convert_symbol_from_ccxt(self):
         """Test symbol conversion from CCXT to VT format."""
         assert convert_symbol_from_ccxt("BTC/USDT") == "BTCUSDT.BINANCE"
         assert convert_symbol_from_ccxt("ETH/BTC") == "ETHBTC.BINANCE"
         assert convert_symbol_from_ccxt("ADA/ETH", Exchange.BINANCE) == "ADAETH.BINANCE"
 
+    @pytest.mark.timeout(10)
     def test_convert_symbol_from_ccxt_invalid(self):
         """Test symbol conversion from CCXT with invalid input."""
         assert convert_symbol_from_ccxt("INVALID") == "INVALID.BINANCE"
 
+    @pytest.mark.timeout(10)
     def test_convert_direction_to_ccxt(self):
         """Test direction conversion to CCXT format."""
         assert convert_direction_to_ccxt(Direction.LONG) == "buy"
         assert convert_direction_to_ccxt(Direction.SHORT) == "sell"
         assert convert_direction_to_ccxt(None) == "buy"  # Default
 
+    @pytest.mark.timeout(10)
     def test_convert_direction_from_ccxt(self):
         """Test direction conversion from CCXT format."""
         assert convert_direction_from_ccxt("buy") == Direction.LONG
@@ -77,6 +87,7 @@ class TestBinanceMappings:
         assert convert_direction_from_ccxt("SELL") == Direction.SHORT
         assert convert_direction_from_ccxt("unknown") == Direction.LONG  # Default
 
+    @pytest.mark.timeout(10)
     def test_convert_order_type_to_ccxt(self):
         """Test order type conversion to CCXT format."""
         assert convert_order_type_to_ccxt(OrderType.MARKET) == "market"
@@ -85,6 +96,7 @@ class TestBinanceMappings:
         assert convert_order_type_to_ccxt(OrderType.FAK) == "immediate_or_cancel"
         assert convert_order_type_to_ccxt(OrderType.FOK) == "fill_or_kill"
 
+    @pytest.mark.timeout(10)
     def test_convert_order_type_from_ccxt(self):
         """Test order type conversion from CCXT format."""
         assert convert_order_type_from_ccxt("market") == OrderType.MARKET
@@ -95,6 +107,7 @@ class TestBinanceMappings:
         assert convert_order_type_from_ccxt("fill_or_kill") == OrderType.FOK
         assert convert_order_type_from_ccxt("unknown") == OrderType.LIMIT  # Default
 
+    @pytest.mark.timeout(10)
     def test_convert_status_from_ccxt(self):
         """Test status conversion from CCXT format."""
         assert convert_status_from_ccxt("open") == Status.NOTTRADED
@@ -109,6 +122,7 @@ class TestBinanceMappings:
         assert convert_status_from_ccxt("pending") == Status.SUBMITTING
         assert convert_status_from_ccxt("unknown") == Status.SUBMITTING  # Default
 
+    @pytest.mark.timeout(10)
     def test_convert_status_to_ccxt(self):
         """Test status conversion to CCXT format."""
         assert convert_status_to_ccxt(Status.SUBMITTING) == "pending"
@@ -118,6 +132,7 @@ class TestBinanceMappings:
         assert convert_status_to_ccxt(Status.CANCELLED) == "canceled"
         assert convert_status_to_ccxt(Status.REJECTED) == "rejected"
 
+    @pytest.mark.timeout(10)
     def test_classify_error_network(self):
         """Test classification of network errors."""
         network_errors = [
@@ -130,6 +145,7 @@ class TestBinanceMappings:
         for error in network_errors:
             assert classify_error(error) == "network_error"
 
+    @pytest.mark.timeout(10)
     def test_classify_error_auth(self):
         """Test classification of authentication errors."""
         auth_errors = [
@@ -142,6 +158,7 @@ class TestBinanceMappings:
         for error in auth_errors:
             assert classify_error(error) == "auth_error"
 
+    @pytest.mark.timeout(10)
     def test_classify_error_rate_limit(self):
         """Test classification of rate limit errors."""
         rate_limit_errors = [
@@ -153,6 +170,7 @@ class TestBinanceMappings:
         for error in rate_limit_errors:
             assert classify_error(error) == "rate_limit"
 
+    @pytest.mark.timeout(10)
     def test_classify_error_invalid_request(self):
         """Test classification of invalid request errors."""
         invalid_errors = [
@@ -165,6 +183,7 @@ class TestBinanceMappings:
         for error in invalid_errors:
             assert classify_error(error) == "invalid_request"
 
+    @pytest.mark.timeout(10)
     def test_classify_error_market(self):
         """Test classification of market errors."""
         market_errors = [
@@ -176,11 +195,13 @@ class TestBinanceMappings:
         for error in market_errors:
             assert classify_error(error) == "market_error"
 
+    @pytest.mark.timeout(10)
     def test_classify_error_unknown(self):
         """Test classification of unknown errors."""
         unknown_error = Exception("Some unexpected error")
         assert classify_error(unknown_error) == "unknown_error"
 
+    @pytest.mark.timeout(10)
     def test_get_retry_delay_network_error(self):
         """Test retry delay calculation for network errors."""
         assert get_retry_delay("network_error", 1) == 2
@@ -188,6 +209,7 @@ class TestBinanceMappings:
         assert get_retry_delay("network_error", 3) == 8
         assert get_retry_delay("network_error", 10) == 30  # Max cap
 
+    @pytest.mark.timeout(10)
     def test_get_retry_delay_rate_limit(self):
         """Test retry delay calculation for rate limit errors."""
         assert get_retry_delay("rate_limit", 1) == 10
@@ -195,6 +217,7 @@ class TestBinanceMappings:
         assert get_retry_delay("rate_limit", 3) == 40
         assert get_retry_delay("rate_limit", 10) == 60  # Max cap
 
+    @pytest.mark.timeout(10)
     def test_get_retry_delay_no_retry_errors(self):
         """Test retry delay for errors that should not be retried."""
         no_retry_errors = ["auth_error", "invalid_request", "market_error"]
@@ -203,12 +226,14 @@ class TestBinanceMappings:
             assert get_retry_delay(error_type, 1) == 0
             assert get_retry_delay(error_type, 2) == 0
 
+    @pytest.mark.timeout(10)
     def test_get_retry_delay_unknown_error(self):
         """Test retry delay calculation for unknown errors."""
         assert get_retry_delay("unknown_error", 1) == 2
         assert get_retry_delay("unknown_error", 2) == 4
         assert get_retry_delay("unknown_error", 5) == 10  # Max cap
 
+    @pytest.mark.timeout(10)
     def test_should_retry_error_retriable(self):
         """Test retry decision for retriable errors."""
         retriable_errors = ["network_error", "rate_limit", "unknown_error"]
@@ -218,6 +243,7 @@ class TestBinanceMappings:
             assert should_retry_error(error_type, 2) is True
             assert should_retry_error(error_type, 3) is False  # Max attempts reached
 
+    @pytest.mark.timeout(10)
     def test_should_retry_error_non_retriable(self):
         """Test retry decision for non-retriable errors."""
         non_retriable_errors = ["auth_error", "invalid_request", "market_error"]
@@ -226,6 +252,7 @@ class TestBinanceMappings:
             assert should_retry_error(error_type, 1) is False
             assert should_retry_error(error_type, 2) is False
 
+    @pytest.mark.timeout(10)
     def test_should_retry_error_max_attempts(self):
         """Test retry decision respects maximum attempts."""
         assert should_retry_error("network_error", 3, max_attempts=3) is False

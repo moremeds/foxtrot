@@ -21,8 +21,7 @@ async def get_top_5_traded_pairs(client):
         sorted_tickers = sorted(
             usdt_tickers.values(), key=lambda x: x.get("quoteVolume", 0), reverse=True
         )
-        top_5 = [ticker["symbol"] for ticker in sorted_tickers[:5]]
-        return top_5
+        return [ticker["symbol"] for ticker in sorted_tickers[:5]]
     except Exception as e:
         print(f"Error fetching top traded pairs: {e}")
         return []

@@ -11,10 +11,9 @@ to verify real-world functionality including:
 """
 
 import asyncio
-import sys
-import time
 from datetime import datetime
 from pathlib import Path
+import sys
 
 import pytest
 
@@ -26,8 +25,8 @@ from foxtrot.app.tui.components.trading_panel import TUITradingPanel
 from foxtrot.app.tui.integration.event_adapter import EventEngineAdapter
 from foxtrot.core.event_engine import EventEngine
 from foxtrot.server.engine import MainEngine
-from foxtrot.util.object import TickData, AccountData, ContractData
-from foxtrot.util.constants import Direction, OrderType, Exchange, Status
+from foxtrot.util.constants import Exchange
+from foxtrot.util.object import AccountData, TickData
 
 
 @pytest.fixture
@@ -42,7 +41,7 @@ async def trading_panel():
         main_engine=main_engine,
         event_engine=event_engine
     )
-    panel.compose = lambda: []
+    panel.compose = list
     panel.set_event_adapter(event_adapter)
 
     yield panel
@@ -57,12 +56,13 @@ async def test_event_engine_integration(trading_panel: TUITradingPanel):
     event_processed = asyncio.Event()
     main_loop = asyncio.get_running_loop()
 
+    @pytest.mark.timeout(30)
     def test_handler(event):
         main_loop.call_soon_threadsafe(event_processed.set)
 
     trading_panel.event_engine.register("TEST_EVENT", test_handler)
 
-    from foxtrot.util.event import Event
+    from foxtrot.core.event import Event
     test_event = Event("TEST_EVENT", {"test": "data"})
     trading_panel.event_engine.put(test_event)
 

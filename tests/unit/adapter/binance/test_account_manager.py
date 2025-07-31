@@ -6,6 +6,7 @@ and account state caching functionality.
 """
 
 from unittest.mock import Mock
+import pytest
 
 from foxtrot.adapter.binance.account_manager import BinanceAccountManager
 from foxtrot.util.constants import Exchange
@@ -21,11 +22,13 @@ class TestBinanceAccountManager:
         self.mock_api_client.adapter_name = "TEST_BINANCE"
         self.account_manager = BinanceAccountManager(self.mock_api_client)
 
+    @pytest.mark.timeout(10)
     def test_initialization(self):
         """Test account manager initialization."""
         assert self.account_manager.api_client == self.mock_api_client
         assert self.account_manager._account_cache is None
 
+    @pytest.mark.timeout(10)
     def test_query_account_success(self):
         """Test successful account query."""
         # Mock exchange with balance data
@@ -49,6 +52,7 @@ class TestBinanceAccountManager:
         # Verify data was cached
         assert self.account_manager._account_cache is not None
 
+    @pytest.mark.timeout(10)
     def test_query_account_no_exchange(self):
         """Test account query when exchange is not connected."""
         self.mock_api_client.exchange = None
@@ -58,6 +62,7 @@ class TestBinanceAccountManager:
         assert result is None
         assert self.account_manager._account_cache is None
 
+    @pytest.mark.timeout(10)
     def test_query_account_empty_response(self):
         """Test account query with empty response."""
         mock_exchange = Mock()
@@ -68,6 +73,7 @@ class TestBinanceAccountManager:
 
         assert result is None
 
+    @pytest.mark.timeout(10)
     def test_query_account_exception(self):
         """Test account query handles exceptions."""
         mock_exchange = Mock()
@@ -79,6 +85,7 @@ class TestBinanceAccountManager:
         assert result is None
         self.mock_api_client._log_error.assert_called_with("Failed to query account: API error")
 
+    @pytest.mark.timeout(10)
     def test_query_position_success(self):
         """Test successful position query."""
         # Mock exchange with balance data
@@ -108,6 +115,7 @@ class TestBinanceAccountManager:
         assert btc_position.volume == 0.5
         assert btc_position.frozen == 0.1
 
+    @pytest.mark.timeout(10)
     def test_query_position_no_exchange(self):
         """Test position query when exchange is not connected."""
         self.mock_api_client.exchange = None
@@ -116,6 +124,7 @@ class TestBinanceAccountManager:
 
         assert result == []
 
+    @pytest.mark.timeout(10)
     def test_query_position_empty_response(self):
         """Test position query with empty response."""
         mock_exchange = Mock()
@@ -126,6 +135,7 @@ class TestBinanceAccountManager:
 
         assert result == []
 
+    @pytest.mark.timeout(10)
     def test_query_position_exception(self):
         """Test position query handles exceptions."""
         mock_exchange = Mock()
@@ -137,6 +147,7 @@ class TestBinanceAccountManager:
         assert result == []
         self.mock_api_client._log_error.assert_called_with("Failed to query positions: API error")
 
+    @pytest.mark.timeout(10)
     def test_get_cached_account(self):
         """Test getting cached account data."""
         # Initially no cache
@@ -156,6 +167,7 @@ class TestBinanceAccountManager:
         assert cached_data is not None
         assert "USDT" in cached_data
 
+    @pytest.mark.timeout(10)
     def test_clear_cache(self):
         """Test clearing cached account data."""
         # Populate cache first

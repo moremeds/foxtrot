@@ -64,6 +64,7 @@ class TestEventEnginePerformance:
         if hasattr(self, "engine") and self.engine._active:
             self.engine.stop()
 
+    @pytest.mark.timeout(10)
     def test_event_processing_throughput(self):
         """Benchmark event processing throughput."""
         num_events = 10000
@@ -130,6 +131,7 @@ class TestEventEnginePerformance:
         print(f"  Send rate: {send_rate:.2f} events/sec")
         print(f"  Memory delta: {metrics['memory_delta']:.2f} MB")
 
+    @pytest.mark.timeout(10)
     def test_event_processing_latency(self):
         """Benchmark event processing latency distribution."""
         num_events = 1000
@@ -192,6 +194,7 @@ class TestEventEnginePerformance:
         print(f"  Max latency: {max_latency:.3f}ms")
         print(f"  Memory delta: {metrics['memory_delta']:.2f} MB")
 
+    @pytest.mark.timeout(10)
     def test_concurrent_throughput(self):
         """Benchmark throughput with multiple concurrent producers."""
         num_producers = 8
@@ -267,6 +270,7 @@ class TestEventEnginePerformance:
         print(f"  Send rate: {send_rate:.2f} events/sec")
         print(f"  Memory delta: {metrics['memory_delta']:.2f} MB")
 
+    @pytest.mark.timeout(10)
     def test_handler_execution_overhead(self):
         """Benchmark overhead of handler execution patterns."""
         num_events = 5000
@@ -357,6 +361,7 @@ class TestEventEnginePerformance:
             print(f"    Duration: {results['duration']:.3f}s")
             print(f"    Memory delta: {results['memory_delta']:.2f} MB")
 
+    @pytest.mark.timeout(10)
     def test_timer_precision_under_load(self):
         """Benchmark timer precision under various load conditions."""
         timer_intervals = []
@@ -441,6 +446,7 @@ class TestEventEnginePerformance:
         print(f"  Load events processed: {load_events_processed}")
         print(f"  Memory delta: {metrics['memory_delta']:.2f} MB")
 
+    @pytest.mark.timeout(10)
     def test_memory_usage_scaling(self):
         """Test memory usage scaling with event queue size."""
         queue_sizes = [100, 500, 1000, 5000, 10000]
@@ -500,6 +506,7 @@ class TestEventEngineStressTest:
         if hasattr(self, "engine") and self.engine._active:
             self.engine.stop()
 
+    @pytest.mark.timeout(10)
     def test_high_frequency_event_stress(self):
         """Stress test with high-frequency event generation."""
         duration_seconds = 5.0
@@ -568,6 +575,7 @@ class TestEventEngineStressTest:
         print(f"  Efficiency: {actual_rate / target_rate * 100:.1f}%")
         print(f"  Memory delta: {metrics['memory_delta']:.2f} MB")
 
+    @pytest.mark.timeout(10)
     def test_sustained_load(self):
         """Test sustained load over extended period."""
         duration_minutes = 1.0  # 1 minute sustained test

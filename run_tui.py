@@ -35,13 +35,13 @@ def parse_arguments():
         default="dark",
         help="TUI color theme (default: dark)",
     )
-    
+
     parser.add_argument(
         "--adapter",
         type=str,
         help="Trading adapter to use (e.g., binance, ibrokers, crypto)"
     )
-    
+
     parser.add_argument(
         "--paper-trading",
         action="store_true",
@@ -118,13 +118,13 @@ def main():
         print(f"Using config file: {args.config}")
 
     print(f"Theme: {args.theme}")
-    
+
     if args.adapter:
         print(f"Trading Adapter: {args.adapter}")
-    
+
     if args.paper_trading:
         print("Paper Trading Mode: ENABLED (no real money)")
-    
+
     print()
 
     try:
@@ -139,14 +139,14 @@ def main():
 
         if args.no_color:
             os.environ["NO_COLOR"] = "1"
-        
+
         # Set theme environment variable
         os.environ["FOXTROT_TUI_THEME"] = args.theme
-        
-        # Set adapter preference if specified  
+
+        # Set adapter preference if specified
         if args.adapter:
             os.environ["FOXTROT_PREFERRED_ADAPTER"] = args.adapter
-        
+
         # Set paper trading mode
         if args.paper_trading:
             os.environ["FOXTROT_PAPER_TRADING"] = "1"

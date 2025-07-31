@@ -23,46 +23,55 @@ from foxtrot.util.event_type import (
 class TestEventTypeConstants:
     """Test event type constant values."""
 
+    @pytest.mark.timeout(10)
     def test_event_tick_value(self):
         """Test EVENT_TICK constant value."""
         assert EVENT_TICK == "eTick."
         assert isinstance(EVENT_TICK, str)
 
+    @pytest.mark.timeout(10)
     def test_event_trade_value(self):
         """Test EVENT_TRADE constant value."""
         assert EVENT_TRADE == "eTrade."
         assert isinstance(EVENT_TRADE, str)
 
+    @pytest.mark.timeout(10)
     def test_event_order_value(self):
         """Test EVENT_ORDER constant value."""
         assert EVENT_ORDER == "eOrder."
         assert isinstance(EVENT_ORDER, str)
 
+    @pytest.mark.timeout(10)
     def test_event_position_value(self):
         """Test EVENT_POSITION constant value."""
         assert EVENT_POSITION == "ePosition."
         assert isinstance(EVENT_POSITION, str)
 
+    @pytest.mark.timeout(10)
     def test_event_account_value(self):
         """Test EVENT_ACCOUNT constant value."""
         assert EVENT_ACCOUNT == "eAccount."
         assert isinstance(EVENT_ACCOUNT, str)
 
+    @pytest.mark.timeout(10)
     def test_event_quote_value(self):
         """Test EVENT_QUOTE constant value."""
         assert EVENT_QUOTE == "eQuote."
         assert isinstance(EVENT_QUOTE, str)
 
+    @pytest.mark.timeout(10)
     def test_event_contract_value(self):
         """Test EVENT_CONTRACT constant value."""
         assert EVENT_CONTRACT == "eContract."
         assert isinstance(EVENT_CONTRACT, str)
 
+    @pytest.mark.timeout(10)
     def test_event_log_value(self):
         """Test EVENT_LOG constant value."""
         assert EVENT_LOG == "eLog"
         assert isinstance(EVENT_LOG, str)
 
+    @pytest.mark.timeout(10)
     def test_event_timer_value(self):
         """Test EVENT_TIMER constant value."""
         assert EVENT_TIMER == "eTimer"
@@ -72,6 +81,7 @@ class TestEventTypeConstants:
 class TestEventTypeFormat:
     """Test event type format consistency."""
 
+    @pytest.mark.timeout(10)
     def test_dotted_event_types(self):
         """Test event types that use dot notation."""
         dotted_events = [
@@ -89,6 +99,7 @@ class TestEventTypeFormat:
             assert event_type.startswith("e")
             assert len(event_type) >= 3  # At least "eX."
 
+    @pytest.mark.timeout(10)
     def test_non_dotted_event_types(self):
         """Test event types that don't use dot notation."""
         non_dotted_events = [EVENT_LOG, EVENT_TIMER]
@@ -97,6 +108,7 @@ class TestEventTypeFormat:
             assert not event_type.endswith(".")
             assert event_type.startswith("e")
 
+    @pytest.mark.timeout(10)
     def test_event_type_prefix_consistency(self):
         """Test all event types start with 'e' prefix."""
         all_event_types = [
@@ -119,6 +131,7 @@ class TestEventTypeFormat:
 class TestEventTypeUsage:
     """Test event type usage patterns."""
 
+    @pytest.mark.timeout(10)
     def test_trading_data_event_types(self):
         """Test event types related to trading data."""
         trading_events = [EVENT_TICK, EVENT_TRADE, EVENT_ORDER, EVENT_POSITION, EVENT_ACCOUNT]
@@ -129,6 +142,7 @@ class TestEventTypeUsage:
             extended_event = event_type + "AAPL.NYSE"
             assert extended_event.startswith(event_type)
 
+    @pytest.mark.timeout(10)
     def test_market_data_event_types(self):
         """Test event types related to market data."""
         market_events = [EVENT_TICK, EVENT_QUOTE, EVENT_CONTRACT]
@@ -137,6 +151,7 @@ class TestEventTypeUsage:
             assert event_type.endswith(".")
             # These typically include symbol information
 
+    @pytest.mark.timeout(10)
     def test_system_event_types(self):
         """Test system-level event types."""
         system_events = [EVENT_LOG, EVENT_TIMER]
@@ -145,6 +160,7 @@ class TestEventTypeUsage:
             assert not event_type.endswith(".")
             # These are typically used as-is without extension
 
+    @pytest.mark.timeout(10)
     def test_event_type_uniqueness(self):
         """Test all event types are unique."""
         all_event_types = [
@@ -162,6 +178,7 @@ class TestEventTypeUsage:
         unique_event_types = set(all_event_types)
         assert len(unique_event_types) == len(all_event_types)
 
+    @pytest.mark.timeout(10)
     def test_event_type_string_operations(self):
         """Test string operations on event types."""
         # Test concatenation
@@ -180,6 +197,7 @@ class TestEventTypeUsage:
 class TestEventTypeConstants:
     """Test event type constants as module attributes."""
 
+    @pytest.mark.timeout(10)
     def test_constants_are_strings(self):
         """Test all event type constants are strings."""
         import foxtrot.util.event_type as event_type_module
@@ -189,6 +207,7 @@ class TestEventTypeConstants:
                 attr_value = getattr(event_type_module, attr_name)
                 assert isinstance(attr_value, str)
 
+    @pytest.mark.timeout(10)
     def test_constants_count(self):
         """Test expected number of event type constants."""
         import foxtrot.util.event_type as event_type_module
@@ -196,6 +215,7 @@ class TestEventTypeConstants:
         event_constants = [attr for attr in dir(event_type_module) if attr.startswith("EVENT_")]
         assert len(event_constants) == 9
 
+    @pytest.mark.timeout(10)
     def test_constants_naming_convention(self):
         """Test event type constants follow naming convention."""
         import foxtrot.util.event_type as event_type_module
@@ -214,6 +234,7 @@ class TestEventTypeConstants:
 class TestEventTypeDocumentation:
     """Test event type module documentation."""
 
+    @pytest.mark.timeout(10)
     def test_module_docstring(self):
         """Test module has proper docstring."""
         import foxtrot.util.event_type as event_type_module
@@ -221,6 +242,7 @@ class TestEventTypeDocumentation:
         assert event_type_module.__doc__ is not None
         assert "Event type string" in event_type_module.__doc__
 
+    @pytest.mark.timeout(10)
     def test_event_type_semantic_meaning(self):
         """Test event types have clear semantic meaning."""
         # Test that event type names match their values semantically
@@ -238,6 +260,7 @@ class TestEventTypeDocumentation:
 class TestEventTypeEdgeCases:
     """Test edge cases and error conditions."""
 
+    @pytest.mark.timeout(10)
     def test_event_type_immutability(self):
         """Test event type constants are immutable strings."""
         original_tick = EVENT_TICK
@@ -247,6 +270,7 @@ class TestEventTypeEdgeCases:
         assert original_tick == EVENT_TICK
         assert modified_tick != EVENT_TICK
 
+    @pytest.mark.timeout(10)
     def test_event_type_comparison(self):
         """Test event type comparison operations."""
         assert EVENT_TICK == EVENT_TICK
@@ -256,6 +280,7 @@ class TestEventTypeEdgeCases:
         assert EVENT_ACCOUNT < EVENT_TICK  # "eAccount." < "eTick."
         assert EVENT_LOG < EVENT_TIMER  # "eLog" < "eTimer"
 
+    @pytest.mark.timeout(10)
     def test_event_type_boolean_context(self):
         """Test event types in boolean context."""
         # All event types should be truthy (non-empty strings)
@@ -275,6 +300,7 @@ class TestEventTypeEdgeCases:
             assert bool(event_type) is True
             assert len(event_type) > 0
 
+    @pytest.mark.timeout(10)
     def test_event_type_hash_consistency(self):
         """Test event types are hashable and hash consistently."""
         event_set = {EVENT_TICK, EVENT_TRADE, EVENT_TICK}
@@ -288,6 +314,7 @@ class TestEventTypeEdgeCases:
 class TestEventTypeIntegration:
     """Test event types integration with other modules."""
 
+    @pytest.mark.timeout(10)
     def test_event_type_imports(self):
         """Test event types can be imported correctly."""
         # Test individual imports
@@ -315,6 +342,7 @@ class TestEventTypeIntegration:
         for event_name in expected_events:
             assert event_name in local_vars
 
+    @pytest.mark.timeout(10)
     def test_event_type_module_attributes(self):
         """Test event type module has expected attributes."""
         import foxtrot.util.event_type as event_type_module

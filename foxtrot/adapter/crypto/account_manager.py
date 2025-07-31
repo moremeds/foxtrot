@@ -38,15 +38,13 @@ class AccountManager:
 
             self._account_cache = account_info
 
-            account_data = CryptoAccountData(
+            return CryptoAccountData(
                 adapter_name=self.adapter.adapter_name,
                 accountid=self.adapter.adapter_name,
                 balance=account_info.get("USDT", {}).get("total", 0.0),
                 frozen=account_info.get("USDT", {}).get("used", 0.0),
                 **account_info.get("info", {}),
             )
-
-            return account_data
 
         except Exception as e:
             print(f"Failed to query account: {str(e)}")

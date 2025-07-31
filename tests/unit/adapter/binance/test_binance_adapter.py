@@ -6,6 +6,7 @@ to the BinanceApiClient and maintains the BaseAdapter interface.
 """
 
 from unittest.mock import Mock, patch
+import pytest
 
 from foxtrot.adapter.binance import BinanceAdapter
 from foxtrot.core.event_engine import EventEngine
@@ -21,6 +22,7 @@ class TestBinanceAdapter:
         self.event_engine = Mock(spec=EventEngine)
         self.adapter = BinanceAdapter(self.event_engine, "TEST_BINANCE")
 
+    @pytest.mark.timeout(10)
     def test_initialization(self):
         """Test adapter initialization."""
         assert self.adapter.adapter_name == "TEST_BINANCE"
@@ -29,6 +31,7 @@ class TestBinanceAdapter:
         assert Exchange.BINANCE in self.adapter.exchanges
         assert hasattr(self.adapter, "api_client")
 
+    @pytest.mark.timeout(10)
     def test_default_settings(self):
         """Test default settings configuration."""
         expected_settings = {
@@ -41,6 +44,7 @@ class TestBinanceAdapter:
         assert self.adapter.default_setting == expected_settings
 
     @patch("foxtrot.adapter.binance.api_client.BinanceApiClient.connect")
+    @pytest.mark.timeout(10)
     def test_connect_delegates_to_api_client(self, mock_connect):
         """Test that connect method delegates to api_client."""
         mock_connect.return_value = True
@@ -53,11 +57,13 @@ class TestBinanceAdapter:
         mock_connect.assert_called_once_with(settings)
 
     @patch("foxtrot.adapter.binance.api_client.BinanceApiClient.close")
+    @pytest.mark.timeout(10)
     def test_close_delegates_to_api_client(self, mock_close):
         """Test that close method delegates to api_client."""
         self.adapter.close()
         mock_close.assert_called_once()
 
+    @pytest.mark.timeout(10)
     def test_send_order_when_order_manager_none(self):
         """Test send_order returns empty string when order_manager is None."""
         self.adapter.api_client.order_manager = None
@@ -74,6 +80,7 @@ class TestBinanceAdapter:
         result = self.adapter.send_order(req)
         assert result == ""
 
+    @pytest.mark.timeout(10)
     def test_send_order_delegates_to_order_manager(self):
         """Test send_order delegates to order_manager when available."""
         mock_order_manager = Mock()
@@ -94,6 +101,7 @@ class TestBinanceAdapter:
         assert result == "TEST_ORDER_123"
         mock_order_manager.send_order.assert_called_once_with(req)
 
+    @pytest.mark.timeout(10)
     def test_cancel_order_when_order_manager_none(self):
         """Test cancel_order returns False when order_manager is None."""
         self.adapter.api_client.order_manager = None
@@ -105,6 +113,7 @@ class TestBinanceAdapter:
         result = self.adapter.cancel_order(req)
         assert result is False
 
+    @pytest.mark.timeout(10)
     def test_cancel_order_delegates_to_order_manager(self):
         """Test cancel_order delegates to order_manager when available."""
         mock_order_manager = Mock()
@@ -120,6 +129,7 @@ class TestBinanceAdapter:
         assert result is True
         mock_order_manager.cancel_order.assert_called_once_with(req)
 
+    @pytest.mark.timeout(10)
     def test_subscribe_when_market_data_none(self):
         """Test subscribe returns False when market_data is None."""
         self.adapter.api_client.market_data = None
@@ -129,6 +139,7 @@ class TestBinanceAdapter:
         result = self.adapter.subscribe(req)
         assert result is False
 
+    @pytest.mark.timeout(10)
     def test_subscribe_delegates_to_market_data(self):
         """Test subscribe delegates to market_data when available."""
         mock_market_data = Mock()
@@ -142,6 +153,7 @@ class TestBinanceAdapter:
         assert result is True
         mock_market_data.subscribe.assert_called_once_with(req)
 
+    @pytest.mark.timeout(10)
     def test_query_account_when_account_manager_none(self):
         """Test query_account returns early when account_manager is None."""
         self.adapter.api_client.account_manager = None
@@ -149,6 +161,7 @@ class TestBinanceAdapter:
         # Should not raise exception, just return early
         self.adapter.query_account()
 
+    @pytest.mark.timeout(10)
     def test_query_account_delegates_to_account_manager(self):
         """Test query_account delegates to account_manager when available."""
         mock_account_manager = Mock()
@@ -164,6 +177,7 @@ class TestBinanceAdapter:
         mock_account_manager.query_account.assert_called_once()
         self.adapter.on_account.assert_called_once_with(mock_account_data)
 
+    @pytest.mark.timeout(10)
     def test_connected_property(self):
         """Test connected property delegates to api_client."""
         self.adapter.api_client.connected = True
@@ -172,6 +186,7 @@ class TestBinanceAdapter:
         self.adapter.api_client.connected = False
         assert self.adapter.connected is False
 
+    @pytest.mark.timeout(10)
     def test_get_available_contracts_when_contract_manager_none(self):
         """Test get_available_contracts returns empty list when contract_manager is None."""
         self.adapter.api_client.contract_manager = None
@@ -179,6 +194,7 @@ class TestBinanceAdapter:
         result = self.adapter.get_available_contracts()
         assert result == []
 
+    @pytest.mark.timeout(10)
     def test_get_available_contracts_delegates_to_contract_manager(self):
         """Test get_available_contracts delegates to contract_manager when available."""
         mock_contract_manager = Mock()

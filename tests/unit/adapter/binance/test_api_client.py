@@ -6,6 +6,7 @@ CCXT exchange instances and coordinates manager interactions.
 """
 
 from unittest.mock import Mock, patch
+import pytest
 
 from foxtrot.adapter.binance.api_client import BinanceApiClient
 from foxtrot.core.event_engine import EventEngine
@@ -32,6 +33,7 @@ class TestBinanceApiClient:
         self.api_client = None
         self.event_engine = None
 
+    @pytest.mark.timeout(10)
     def test_initialization(self):
         """Test API client initialization."""
         assert self.api_client.event_engine == self.event_engine
@@ -48,6 +50,7 @@ class TestBinanceApiClient:
 
     @patch("foxtrot.adapter.binance.api_client.BinanceApiClient.initialize_managers")
     @patch("ccxt.binance")
+    @pytest.mark.timeout(10)
     def test_connect_success(self, mock_ccxt_binance, mock_initialize_managers):
         """Test successful connection to Binance API."""
         # Mock CCXT exchange
@@ -79,6 +82,7 @@ class TestBinanceApiClient:
         mock_initialize_managers.assert_called_once()
         mock_exchange.load_markets.assert_called_once()
 
+    @pytest.mark.timeout(10)
     def test_connect_missing_credentials(self):
         """Test connection failure with missing credentials."""
         settings = {"API Key": "", "Secret": "test_secret", "Sandbox": True}
@@ -90,6 +94,7 @@ class TestBinanceApiClient:
         assert self.api_client.exchange is None
 
     @patch("ccxt.binance")
+    @pytest.mark.timeout(10)
     def test_connect_ccxt_exception(self, mock_ccxt_binance):
         """Test connection failure due to CCXT exception."""
         mock_ccxt_binance.side_effect = Exception("Connection failed")
@@ -102,6 +107,7 @@ class TestBinanceApiClient:
         assert self.api_client.connected is False
 
     @patch("ccxt.binance")
+    @pytest.mark.timeout(10)
     def test_connect_load_markets_failure(self, mock_ccxt_binance):
         """Test connection failure when load_markets returns empty."""
         mock_exchange = Mock()
@@ -120,6 +126,7 @@ class TestBinanceApiClient:
     @patch("foxtrot.adapter.binance.market_data.BinanceMarketData")
     @patch("foxtrot.adapter.binance.historical_data.BinanceHistoricalData")
     @patch("foxtrot.adapter.binance.contract_manager.BinanceContractManager")
+    @pytest.mark.timeout(10)
     def test_initialize_managers(
         self,
         mock_contract_mgr_class,
@@ -159,6 +166,7 @@ class TestBinanceApiClient:
         mock_historical_class.assert_called_once_with(self.api_client)
         mock_contract_mgr_class.assert_called_once_with(self.api_client)
 
+    @pytest.mark.timeout(10)
     def test_close_with_market_data(self):
         """Test close method with market data manager."""
         # Mock market data manager
@@ -182,6 +190,7 @@ class TestBinanceApiClient:
         # Verify connection state was reset
         assert self.api_client.connected is False
 
+    @pytest.mark.timeout(10)
     def test_close_without_managers(self):
         """Test close method without managers."""
         # Mock exchange without close method
@@ -194,6 +203,7 @@ class TestBinanceApiClient:
         self.api_client.close()
         assert self.api_client.connected is False
 
+    @pytest.mark.timeout(10)
     def test_close_with_exception(self):
         """Test close method handles exceptions gracefully."""
         mock_market_data = Mock()
@@ -205,12 +215,14 @@ class TestBinanceApiClient:
         self.api_client.close()
         assert self.api_client.connected is False
 
+    @pytest.mark.timeout(10)
     def test_log_info(self):
         """Test info logging method."""
         with patch("builtins.print") as mock_print:
             self.api_client._log_info("Test message")
             mock_print.assert_called_once_with("[TEST_BINANCE] INFO: Test message")
 
+    @pytest.mark.timeout(10)
     def test_log_error(self):
         """Test error logging method."""
         with patch("builtins.print") as mock_print:

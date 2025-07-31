@@ -40,6 +40,7 @@ class TestEventEngineThreadSafety:
         with self.lock:
             self.errors.append(error)
 
+    @pytest.mark.timeout(10)
     def test_concurrent_event_putting(self):
         """Test multiple threads putting events simultaneously."""
         num_threads = 10
@@ -98,6 +99,7 @@ class TestEventEngineThreadSafety:
 
         assert sorted(event_data) == sorted(expected_data)
 
+    @pytest.mark.timeout(10)
     def test_concurrent_handler_registration(self):
         """Test concurrent handler registration and unregistration."""
         num_threads = 5
@@ -159,6 +161,7 @@ class TestEventEngineThreadSafety:
         # Verify engine is still functional
         assert not self.engine._active
 
+    @pytest.mark.timeout(10)
     def test_concurrent_general_handler_operations(self):
         """Test concurrent general handler registration and unregistration."""
         num_threads = 8
@@ -233,6 +236,7 @@ class TestEventEngineThreadSafety:
         # Verify some events were processed
         assert len(self.results) > 0
 
+    @pytest.mark.timeout(10)
     def test_start_stop_race_conditions(self):
         """Test concurrent start/stop operations."""
         num_threads = 20
@@ -288,6 +292,7 @@ class TestEventEngineThreadSafety:
         assert len(self.errors) == 0, f"Errors occurred: {self.errors}"
         assert len(self.results) > 0  # Some operations should have succeeded
 
+    @pytest.mark.timeout(10)
     def test_handler_exception_isolation(self):
         """Test that handler exceptions don't affect other handlers or engine stability."""
         num_threads = 5
@@ -354,6 +359,7 @@ class TestEventEngineThreadSafety:
         # The working handler might not be called due to failing handler exception
         # This is a limitation of the current implementation
 
+    @pytest.mark.timeout(10)
     def test_queue_operations_thread_safety(self):
         """Test thread safety of queue operations under high load."""
         num_producers = 10
@@ -423,6 +429,7 @@ class TestEventEngineThreadSafety:
         ]
         assert sorted(consumed_events) == sorted(expected_events)
 
+    @pytest.mark.timeout(10)
     def test_memory_consistency_under_load(self):
         """Test memory consistency and proper cleanup under high load."""
         num_threads = 15
@@ -530,6 +537,7 @@ class TestEventEngineThreadSafety:
             f"Too many general handlers: {final_general_count} >= {max_expected_general}"
         )
 
+    @pytest.mark.timeout(10)
     def test_timer_thread_safety(self):
         """Test timer thread safety with concurrent operations."""
         timer_events = []
@@ -610,6 +618,7 @@ class TestEventEngineRaceConditions:
         with self.race_lock:
             self.race_results.append(result)
 
+    @pytest.mark.timeout(10)
     def test_handler_modification_during_processing(self):
         """Test modifying handlers while events are being processed."""
         processing_events = []
@@ -676,6 +685,7 @@ class TestEventEngineRaceConditions:
         assert len(processing_events) > 0  # Some processing occurred
         assert len(self.race_results) > 0  # New handlers were called
 
+    @pytest.mark.timeout(10)
     def test_queue_access_race_conditions(self):
         """Test race conditions in queue access patterns."""
         put_results = []
@@ -729,6 +739,7 @@ class TestEventEngineRaceConditions:
         error_results = [r for r in self.race_results if "error" in r]
         assert len(error_results) == 0, f"Race condition errors: {error_results}"
 
+    @pytest.mark.timeout(10)
     def test_engine_state_consistency(self):
         """Test engine state remains consistent under concurrent operations."""
         state_checks = []

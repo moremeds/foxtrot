@@ -277,8 +277,4 @@ def should_retry_error(error_category: str, attempt: int, max_attempts: int = 3)
         return False
 
     # Retry network and rate limit errors
-    if error_category in ["network_error", "rate_limit", "unknown_error"]:
-        return True
-
-    # Don't retry auth, invalid request, or market errors
-    return False
+    return error_category in ["network_error", "rate_limit", "unknown_error"]

@@ -116,10 +116,9 @@ class BinanceApiClient:
             if self.market_data:
                 self.market_data.close()
 
-            if self.exchange:
+            if self.exchange and hasattr(self.exchange, "close"):
                 # Close any open connections
-                if hasattr(self.exchange, "close"):
-                    self.exchange.close()
+                self.exchange.close()
 
             self._log_info("Binance connection closed")
 

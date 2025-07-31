@@ -415,7 +415,7 @@ class TUITradingPanel(Container, TUIEventMixin):
         self.volume_validator = VolumeValidator()
         self.order_type_validator = OrderTypeValidator()
         self.direction_validator = DirectionValidator()
-        
+
         # Form validators dictionary for easy access by tests
         self._form_validators = {
             'symbol': self.symbol_validator,
@@ -455,7 +455,7 @@ class TUITradingPanel(Container, TUIEventMixin):
         # Set the internal adapter first
         self._event_adapter = event_adapter
         self.event_adapter = event_adapter
-        
+
         # Now we can register handlers
         self.register_event_handler(EVENT_TICK, self._on_tick_event)
         self.register_event_handler(EVENT_ORDER, self._on_order_event)
@@ -948,7 +948,7 @@ class TUITradingPanel(Container, TUIEventMixin):
             await self._show_error(secure_error.user_message)
 
     # Event Handlers
-    
+
     async def _update_market_data(self, tick_data):
         """Update market data display with tick data."""
         if self.market_data and self.symbol_input:
@@ -969,7 +969,7 @@ class TUITradingPanel(Container, TUIEventMixin):
         # Update UI based on order status changes
 
     async def _on_account_event(self, event: Event):
-        """Handle account update events.""" 
+        """Handle account update events."""
         # Update available funds display
 
     async def _handle_order_error(self, error_msg: str):

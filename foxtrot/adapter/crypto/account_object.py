@@ -21,31 +21,31 @@ class CryptoUserAsset:
     free: str
     interest: str
     locked: str
-    netAsset: str
+    net_asset: str
 
 
 @dataclass
 class CryptoIsolatedAsset:
     asset: str
-    borrowEnabled: bool
+    borrow_enabled: bool
     borrowed: str
     free: str
     interest: str
     locked: str
-    netAsset: str
-    netAssetOfBtc: str
-    repayEnabled: bool
-    totalAsset: str
+    net_asset: str
+    net_asset_of_btc: str
+    repay_enabled: bool
+    total_asset: str
 
 
 @dataclass
 class CryptoIsolatedSymbol:
-    baseAsset: CryptoIsolatedAsset
-    quoteAsset: CryptoIsolatedAsset
+    base_asset: CryptoIsolatedAsset
+    quote_asset: CryptoIsolatedAsset
     symbol: str
-    isolatedCreated: bool
-    marginLevel: str
-    marginLevelStatus: str
+    isolated_created: bool
+    margin_level: str
+    margin_level_status: str
     marginRatio: str
     indexPrice: str
     liquidatePrice: str
@@ -127,8 +127,8 @@ class CryptoAccountData(AccountData):
     updateTime: int | None = None
     accountType: str | None = None
     balances: list[CryptoBalance] | None = None
-    borrowEnabled: bool | None = None
-    marginLevel: str | None = None
+    borrow_enabled: bool | None = None
+    margin_level: str | None = None
     totalAssetOfBtc: str | None = None
     totalLiabilityOfBtc: str | None = None
     totalNetAssetOfBtc: str | None = None

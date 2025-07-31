@@ -8,12 +8,11 @@ which is better suited for headless servers and terminal environments.
 
 import os
 import sys
+from foxtrot.app.tui.main_app import main
 
 # Add the project root to the Python path
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, project_root)
-
-from foxtrot.app.tui.main_app import main
 
 if __name__ == "__main__":
     main()

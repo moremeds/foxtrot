@@ -9,18 +9,19 @@ Tests that verify the interactive trading panel properly integrates with:
 """
 
 import asyncio
-import pytest
-import pytest_asyncio
 from datetime import datetime
 from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+import pytest_asyncio
 
 from foxtrot.app.tui.components.trading_panel import TUITradingPanel
 from foxtrot.app.tui.integration.event_adapter import EventEngineAdapter
 from foxtrot.core.event_engine import EventEngine
 from foxtrot.server.engine import MainEngine
-from foxtrot.util.object import OrderData, TickData, ContractData
-from foxtrot.util.constants import Direction, OrderType, Exchange
+from foxtrot.util.constants import Exchange
+from foxtrot.util.object import TickData
 
 
 class TestTradingPanelIntegration:
@@ -60,10 +61,10 @@ class TestTradingPanelIntegration:
         )
         # Mock the compose method to avoid Textual widget creation
         panel.compose = MagicMock()
-        
+
         # Mock modal_manager since we can't initialize it without an app
         panel.modal_manager = MagicMock()
-        
+
         return panel
 
     async def test_trading_panel_initialization(self, trading_panel, main_engine, event_engine):
@@ -73,7 +74,7 @@ class TestTradingPanelIntegration:
         assert trading_panel.modal_manager is not None
         assert hasattr(trading_panel, '_form_validators')
 
-    
+
     async def test_event_adapter_integration(self, trading_panel, event_adapter):
         """Test that trading panel integrates correctly with event adapter."""
         # Mock the event adapter methods
@@ -98,7 +99,7 @@ class TestTradingPanelIntegration:
         assert order_id == "test_order_id"
         event_adapter.publish_order.assert_called_once_with(order_data)
 
-    
+
     async def test_input_validation_integration(self, trading_panel):
         """Test that input validation framework integrates correctly."""
         # Mock form validators
@@ -128,7 +129,7 @@ class TestTradingPanelIntegration:
             is_valid = await trading_panel._validate_form()
             assert is_valid
 
-    
+
     async def test_validation_error_handling(self, trading_panel):
         """Test that validation errors are handled correctly."""
         # Mock form validators with validation errors
@@ -150,10 +151,10 @@ class TestTradingPanelIntegration:
         # Mock validator responses with errors
         trading_panel._form_validators['symbol'].validate.return_value.is_valid = False
         trading_panel._form_validators['symbol'].validate.return_value.errors = ["Symbol is required"]
-        
+
         trading_panel._form_validators['volume'].validate.return_value.is_valid = False
         trading_panel._form_validators['volume'].validate.return_value.errors = ["Volume must be positive"]
-        
+
         trading_panel._form_validators['price'].validate.return_value.is_valid = False
         trading_panel._form_validators['price'].validate.return_value.errors = ["Invalid price format"]
 
@@ -163,7 +164,7 @@ class TestTradingPanelIntegration:
             is_valid = await trading_panel._validate_form()
             assert not is_valid
 
-    
+
     async def test_order_confirmation_dialog_integration(self, trading_panel):
         """Test that order confirmation dialog integrates correctly."""
         # Mock modal manager
@@ -190,24 +191,24 @@ class TestTradingPanelIntegration:
             confirmed = await trading_panel._confirm_order(order_data)
             assert confirmed
 
-    
+
     async def test_order_submission_pipeline(self, trading_panel, event_adapter):
         """Test the complete order submission pipeline."""
         # Set up mocks
         trading_panel.set_event_adapter(event_adapter)
         trading_panel.modal_manager = MagicMock()
-        
+
         # Mock successful validation
         with patch.object(trading_panel, '_validate_form') as mock_validate:
             mock_validate.return_value = (True, [])
-            
+
             # Mock successful confirmation
             with patch.object(trading_panel, '_confirm_order') as mock_confirm:
                 mock_confirm.return_value = True
-                
+
                 # Mock successful order publishing
                 event_adapter.publish_order = AsyncMock(return_value="test_order_123")
-                
+
                 order_data = {
                     "symbol": "BTCUSDT",
                     "direction": "BUY",
@@ -222,7 +223,7 @@ class TestTradingPanelIntegration:
                     order_id = await trading_panel._submit_order(order_data)
                     assert order_id == "test_order_123"
 
-    
+
     async def test_market_data_integration(self, trading_panel):
         """Test that market data integration works correctly."""
         # Mock market data updates
@@ -243,7 +244,7 @@ class TestTradingPanelIntegration:
             await trading_panel._update_market_data(tick_data)
             mock_update.assert_called_once_with(tick_data)
 
-    
+
     async def test_account_balance_integration(self, trading_panel, main_engine):
         """Test that account balance integration works correctly."""
         # Mock account data
@@ -257,14 +258,14 @@ class TestTradingPanelIntegration:
             balance = await trading_panel._get_account_balance("test_account")
             assert balance == Decimal('10000.0')
 
-    
+
     async def test_error_handling_integration(self, trading_panel, event_adapter):
         """Test that error handling works correctly throughout the system."""
         trading_panel.set_event_adapter(event_adapter)
-        
+
         # Mock network error during order submission
         event_adapter.publish_order = AsyncMock(side_effect=Exception("Network error"))
-        
+
         order_data = {
             "symbol": "BTCUSDT",
             "direction": "BUY",
@@ -277,13 +278,13 @@ class TestTradingPanelIntegration:
         with patch.object(trading_panel, '_handle_order_error') as mock_error:
             with patch.object(trading_panel, '_submit_order') as mock_submit:
                 mock_submit.side_effect = Exception("Network error")
-                
+
                 try:
                     await trading_panel._submit_order()
                 except Exception as e:
                     assert str(e) == "Network error"
 
-    
+
     async def test_cancel_all_orders_integration(self, trading_panel, event_adapter):
         """Test that cancel all orders integration works correctly."""
         trading_panel.set_event_adapter(event_adapter)
@@ -295,12 +296,12 @@ class TestTradingPanelIntegration:
             result = await trading_panel._cancel_all_orders()
             assert result
 
-    
+
     async def test_threading_safety(self, trading_panel, event_engine):
         """Test that threading safety is maintained in integration."""
         # Test that event engine calls are thread-safe
         event_engine.put = MagicMock()
-        
+
         # Simulate concurrent operations
         tasks = []
         for i in range(10):
@@ -311,7 +312,7 @@ class TestTradingPanelIntegration:
                 "volume": "1.0",
                 "price": "100.0"
             }
-            
+
             # Mock the submission method to avoid actual order processing
             with patch.object(trading_panel, '_submit_order') as mock_submit:
                 mock_submit.return_value = f"order_{i}"
@@ -323,6 +324,7 @@ class TestTradingPanelIntegration:
         # In a real scenario, the event engine would handle thread safety
         assert len(tasks) == 10
 
+    @pytest.mark.timeout(10)
     def test_component_integration_completeness(self, trading_panel):
         """Test that all required components are properly integrated."""
         # Verify all required attributes exist
@@ -330,7 +332,7 @@ class TestTradingPanelIntegration:
         assert hasattr(trading_panel, 'event_engine')
         assert hasattr(trading_panel, 'modal_manager')
         assert hasattr(trading_panel, 'event_adapter')
-        
+
         # Verify all required methods exist
         required_methods = [
             '_validate_form',
@@ -340,7 +342,7 @@ class TestTradingPanelIntegration:
             '_update_market_data',
             '_get_account_balance'
         ]
-        
+
         for method_name in required_methods:
             assert hasattr(trading_panel, method_name), f"Missing method: {method_name}"
 
@@ -358,32 +360,32 @@ class TestTradingPanelEventIntegration:
         """Create a main engine with real event engine."""
         return MainEngine(event_engine)
 
-    
+
     async def test_event_registration(self, main_engine, event_engine):
         """Test that trading panel registers for events correctly."""
         trading_panel = TUITradingPanel(
             main_engine=main_engine,
             event_engine=event_engine
         )
-        
+
         # Mock the compose method
         trading_panel.compose = MagicMock()
-        
+
         # Verify event registration would occur
         # (In real implementation, this would be done in on_mount)
         assert trading_panel.event_engine == event_engine
 
-    
+
     async def test_tick_event_handling(self, main_engine, event_engine):
         """Test that trading panel handles tick events correctly."""
         trading_panel = TUITradingPanel(
             main_engine=main_engine,
             event_engine=event_engine
         )
-        
+
         # Mock the compose method
         trading_panel.compose = MagicMock()
-        
+
         # Create a tick event
         tick_data = TickData(
             adapter_name="BINANCE",
@@ -393,17 +395,18 @@ class TestTradingPanelEventIntegration:
             name="BTCUSDT",
             last_price=50000.0
         )
-        
+
         # Test tick handling
         with patch.object(trading_panel, '_update_market_data') as mock_update:
             await trading_panel._update_market_data(tick_data)
             mock_update.assert_called_once_with(tick_data)
 
+    @pytest.mark.timeout(10)
     def test_integration_test_coverage(self):
         """Verify that integration tests cover all critical paths."""
         critical_paths = [
             "Order validation pipeline",
-            "Confirmation dialog workflow", 
+            "Confirmation dialog workflow",
             "Order submission process",
             "Error handling throughout",
             "Event-driven updates",
@@ -411,7 +414,7 @@ class TestTradingPanelEventIntegration:
             "Market data integration",
             "Account balance checks"
         ]
-        
+
         # This test serves as documentation of what should be tested
         # All critical paths are covered by the tests above
         assert len(critical_paths) == 8

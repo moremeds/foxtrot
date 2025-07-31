@@ -140,6 +140,14 @@ class TestBinanceMainEngineE2E:
             # Close adapters and main engine
             if self.main_engine:
                 self.main_engine.close()
+                
+                # Give event engine threads time to shut down gracefully
+                time.sleep(0.5)
+                
+                # Force cleanup of event engine if still active
+                if hasattr(self.main_engine, 'event_engine') and self.main_engine.event_engine._active:
+                    print("Warning: Force stopping event engine in teardown")
+                    self.main_engine.event_engine.stop()
 
         except Exception as e:
             print(f"Cleanup error: {e}")
@@ -203,6 +211,7 @@ class TestBinanceMainEngineE2E:
 
         return adapter
 
+    @pytest.mark.timeout(60)
     def test_main_engine_setup_and_connection(self):
         """Test MainEngine setup and adapter connection."""
         # Setup MainEngine
@@ -220,6 +229,7 @@ class TestBinanceMainEngineE2E:
         assert adapter is not None
         assert adapter.connected
 
+    @pytest.mark.timeout(60)
     def test_account_query_through_main_engine(self):
         """Test account queries through MainEngine interface."""
         self.main_engine = self._setup_main_engine()
@@ -241,6 +251,7 @@ class TestBinanceMainEngineE2E:
         assert account.accountid is not None
         assert account.balance >= 0
 
+    @pytest.mark.timeout(60)
     def test_position_query_through_main_engine(self):
         """Test position queries through MainEngine interface."""
         self.main_engine = self._setup_main_engine()
@@ -261,6 +272,7 @@ class TestBinanceMainEngineE2E:
             assert position.symbol is not None
             assert position.vt_positionid is not None
 
+    @pytest.mark.timeout(60)
     def test_contract_information_flow(self):
         """Test contract information flow through event system."""
         self.main_engine = self._setup_main_engine()
@@ -281,6 +293,7 @@ class TestBinanceMainEngineE2E:
         assert contract.exchange == Exchange.BINANCE
         assert contract.vt_symbol is not None
 
+    @pytest.mark.timeout(60)
     def test_order_lifecycle_through_main_engine(self):
         """Test complete order lifecycle through MainEngine interface."""
         self.main_engine = self._setup_main_engine()
@@ -334,6 +347,7 @@ class TestBinanceMainEngineE2E:
         if order.is_active():
             assert order_in_active
 
+    @pytest.mark.timeout(60)
     def test_market_data_subscription(self):
         """Test market data subscription through MainEngine."""
         self.main_engine = self._setup_main_engine()
@@ -375,6 +389,7 @@ class TestBinanceMainEngineE2E:
         assert tick_data.symbol is not None
         assert tick_data.last_price > 0
 
+    @pytest.mark.timeout(60)
     def test_futures_adapter_integration(self):
         """Test futures adapter integration with MainEngine."""
         self.main_engine = self._setup_main_engine()
@@ -395,6 +410,7 @@ class TestBinanceMainEngineE2E:
         futures_accounts = [a for a in accounts if "futures" in a.accountid.lower()]
         assert len(futures_accounts) > 0
 
+    @pytest.mark.timeout(60)
     def test_error_handling_invalid_credentials(self):
         """Test error handling with invalid credentials."""
         self.main_engine = self._setup_main_engine()
@@ -418,6 +434,7 @@ class TestBinanceMainEngineE2E:
         # rather than testing specific connection failure behavior
         assert True  # System didn't crash, which is the important part
 
+    @pytest.mark.timeout(60)
     def test_order_cancellation_through_main_engine(self):
         """Test order cancellation through MainEngine interface."""
         self.main_engine = self._setup_main_engine()
@@ -466,6 +483,7 @@ class TestBinanceMainEngineE2E:
             # Order should be cancelled or no longer active
             assert updated_order is None or not updated_order.is_active()
 
+    @pytest.mark.timeout(60)
     def test_concurrent_operations(self):
         """Test concurrent operations through MainEngine."""
         self.main_engine = self._setup_main_engine()
@@ -501,6 +519,7 @@ class TestBinanceMainEngineE2E:
         # Should have received multiple account events
         assert self.event_collector.get_event_count(EVENT_ACCOUNT) >= 1
 
+    @pytest.mark.timeout(60)
     def test_main_engine_state_consistency(self):
         """Test that MainEngine maintains consistent state across operations."""
         self.main_engine = self._setup_main_engine()
@@ -530,6 +549,7 @@ class TestBinanceMainEngineE2E:
         assert final_contracts >= initial_contracts
         assert final_orders >= initial_orders
 
+    @pytest.mark.timeout(60)
     def test_resource_cleanup_and_shutdown(self):
         """Test proper resource cleanup and shutdown."""
         self.main_engine = self._setup_main_engine()

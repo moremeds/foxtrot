@@ -46,15 +46,12 @@ class BinanceAccountManager:
             # Cache the account info
             self._account_cache = account_info
 
-            # Convert to AccountData
-            account_data = AccountData(
+            return AccountData(
                 adapter_name=self.api_client.adapter_name,
                 accountid=self.api_client.adapter_name,
                 balance=account_info.get("USDT", {}).get("total", 0.0),
                 frozen=account_info.get("USDT", {}).get("used", 0.0),
             )
-
-            return account_data
 
         except Exception as e:
             self.api_client._log_error(f"Failed to query account: {str(e)}")

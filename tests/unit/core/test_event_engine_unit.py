@@ -18,12 +18,14 @@ from foxtrot.core.event_engine import EVENT_TIMER, Event, EventEngine
 class TestEvent:
     """Test Event class functionality."""
 
+    @pytest.mark.timeout(10)
     def test_event_creation_with_type_only(self):
         """Test Event creation with type parameter only."""
         event = Event("test_type")
         assert event.type == "test_type"
         assert event.data is None
 
+    @pytest.mark.timeout(10)
     def test_event_creation_with_type_and_data(self):
         """Test Event creation with both type and data parameters."""
         test_data = {"price": 100.0, "volume": 1.5}
@@ -31,6 +33,7 @@ class TestEvent:
         assert event.type == "market_data"
         assert event.data == test_data
 
+    @pytest.mark.timeout(10)
     def test_event_creation_with_complex_data(self):
         """Test Event creation with complex data structures."""
 
@@ -43,6 +46,7 @@ class TestEvent:
         assert event.type == "complex_event"
         assert event.data.value == "complex_value"
 
+    @pytest.mark.timeout(10)
     def test_event_type_validation(self):
         """Test Event type parameter validation."""
         # Test with empty string
@@ -53,6 +57,7 @@ class TestEvent:
         event = Event("test.event_type-123")
         assert event.type == "test.event_type-123"
 
+    @pytest.mark.timeout(10)
     def test_event_data_types(self):
         """Test Event with various data types."""
         test_cases = [
@@ -74,6 +79,7 @@ class TestEvent:
 class TestEventEngineInitialization:
     """Test EventEngine initialization and configuration."""
 
+    @pytest.mark.timeout(10)
     def test_default_initialization(self):
         """Test EventEngine initialization with default parameters."""
         engine = EventEngine()
@@ -94,6 +100,7 @@ class TestEventEngineInitialization:
         assert engine._thread.is_alive() is False
         assert engine._timer.is_alive() is False
 
+    @pytest.mark.timeout(10)
     def test_custom_interval_initialization(self):
         """Test EventEngine initialization with custom interval."""
         custom_intervals = [0.1, 0.5, 2.0, 5.0, 10.0]
@@ -103,17 +110,20 @@ class TestEventEngineInitialization:
             assert engine._interval == interval
             assert engine._active is False
 
+    @pytest.mark.timeout(10)
     def test_zero_interval_initialization(self):
         """Test EventEngine initialization with zero interval."""
         engine = EventEngine(0.0)
         assert engine._interval == 0.0
 
+    @pytest.mark.timeout(10)
     def test_negative_interval_initialization(self):
         """Test EventEngine initialization with negative interval."""
         engine = EventEngine(-1.0)
         assert engine._interval == -1.0
         # Note: Negative interval will cause immediate timer events
 
+    @pytest.mark.timeout(10)
     def test_thread_target_assignment(self):
         """Test that threads are created with correct target methods."""
         engine = EventEngine()
@@ -122,6 +132,7 @@ class TestEventEngineInitialization:
         assert engine._thread._target == engine._run
         assert engine._timer._target == engine._run_timer
 
+    @pytest.mark.timeout(10)
     def test_handlers_structure(self):
         """Test handlers data structure initialization."""
         engine = EventEngine()
@@ -149,6 +160,7 @@ class TestEventEngineLifecycle:
         if hasattr(self, "engine") and self.engine._active:
             self.engine.stop()
 
+    @pytest.mark.timeout(10)
     def test_start_engine(self):
         """Test starting the EventEngine."""
         assert self.engine._active is False
@@ -166,6 +178,7 @@ class TestEventEngineLifecycle:
         # Cleanup
         self.engine.stop()
 
+    @pytest.mark.timeout(10)
     def test_stop_engine(self):
         """Test stopping the EventEngine."""
         self.engine.start()
@@ -190,6 +203,7 @@ class TestEventEngineLifecycle:
         assert self.engine._thread.is_alive() is False
         assert self.engine._timer.is_alive() is False
 
+    @pytest.mark.timeout(10)
     def test_double_start_engine(self):
         """Test calling start() twice is idempotent and safe."""
         self.engine.start()
@@ -208,6 +222,7 @@ class TestEventEngineLifecycle:
 
         self.engine.stop()
 
+    @pytest.mark.timeout(10)
     def test_stop_before_start(self):
         """Test calling stop() before start() is idempotent and safe."""
         assert self.engine._active is False
@@ -217,6 +232,7 @@ class TestEventEngineLifecycle:
 
         assert self.engine._active is False
 
+    @pytest.mark.timeout(10)
     def test_multiple_start_stop_cycles(self):
         """Test multiple start/stop cycles."""
         for cycle in range(3):
@@ -246,6 +262,7 @@ class TestEventEngineHandlerManagement:
         self.test_events = []
 
         # Test handler that records events
+        @pytest.mark.timeout(10)
         def test_handler(event: Event) -> None:
             self.test_events.append(event)
 
@@ -262,6 +279,7 @@ class TestEventEngineHandlerManagement:
         if hasattr(self, "engine") and self.engine._active:
             self.engine.stop()
 
+    @pytest.mark.timeout(10)
     def test_register_handler(self):
         """Test registering a handler for specific event type."""
         event_type = "test_event"
@@ -273,6 +291,7 @@ class TestEventEngineHandlerManagement:
         assert self.test_handler in self.engine._handlers[event_type]
         assert len(self.engine._handlers[event_type]) == 1
 
+    @pytest.mark.timeout(10)
     def test_register_multiple_handlers_same_type(self):
         """Test registering multiple handlers for same event type."""
         event_type = "test_event"
@@ -285,6 +304,7 @@ class TestEventEngineHandlerManagement:
         assert self.test_handler in self.engine._handlers[event_type]
         assert self.another_handler in self.engine._handlers[event_type]
 
+    @pytest.mark.timeout(10)
     def test_register_same_handler_twice(self):
         """Test registering same handler twice for same type (should not duplicate)."""
         event_type = "test_event"
@@ -296,6 +316,7 @@ class TestEventEngineHandlerManagement:
         assert len(self.engine._handlers[event_type]) == 1
         assert self.test_handler in self.engine._handlers[event_type]
 
+    @pytest.mark.timeout(10)
     def test_register_handler_different_types(self):
         """Test registering same handler for different event types."""
         event_types = ["type1", "type2", "type3"]
@@ -308,6 +329,7 @@ class TestEventEngineHandlerManagement:
             assert self.test_handler in self.engine._handlers[event_type]
             assert len(self.engine._handlers[event_type]) == 1
 
+    @pytest.mark.timeout(10)
     def test_unregister_handler(self):
         """Test unregistering a handler."""
         event_type = "test_event"
@@ -321,6 +343,7 @@ class TestEventEngineHandlerManagement:
         # Handler should be removed and event type cleaned up
         assert event_type not in self.engine._handlers
 
+    @pytest.mark.timeout(10)
     def test_unregister_one_of_multiple_handlers(self):
         """Test unregistering one handler when multiple are registered."""
         event_type = "test_event"
@@ -335,6 +358,7 @@ class TestEventEngineHandlerManagement:
         assert self.another_handler in self.engine._handlers[event_type]
         assert self.test_handler not in self.engine._handlers[event_type]
 
+    @pytest.mark.timeout(10)
     def test_unregister_nonexistent_handler(self):
         """Test unregistering handler that was never registered."""
         event_type = "test_event"
@@ -345,6 +369,7 @@ class TestEventEngineHandlerManagement:
         # Should not create entry in handlers dict
         assert len(self.engine._handlers) == 0
 
+    @pytest.mark.timeout(10)
     def test_register_general_handler(self):
         """Test registering a general handler for all event types."""
         self.engine.register_general(self.test_handler)
@@ -352,6 +377,7 @@ class TestEventEngineHandlerManagement:
         assert self.test_handler in self.engine._general_handlers
         assert len(self.engine._general_handlers) == 1
 
+    @pytest.mark.timeout(10)
     def test_register_multiple_general_handlers(self):
         """Test registering multiple general handlers."""
         self.engine.register_general(self.test_handler)
@@ -361,6 +387,7 @@ class TestEventEngineHandlerManagement:
         assert self.test_handler in self.engine._general_handlers
         assert self.another_handler in self.engine._general_handlers
 
+    @pytest.mark.timeout(10)
     def test_register_same_general_handler_twice(self):
         """Test registering same general handler twice (should not duplicate)."""
         self.engine.register_general(self.test_handler)
@@ -369,6 +396,7 @@ class TestEventEngineHandlerManagement:
         assert len(self.engine._general_handlers) == 1
         assert self.test_handler in self.engine._general_handlers
 
+    @pytest.mark.timeout(10)
     def test_unregister_general_handler(self):
         """Test unregistering a general handler."""
         self.engine.register_general(self.test_handler)
@@ -379,6 +407,7 @@ class TestEventEngineHandlerManagement:
         assert self.test_handler not in self.engine._general_handlers
         assert len(self.engine._general_handlers) == 0
 
+    @pytest.mark.timeout(10)
     def test_unregister_nonexistent_general_handler(self):
         """Test unregistering general handler that was never registered."""
         # This should not raise an exception
@@ -408,6 +437,7 @@ class TestEventEngineEventProcessing:
         if hasattr(self, "engine") and self.engine._active:
             self.engine.stop()
 
+    @pytest.mark.timeout(10)
     def test_put_event(self):
         """Test putting an event into the queue."""
         event = Event("test_event", "test_data")
@@ -420,6 +450,7 @@ class TestEventEngineEventProcessing:
         # Event should be in queue
         assert self.engine._queue.qsize() == 1
 
+    @pytest.mark.timeout(10)
     def test_put_multiple_events(self):
         """Test putting multiple events into the queue."""
         events = [Event("event1", "data1"), Event("event2", "data2"), Event("event3", "data3")]
@@ -429,6 +460,7 @@ class TestEventEngineEventProcessing:
 
         assert self.engine._queue.qsize() == 3
 
+    @pytest.mark.timeout(10)
     def test_event_processing_with_specific_handler(self):
         """Test event processing with type-specific handler."""
         event_type = "test_event"
@@ -452,6 +484,7 @@ class TestEventEngineEventProcessing:
 
         self.engine.stop()
 
+    @pytest.mark.timeout(10)
     def test_event_processing_with_general_handler(self):
         """Test event processing with general handler."""
         event_type = "any_event"
@@ -477,6 +510,7 @@ class TestEventEngineEventProcessing:
 
         self.engine.stop()
 
+    @pytest.mark.timeout(10)
     def test_event_processing_with_both_handlers(self):
         """Test event processing with both specific and general handlers."""
         event_type = "test_event"
@@ -512,6 +546,7 @@ class TestEventEngineEventProcessing:
 
         self.engine.stop()
 
+    @pytest.mark.timeout(10)
     def test_event_processing_no_matching_handler(self):
         """Test event processing when no handlers match."""
         event_type = "unhandled_event"
@@ -532,6 +567,7 @@ class TestEventEngineEventProcessing:
 
         self.engine.stop()
 
+    @pytest.mark.timeout(10)
     def test_multiple_events_processing(self):
         """Test processing multiple events in sequence."""
         event_types = ["event1", "event2", "event3"]
@@ -559,6 +595,7 @@ class TestEventEngineEventProcessing:
 
         self.engine.stop()
 
+    @pytest.mark.timeout(10)
     def test_handler_exception_handling(self):
         """Test that handler exceptions don't stop event processing."""
         failing_handler_called = False
@@ -613,6 +650,7 @@ class TestEventEngineTimerFunctionality:
         if hasattr(self, "engine") and self.engine._active:
             self.engine.stop()
 
+    @pytest.mark.timeout(10)
     def test_timer_event_generation(self):
         """Test that timer events are generated at specified intervals."""
         self.engine = EventEngine(0.1)  # 100ms interval
@@ -634,6 +672,7 @@ class TestEventEngineTimerFunctionality:
             assert event.type == EVENT_TIMER
             assert event.data is None
 
+    @pytest.mark.timeout(10)
     def test_timer_event_interval_accuracy(self):
         """Test timer event interval accuracy."""
         self.engine = EventEngine(0.05)  # 50ms interval
@@ -660,6 +699,7 @@ class TestEventEngineTimerFunctionality:
             # Allow 50% tolerance for timing variations
             assert 0.025 <= avg_interval <= 0.075
 
+    @pytest.mark.timeout(10)
     def test_timer_with_different_intervals(self):
         """Test timer functionality with different intervals."""
         intervals = [0.02, 0.05, 0.1, 0.2]
@@ -680,6 +720,7 @@ class TestEventEngineTimerFunctionality:
             # Should have received some timer events
             assert len(self.timer_events) >= 1
 
+    @pytest.mark.timeout(10)
     def test_timer_stops_with_engine(self):
         """Test that timer stops when engine is stopped."""
         self.engine = EventEngine(0.05)
@@ -714,6 +755,7 @@ class TestEventEngineEdgeCases:
         if hasattr(self, "engine") and self.engine._active:
             self.engine.stop()
 
+    @pytest.mark.timeout(10)
     def test_empty_queue_processing(self):
         """Test event processing when queue is empty."""
         self.engine.start()
@@ -726,6 +768,7 @@ class TestEventEngineEdgeCases:
 
         self.engine.stop()
 
+    @pytest.mark.timeout(10)
     def test_handler_returning_values(self):
         """Test handlers that return values (should be ignored)."""
         returned_values = []
@@ -746,6 +789,7 @@ class TestEventEngineEdgeCases:
 
         self.engine.stop()
 
+    @pytest.mark.timeout(10)
     def test_none_handler_registration(self):
         """Test registering None as handler (current implementation allows it)."""
         # Current implementation allows None handlers, but they will fail when called
@@ -765,6 +809,7 @@ class TestEventEngineEdgeCases:
 
         self.engine.stop()
 
+    @pytest.mark.timeout(10)
     def test_invalid_event_type(self):
         """Test with various invalid event types."""
         # Empty string event type (allowed)
@@ -776,6 +821,7 @@ class TestEventEngineEdgeCases:
         assert event_with_none_type.type is None
         assert event_with_none_type.data == "data"
 
+    @pytest.mark.timeout(10)
     def test_large_event_data(self):
         """Test with large event data."""
         large_data = "x" * 10000  # 10KB string
@@ -784,9 +830,11 @@ class TestEventEngineEdgeCases:
         self.engine.put(event)
         assert self.engine._queue.qsize() == 1
 
+    @pytest.mark.timeout(10)
     def test_rapid_handler_registration_unregistration(self):
         """Test rapid handler registration and unregistration."""
 
+        @pytest.mark.timeout(10)
         def test_handler(event: Event) -> None:
             pass
 

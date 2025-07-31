@@ -189,10 +189,7 @@ class TimeCell(BaseCell):
         timestamp: str = content.strftime("%H:%M:%S")
 
         millisecond: int = int(content.microsecond / 1000)
-        if millisecond:
-            timestamp = f"{timestamp}.{millisecond}"
-        else:
-            timestamp = f"{timestamp}.000"
+        timestamp = f"{timestamp}.{millisecond}" if millisecond else f"{timestamp}.000"
 
         self.setText(timestamp)
         self._data = data
@@ -1042,10 +1039,7 @@ class TradingWidget(QtWidgets.QWidget):
             elif data.direction == Direction.LONG:
                 direction = Direction.SHORT
             else:  # Net position mode
-                if data.volume > 0:
-                    direction = Direction.SHORT
-                else:
-                    direction = Direction.LONG
+                direction = Direction.SHORT if data.volume > 0 else Direction.LONG
 
             self.direction_combo.setCurrentIndex(self.direction_combo.findText(direction.value))
             self.offset_combo.setCurrentIndex(self.offset_combo.findText(Offset.CLOSE.value))

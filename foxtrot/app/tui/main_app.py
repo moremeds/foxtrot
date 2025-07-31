@@ -406,7 +406,6 @@ def main() -> None:
         # Import foxtrot components
         from foxtrot.core.event_engine import EventEngine
         from foxtrot.server.engine import MainEngine
-        from foxtrot.util.settings import SETTINGS
 
         print("Starting Foxtrot TUI...")
         print("=" * 50)
@@ -436,8 +435,6 @@ def main() -> None:
         print("Falling back to GUI mode...")
         try:
             # Try to start GUI as fallback
-            from foxtrot.app.ui.mainwindow import MainWindow
-
             print("GUI fallback not implemented yet")
         except ImportError:
             print("GUI fallback also unavailable")

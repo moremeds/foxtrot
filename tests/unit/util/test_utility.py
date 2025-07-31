@@ -39,55 +39,65 @@ from foxtrot.util.utility import (
 class TestVTSymbolFunctions:
     """Test VT symbol utility functions."""
 
+    @pytest.mark.timeout(10)
     def test_extract_vt_symbol_basic(self):
         """Test basic VT symbol extraction."""
         symbol, exchange = extract_vt_symbol("AAPL.NYSE")
         assert symbol == "AAPL"
         assert exchange == Exchange.NYSE
 
+    @pytest.mark.timeout(10)
     def test_extract_vt_symbol_with_dots_in_symbol(self):
         """Test VT symbol extraction with dots in symbol name."""
         symbol, exchange = extract_vt_symbol("BRK.B.NYSE")
         assert symbol == "BRK.B"
         assert exchange == Exchange.NYSE
 
+    @pytest.mark.timeout(10)
     def test_extract_vt_symbol_crypto(self):
         """Test VT symbol extraction for crypto pairs."""
         symbol, exchange = extract_vt_symbol("BTCUSDT.BINANCE")
         assert symbol == "BTCUSDT"
         assert exchange == Exchange.BINANCE
 
+    @pytest.mark.timeout(10)
     def test_extract_vt_symbol_complex_symbol(self):
         """Test VT symbol extraction with complex symbol names."""
         symbol, exchange = extract_vt_symbol("ES2023-12.GLOBEX")
         assert symbol == "ES2023-12"
         assert exchange == Exchange.GLOBEX
 
+    @pytest.mark.timeout(10)
     def test_extract_vt_symbol_invalid_format(self):
         """Test VT symbol extraction with invalid format."""
         with pytest.raises(ValueError):
             extract_vt_symbol("INVALID_SYMBOL")
 
+    @pytest.mark.timeout(10)
     def test_extract_vt_symbol_unknown_exchange(self):
         """Test VT symbol extraction with unknown exchange."""
         with pytest.raises(ValueError):
             extract_vt_symbol("AAPL.UNKNOWN")
 
+    @pytest.mark.timeout(10)
     def test_generate_vt_symbol_basic(self):
         """Test basic VT symbol generation."""
         vt_symbol = generate_vt_symbol("AAPL", Exchange.NYSE)
         assert vt_symbol == "AAPL.NYSE"
 
+    @pytest.mark.timeout(10)
     def test_generate_vt_symbol_crypto(self):
         """Test VT symbol generation for crypto."""
         vt_symbol = generate_vt_symbol("BTCUSDT", Exchange.BINANCE)
         assert vt_symbol == "BTCUSDT.BINANCE"
 
+    @pytest.mark.timeout(10)
     def test_generate_vt_symbol_complex(self):
         """Test VT symbol generation with complex names."""
         vt_symbol = generate_vt_symbol("BRK.B", Exchange.NYSE)
         assert vt_symbol == "BRK.B.NYSE"
 
+    @pytest.mark.timeout(10)
     def test_extract_generate_roundtrip(self):
         """Test extract and generate are inverse operations."""
         original_vt_symbol = "SPY.SMART"
@@ -99,17 +109,20 @@ class TestVTSymbolFunctions:
 class TestPathUtilities:
     """Test path utility functions."""
 
+    @pytest.mark.timeout(10)
     def test_trader_dir_exists(self):
         """Test TRADER_DIR constant exists and is Path."""
         assert TRADER_DIR is not None
         assert isinstance(TRADER_DIR, Path)
 
+    @pytest.mark.timeout(10)
     def test_temp_dir_exists(self):
         """Test TEMP_DIR constant exists and is Path."""
         assert TEMP_DIR is not None
         assert isinstance(TEMP_DIR, Path)
 
     @patch("foxtrot.util.utility.TEMP_DIR")
+    @pytest.mark.timeout(10)
     def test_get_file_path(self, mock_temp_dir):
         """Test get_file_path function."""
         mock_temp_dir.joinpath.return_value = Path("/mock/path/test.json")
@@ -120,6 +133,7 @@ class TestPathUtilities:
         assert result == Path("/mock/path/test.json")
 
     @patch("foxtrot.util.utility.TEMP_DIR")
+    @pytest.mark.timeout(10)
     def test_get_folder_path_existing(self, mock_temp_dir):
         """Test get_folder_path with existing folder."""
         mock_folder = Mock()
@@ -134,6 +148,7 @@ class TestPathUtilities:
         assert result == mock_folder
 
     @patch("foxtrot.util.utility.TEMP_DIR")
+    @pytest.mark.timeout(10)
     def test_get_folder_path_new(self, mock_temp_dir):
         """Test get_folder_path with new folder."""
         mock_folder = Mock()
@@ -147,6 +162,7 @@ class TestPathUtilities:
         mock_folder.mkdir.assert_called_once()
         assert result == mock_folder
 
+    @pytest.mark.timeout(10)
     def test_get_icon_path(self):
         """Test get_icon_path function."""
         test_filepath = "/path/to/ui/module.py"
@@ -160,6 +176,7 @@ class TestJSONUtilities:
     """Test JSON utility functions."""
 
     @patch("foxtrot.util.utility.get_file_path")
+    @pytest.mark.timeout(10)
     def test_load_json_existing_file(self, mock_get_file_path):
         """Test loading existing JSON file."""
         test_data = {"key": "value", "number": 123}
@@ -175,6 +192,7 @@ class TestJSONUtilities:
 
     @patch("foxtrot.util.utility.get_file_path")
     @patch("foxtrot.util.utility.save_json")
+    @pytest.mark.timeout(10)
     def test_load_json_nonexistent_file(self, mock_save_json, mock_get_file_path):
         """Test loading non-existent JSON file creates empty file."""
         mock_path = Mock()
@@ -187,6 +205,7 @@ class TestJSONUtilities:
         mock_save_json.assert_called_once_with("nonexistent.json", {})
 
     @patch("foxtrot.util.utility.get_file_path")
+    @pytest.mark.timeout(10)
     def test_save_json(self, mock_get_file_path):
         """Test saving JSON file."""
         test_data = {"key": "value", "list": [1, 2, 3]}
@@ -205,6 +224,7 @@ class TestJSONUtilities:
         loaded_data = json.loads(written_data)
         assert loaded_data == test_data
 
+    @pytest.mark.timeout(10)
     def test_load_save_json_roundtrip(self):
         """Test load and save JSON roundtrip with real files."""
         test_data = {"string": "test", "number": 42, "list": [1, 2, 3], "nested": {"key": "value"}}
@@ -224,12 +244,14 @@ class TestJSONUtilities:
 class TestMathematicalUtilities:
     """Test mathematical utility functions."""
 
+    @pytest.mark.timeout(10)
     def test_round_to_basic(self):
         """Test basic round_to functionality."""
         assert round_to(12.34, 0.1) == 12.3
         assert round_to(12.36, 0.1) == 12.4
         assert round_to(12.35, 0.1) == 12.4  # Round half up
 
+    @pytest.mark.timeout(10)
     def test_round_to_different_targets(self):
         """Test round_to with different target values."""
         assert round_to(127, 5) == 125
@@ -237,6 +259,7 @@ class TestMathematicalUtilities:
         assert round_to(12.567, 0.01) == 12.57
         assert round_to(12.561, 0.01) == 12.56
 
+    @pytest.mark.timeout(10)
     def test_round_to_edge_cases(self):
         """Test round_to edge cases."""
         assert round_to(0, 0.1) == 0
@@ -244,48 +267,56 @@ class TestMathematicalUtilities:
         assert round_to(-12.34, 0.1) == -12.3
         assert round_to(-12.36, 0.1) == -12.4
 
+    @pytest.mark.timeout(10)
     def test_floor_to_basic(self):
         """Test basic floor_to functionality."""
         assert floor_to(12.9, 0.1) == 12.9
         assert floor_to(12.91, 0.1) == 12.9
         assert floor_to(12.99, 0.1) == 12.9
 
+    @pytest.mark.timeout(10)
     def test_floor_to_different_targets(self):
         """Test floor_to with different target values."""
         assert floor_to(127, 5) == 125
         assert floor_to(129, 5) == 125
         assert floor_to(12.567, 0.01) == 12.56
 
+    @pytest.mark.timeout(10)
     def test_floor_to_edge_cases(self):
         """Test floor_to edge cases."""
         assert floor_to(0, 0.1) == 0
         assert floor_to(0.09, 0.1) == 0
         assert floor_to(-12.34, 0.1) == -12.4  # Floor of negative
 
+    @pytest.mark.timeout(10)
     def test_ceil_to_basic(self):
         """Test basic ceil_to functionality."""
         assert ceil_to(12.1, 0.1) == 12.1
         assert ceil_to(12.01, 0.1) == 12.1
         assert ceil_to(12.11, 0.1) == 12.2
 
+    @pytest.mark.timeout(10)
     def test_ceil_to_different_targets(self):
         """Test ceil_to with different target values."""
         assert ceil_to(123, 5) == 125
         assert ceil_to(121, 5) == 125
         assert ceil_to(12.561, 0.01) == 12.57
 
+    @pytest.mark.timeout(10)
     def test_ceil_to_edge_cases(self):
         """Test ceil_to edge cases."""
         assert ceil_to(0, 0.1) == 0
         assert ceil_to(0.01, 0.1) == 0.1
         assert ceil_to(-12.34, 0.1) == -12.3  # Ceil of negative
 
+    @pytest.mark.timeout(10)
     def test_get_digits_integers(self):
         """Test get_digits with integers."""
         assert get_digits(123) == 0
         assert get_digits(0) == 0
         assert get_digits(-456) == 0
 
+    @pytest.mark.timeout(10)
     def test_get_digits_decimals(self):
         """Test get_digits with decimal numbers."""
         assert get_digits(12.34) == 2
@@ -293,12 +324,14 @@ class TestMathematicalUtilities:
         assert get_digits(3.14159) == 5
         assert get_digits(-2.5) == 1
 
+    @pytest.mark.timeout(10)
     def test_get_digits_scientific_notation(self):
         """Test get_digits with scientific notation."""
         assert get_digits(1e-5) == 5  # 0.00001
         assert get_digits(2e-3) == 3  # 0.002
         assert get_digits(1.5e-4) == 5  # 0.00015
 
+    @pytest.mark.timeout(10)
     def test_get_digits_edge_cases(self):
         """Test get_digits edge cases."""
         assert get_digits(0.0) == 1  # "0.0"
@@ -339,6 +372,7 @@ class TestBarGenerator:
             volume=volume,
         )
 
+    @pytest.mark.timeout(10)
     def test_bar_generator_initialization(self):
         """Test BarGenerator initialization."""
         generator = BarGenerator(self.on_bar)
@@ -349,6 +383,7 @@ class TestBarGenerator:
         assert generator.window == 0
         assert generator.on_window_bar is None
 
+    @pytest.mark.timeout(10)
     def test_bar_generator_with_window(self):
         """Test BarGenerator initialization with window."""
         generator = BarGenerator(self.on_bar, window=5, on_window_bar=self.on_window_bar)
@@ -356,11 +391,13 @@ class TestBarGenerator:
         assert generator.window == 5
         assert generator.on_window_bar == self.on_window_bar
 
+    @pytest.mark.timeout(10)
     def test_bar_generator_daily_without_end_time(self):
         """Test BarGenerator daily interval requires end time."""
         with pytest.raises(RuntimeError, match="daily closing time"):
             BarGenerator(self.on_bar, interval=Interval.DAILY)
 
+    @pytest.mark.timeout(10)
     def test_bar_generator_daily_with_end_time(self):
         """Test BarGenerator daily interval with end time."""
         end_time = time(15, 0)
@@ -369,6 +406,7 @@ class TestBarGenerator:
         assert generator.daily_end == end_time
         assert generator.interval == Interval.DAILY
 
+    @pytest.mark.timeout(10)
     def test_update_tick_creates_first_bar(self):
         """Test updating tick creates first bar."""
         generator = BarGenerator(self.on_bar)
@@ -382,6 +420,7 @@ class TestBarGenerator:
         assert generator.bar.low_price == 100.0
         assert generator.bar.close_price == 100.0
 
+    @pytest.mark.timeout(10)
     def test_update_tick_filters_zero_price(self):
         """Test update_tick filters out zero last_price."""
         generator = BarGenerator(self.on_bar)
@@ -391,6 +430,7 @@ class TestBarGenerator:
 
         assert generator.bar is None
 
+    @pytest.mark.timeout(10)
     def test_update_tick_same_minute_updates_bar(self):
         """Test updating tick in same minute updates existing bar."""
         generator = BarGenerator(self.on_bar)
@@ -409,6 +449,7 @@ class TestBarGenerator:
         assert generator.bar.close_price == 102.0
         assert len(self.generated_bars) == 0  # No bar completed yet
 
+    @pytest.mark.timeout(10)
     def test_update_tick_new_minute_completes_bar(self):
         """Test updating tick in new minute completes previous bar."""
         generator = BarGenerator(self.on_bar)
@@ -429,6 +470,7 @@ class TestBarGenerator:
         # New bar should be created
         assert generator.bar.open_price == 101.0
 
+    @pytest.mark.timeout(10)
     def test_update_tick_volume_calculation(self):
         """Test volume calculation from tick updates."""
         generator = BarGenerator(self.on_bar)
@@ -444,6 +486,7 @@ class TestBarGenerator:
         # Volume change should be added
         assert generator.bar.volume == 500  # 1500 - 1000
 
+    @pytest.mark.timeout(10)
     def test_generate_method(self):
         """Test generate method."""
         generator = BarGenerator(self.on_bar)
@@ -456,6 +499,7 @@ class TestBarGenerator:
         assert len(self.generated_bars) == 1
         assert generator.bar is None  # Bar should be cleared
 
+    @pytest.mark.timeout(10)
     def test_generate_method_no_bar(self):
         """Test generate method with no current bar."""
         generator = BarGenerator(self.on_bar)
@@ -497,6 +541,7 @@ class TestArrayManager:
             open_interest=open_interest,
         )
 
+    @pytest.mark.timeout(10)
     def test_array_manager_initialization(self):
         """Test ArrayManager initialization."""
         am = ArrayManager(size=20)
@@ -511,11 +556,13 @@ class TestArrayManager:
         assert len(am.close_array) == 20
         assert np.all(am.open_array == 0)
 
+    @pytest.mark.timeout(10)
     def test_array_manager_default_size(self):
         """Test ArrayManager default size."""
         am = ArrayManager()
         assert am.size == 100
 
+    @pytest.mark.timeout(10)
     def test_update_bar_basic(self):
         """Test basic bar update."""
         bar = self.create_test_bar(open_price=100, close_price=105)
@@ -527,6 +574,7 @@ class TestArrayManager:
         assert self.array_manager.close_array[-1] == 105
         assert self.array_manager.inited is False  # Not enough data yet
 
+    @pytest.mark.timeout(10)
     def test_update_bar_multiple(self):
         """Test updating multiple bars."""
         for i in range(5):
@@ -537,6 +585,7 @@ class TestArrayManager:
         assert self.array_manager.close_array[-1] == 104  # Last bar
         assert self.array_manager.close_array[-5] == 100  # First bar
 
+    @pytest.mark.timeout(10)
     def test_array_manager_initialization_threshold(self):
         """Test ArrayManager initialization after reaching size."""
         # Fill to size
@@ -547,6 +596,7 @@ class TestArrayManager:
         assert self.array_manager.count == 10
         assert self.array_manager.inited is True
 
+    @pytest.mark.timeout(10)
     def test_array_manager_rolling_window(self):
         """Test ArrayManager rolling window behavior."""
         # Fill beyond size
@@ -558,6 +608,7 @@ class TestArrayManager:
         assert self.array_manager.close_array[-1] == 114  # Latest
         assert self.array_manager.close_array[0] == 105  # Oldest in window
 
+    @pytest.mark.timeout(10)
     def test_array_properties(self):
         """Test array property accessors."""
         bar = self.create_test_bar(
@@ -605,6 +656,7 @@ class TestTechnicalIndicators:
             self.array_manager.update_bar(bar)
 
     @patch("foxtrot.util.utility.talib")
+    @pytest.mark.timeout(10)
     def test_sma_indicator(self, mock_talib):
         """Test SMA (Simple Moving Average) indicator."""
         mock_talib.SMA.return_value = np.array([100, 100.5, 101, 101.5, 102])
@@ -618,6 +670,7 @@ class TestTechnicalIndicators:
         mock_talib.SMA.assert_called_with(self.array_manager.close, 5)
 
     @patch("foxtrot.util.utility.talib")
+    @pytest.mark.timeout(10)
     def test_rsi_indicator(self, mock_talib):
         """Test RSI (Relative Strength Index) indicator."""
         mock_talib.RSI.return_value = np.array([50, 55, 60, 65, 70])
@@ -628,6 +681,7 @@ class TestTechnicalIndicators:
         mock_talib.RSI.assert_called_with(self.array_manager.close, 14)
 
     @patch("foxtrot.util.utility.talib")
+    @pytest.mark.timeout(10)
     def test_macd_indicator(self, mock_talib):
         """Test MACD indicator."""
         mock_macd = np.array([1.0, 1.2, 1.5])
@@ -644,6 +698,7 @@ class TestTechnicalIndicators:
         mock_talib.MACD.assert_called_with(self.array_manager.close, 12, 26, 9)
 
     @patch("foxtrot.util.utility.talib")
+    @pytest.mark.timeout(10)
     def test_bollinger_bands(self, mock_talib):
         """Test Bollinger Bands calculation."""
         mock_talib.SMA.return_value = np.array([100, 101, 102])
@@ -660,26 +715,31 @@ class TestTechnicalIndicators:
 class TestVirtualDecorator:
     """Test virtual decorator function."""
 
+    @pytest.mark.timeout(10)
     def test_virtual_decorator_basic(self):
         """Test virtual decorator basic functionality."""
 
         @virtual
+        @pytest.mark.timeout(10)
         def test_function():
             return "test"
 
         assert test_function() == "test"
         assert callable(test_function)
 
+    @pytest.mark.timeout(10)
     def test_virtual_decorator_with_arguments(self):
         """Test virtual decorator with function arguments."""
 
         @virtual
+        @pytest.mark.timeout(10)
         def test_function_with_args(x, y=10):
             return x + y
 
         assert test_function_with_args(5) == 15
         assert test_function_with_args(5, y=20) == 25
 
+    @pytest.mark.timeout(10)
     def test_virtual_decorator_preserves_function(self):
         """Test virtual decorator preserves original function."""
 
@@ -693,6 +753,7 @@ class TestVirtualDecorator:
         assert decorated.__doc__ == "Original docstring."
         assert decorated() == "original"
 
+    @pytest.mark.timeout(10)
     def test_virtual_decorator_on_method(self):
         """Test virtual decorator on class methods."""
 
@@ -708,21 +769,25 @@ class TestVirtualDecorator:
 class TestUtilityEdgeCases:
     """Test edge cases and error conditions."""
 
+    @pytest.mark.timeout(10)
     def test_extract_vt_symbol_empty_string(self):
         """Test extract_vt_symbol with empty string."""
         with pytest.raises(ValueError):
             extract_vt_symbol("")
 
+    @pytest.mark.timeout(10)
     def test_extract_vt_symbol_no_dot(self):
         """Test extract_vt_symbol with no dot separator."""
         with pytest.raises(ValueError):
             extract_vt_symbol("SYMBOL")
 
+    @pytest.mark.timeout(10)
     def test_generate_vt_symbol_empty_symbol(self):
         """Test generate_vt_symbol with empty symbol."""
         result = generate_vt_symbol("", Exchange.NYSE)
         assert result == ".NYSE"
 
+    @pytest.mark.timeout(10)
     def test_mathematical_functions_with_zero(self):
         """Test mathematical functions with zero values."""
         assert round_to(0, 0.1) == 0
@@ -730,6 +795,7 @@ class TestUtilityEdgeCases:
         assert ceil_to(0, 0.1) == 0
         assert get_digits(0) == 0
 
+    @pytest.mark.timeout(10)
     def test_path_functions_integration(self):
         """Test path functions work together."""
         # This tests the actual path creation logic

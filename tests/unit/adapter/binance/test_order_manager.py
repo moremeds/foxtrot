@@ -6,6 +6,7 @@ cancellation, and status updates.
 """
 
 from unittest.mock import Mock
+import pytest
 
 from foxtrot.adapter.binance.order_manager import BinanceOrderManager
 from foxtrot.util.constants import Direction, Exchange, OrderType, Status
@@ -21,6 +22,7 @@ class TestBinanceOrderManager:
         self.mock_api_client.adapter_name = "TEST_BINANCE"
         self.order_manager = BinanceOrderManager(self.mock_api_client)
 
+    @pytest.mark.timeout(10)
     def test_initialization(self):
         """Test order manager initialization."""
         assert self.order_manager.api_client == self.mock_api_client
@@ -28,6 +30,7 @@ class TestBinanceOrderManager:
         assert self.order_manager._local_order_id == 0
         assert hasattr(self.order_manager, "_order_lock")
 
+    @pytest.mark.timeout(10)
     def test_send_order_success_limit(self):
         """Test successful limit order sending."""
         # Mock exchange
@@ -58,6 +61,7 @@ class TestBinanceOrderManager:
         assert order.type == OrderType.LIMIT
         assert order.status == Status.NOTTRADED
 
+    @pytest.mark.timeout(10)
     def test_send_order_success_market(self):
         """Test successful market order sending."""
         # Mock exchange
@@ -81,6 +85,7 @@ class TestBinanceOrderManager:
         assert result == "TEST_BINANCE_1"
         mock_exchange.create_market_order.assert_called_once_with("BTC/USDT", "sell", 0.001)
 
+    @pytest.mark.timeout(10)
     def test_send_order_no_exchange(self):
         """Test order sending when exchange is not connected."""
         self.mock_api_client.exchange = None
@@ -99,6 +104,7 @@ class TestBinanceOrderManager:
         assert result == ""
         self.mock_api_client._log_error.assert_called_with("Exchange not connected")
 
+    @pytest.mark.timeout(10)
     def test_send_order_invalid_symbol(self):
         """Test order sending with malformed symbol (no dot)."""
         self.mock_api_client.exchange = Mock()
@@ -117,6 +123,7 @@ class TestBinanceOrderManager:
         assert result == ""
         self.mock_api_client._log_error.assert_called_with("Invalid symbol: INVALID")
 
+    @pytest.mark.timeout(10)
     def test_send_order_exchange_exception(self):
         """Test order sending when exchange raises exception."""
         mock_exchange = Mock()
@@ -137,6 +144,7 @@ class TestBinanceOrderManager:
         assert result == ""
         self.mock_api_client._log_error.assert_called_with("Failed to send order: Network error")
 
+    @pytest.mark.timeout(10)
     def test_cancel_order_success(self):
         """Test successful order cancellation."""
         # First, add an order to track
@@ -169,6 +177,7 @@ class TestBinanceOrderManager:
         order = self.order_manager._orders[order_id]
         assert order.status == Status.CANCELLED
 
+    @pytest.mark.timeout(10)
     def test_cancel_order_not_found(self):
         """Test cancelling non-existent order."""
         self.mock_api_client.exchange = Mock()
@@ -181,6 +190,7 @@ class TestBinanceOrderManager:
         assert result is False
         self.mock_api_client._log_error.assert_called_with("Order not found: NONEXISTENT")
 
+    @pytest.mark.timeout(10)
     def test_cancel_order_no_exchange(self):
         """Test cancelling order when exchange is not connected."""
         self.mock_api_client.exchange = None
@@ -192,6 +202,7 @@ class TestBinanceOrderManager:
 
         assert result is False
 
+    @pytest.mark.timeout(10)
     def test_query_order_found(self):
         """Test querying existing order."""
         # Add an order first
@@ -216,42 +227,50 @@ class TestBinanceOrderManager:
         assert result.orderid == "12345"  # Exchange order ID
         assert result.symbol == "BTCUSDT.BINANCE"
 
+    @pytest.mark.timeout(10)
     def test_query_order_not_found(self):
         """Test querying non-existent order."""
         result = self.order_manager.query_order("NONEXISTENT")
         assert result is None
 
+    @pytest.mark.timeout(10)
     def test_convert_symbol_to_ccxt_usdt(self):
         """Test symbol conversion for USDT pairs."""
         result = self.order_manager._convert_symbol_to_ccxt("BTCUSDT.BINANCE")
         assert result == "BTC/USDT"
 
+    @pytest.mark.timeout(10)
     def test_convert_symbol_to_ccxt_btc(self):
         """Test symbol conversion for BTC pairs."""
         result = self.order_manager._convert_symbol_to_ccxt("ETHBTC.BINANCE")
         assert result == "ETH/BTC"
 
+    @pytest.mark.timeout(10)
     def test_convert_symbol_to_ccxt_eth(self):
         """Test symbol conversion for ETH pairs."""
         result = self.order_manager._convert_symbol_to_ccxt("ADAETH.BINANCE")
         assert result == "ADA/ETH"
 
+    @pytest.mark.timeout(10)
     def test_convert_symbol_to_ccxt_unknown(self):
         """Test symbol conversion for unknown format."""
         result = self.order_manager._convert_symbol_to_ccxt("UNKNOWN.BINANCE")
         assert result == "UNKNOWN/USDT"  # Default to USDT
 
+    @pytest.mark.timeout(10)
     def test_convert_symbol_to_ccxt_invalid(self):
         """Test symbol conversion for invalid format."""
         result = self.order_manager._convert_symbol_to_ccxt("INVALID")
         assert result == ""
 
+    @pytest.mark.timeout(10)
     def test_convert_order_type_to_ccxt(self):
         """Test order type conversion."""
         assert self.order_manager._convert_order_type_to_ccxt(OrderType.MARKET) == "market"
         assert self.order_manager._convert_order_type_to_ccxt(OrderType.LIMIT) == "limit"
         assert self.order_manager._convert_order_type_to_ccxt(OrderType.STOP) == "limit"  # Default
 
+    @pytest.mark.timeout(10)
     def test_convert_status_from_ccxt(self):
         """Test status conversion from CCXT."""
         assert self.order_manager._convert_status_from_ccxt("open") == Status.NOTTRADED

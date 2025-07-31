@@ -166,8 +166,7 @@ class BinanceMarketData:
             if not ticker:
                 return None
 
-            # Convert to TickData
-            tick = TickData(
+            return TickData(
                 adapter_name=self.api_client.adapter_name,
                 symbol=symbol,
                 exchange=Exchange.BINANCE,
@@ -189,8 +188,6 @@ class BinanceMarketData:
                 ask_price_1=ticker.get("ask", 0),
                 ask_volume_1=0,  # Would need order book data
             )
-
-            return tick
 
         except Exception as e:
             self.api_client._log_error(f"Failed to fetch tick data for {symbol}: {str(e)}")
