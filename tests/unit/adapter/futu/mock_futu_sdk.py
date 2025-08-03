@@ -9,11 +9,7 @@ from datetime import datetime
 import time
 from typing import Any
 
-
 # Mock Futu SDK constants and enums
-class RET_OK:
-    pass
-
 RET_OK = 0
 RET_ERROR = -1
 
@@ -131,6 +127,12 @@ class MockOpenQuoteContext:
     def close(self) -> None:
         """Mock connection close."""
         self.connected = False
+
+    def get_global_state(self) -> tuple[int, str]:
+        """Mock global state query."""
+        if self.connected:
+            return (RET_OK, "Connected")
+        return (RET_ERROR, "Not connected")
 
     def set_handler(self, handler: StockQuoteHandlerBase) -> None:
         """Mock handler setting."""
@@ -354,6 +356,20 @@ class MockOpenHKTradeContext:
         ]
         return (RET_OK, mock_positions)
 
+    def get_acc_list(self) -> tuple[int, list[dict[str, Any]]]:
+        """Mock account list query for health monitoring."""
+        if not self.connected:
+            return (RET_ERROR, "Not connected")
+
+        mock_acc_list = [
+            {
+                "acc_id": "HK123456",
+                "trd_env": TrdEnv.SIMULATE,
+                "acc_type": "MARGIN",
+            }
+        ]
+        return (RET_OK, mock_acc_list)
+
     def simulate_order_callback(self, order_id: str, status: str = OrderStatus.FILLED_ALL) -> None:
         """Simulate order status callback for testing."""
         if self.trade_handler and order_id in self.orders:
@@ -409,8 +425,23 @@ class MockOpenUSTradeContext(MockOpenHKTradeContext):
         ]
         return (RET_OK, mock_positions)
 
+    def get_acc_list(self) -> tuple[int, list[dict[str, Any]]]:
+        """Mock account list query for health monitoring."""
+        if not self.connected:
+            return (RET_ERROR, "Not connected")
+
+        mock_acc_list = [
+            {
+                "acc_id": "US123456",
+                "trd_env": TrdEnv.SIMULATE,
+                "acc_type": "CASH",
+            }
+        ]
+        return (RET_OK, mock_acc_list)
+
 
 # Factory functions for creating mock contexts
+# ruff: noqa: N802 - Function names must match Futu SDK API exactly
 def OpenQuoteContext(host: str = "127.0.0.1", port: int = 11111) -> MockOpenQuoteContext:
     """Factory function for mock quote context."""
     return MockOpenQuoteContext(host, port)

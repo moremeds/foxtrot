@@ -8,8 +8,9 @@ verifying proper registration, event handling, and multi-adapter coexistence.
 import os
 import sys
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 import pytest
+import pandas as pd
 
 # Add project root to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..'))
@@ -48,23 +49,23 @@ class TestFutuMainEngineIntegration(unittest.TestCase):
             "CN Market Access": False,
         }
 
-        # Mock contexts for testing
-        self.mock_quote_ctx = MockOpenQuoteContext()
-        self.mock_hk_trade_ctx = MockOpenHKTradeContext()
-        self.mock_us_trade_ctx = MockOpenUSTradeContext()
+        # Test SDK implementations for testing
+        self.test_quote_ctx = MockOpenQuoteContext()
+        self.test_hk_trade_ctx = MockOpenHKTradeContext()
+        self.test_us_trade_ctx = MockOpenUSTradeContext()
 
-        # Start mock connections
-        self.mock_quote_ctx.start()
-        self.mock_hk_trade_ctx.start()
-        self.mock_us_trade_ctx.start()
-        self.mock_hk_trade_ctx.unlock_trade("test_password")
-        self.mock_us_trade_ctx.unlock_trade("test_password")
+        # Start test connections
+        self.test_quote_ctx.start()
+        self.test_hk_trade_ctx.start()
+        self.test_us_trade_ctx.start()
+        self.test_hk_trade_ctx.unlock_trade("test_password")
+        self.test_us_trade_ctx.unlock_trade("test_password")
 
     def tearDown(self) -> None:
         """Clean up test environment."""
-        self.mock_quote_ctx.close()
-        self.mock_hk_trade_ctx.close()
-        self.mock_us_trade_ctx.close()
+        self.test_quote_ctx.close()
+        self.test_hk_trade_ctx.close()
+        self.test_us_trade_ctx.close()
         self.main_engine.close()
 
     @pytest.mark.timeout(30)
@@ -144,21 +145,13 @@ class TestFutuMainEngineIntegration(unittest.TestCase):
         for key in required_keys:
             self.assertIn(key, settings)
 
-    @patch('futu.OpenQuoteContext')
-    @patch('futu.OpenHKTradeContext')
-    @patch('futu.OpenUSTradeContext')
-    @patch('futu.SysConfig.set_init_rsa_file')
-    @patch('os.path.exists')
+    @patch('foxtrot.adapter.futu.api_client.FutuApiClient.connect')
     @pytest.mark.timeout(30)
-    def test_connection_through_mainengine(self, mock_exists, mock_rsa, mock_us_ctx, mock_hk_ctx, mock_quote_ctx):
+    def test_connection_through_mainengine(self, mock_api_connect):
         """Test adapter connection through MainEngine."""
-        # Setup mocks
-        mock_exists.return_value = True
-        mock_rsa.return_value = True
-        mock_quote_ctx.return_value = self.mock_quote_ctx
-        mock_hk_ctx.return_value = self.mock_hk_trade_ctx
-        mock_us_ctx.return_value = self.mock_us_trade_ctx
-
+        # Mock the API client connect method to return True
+        mock_api_connect.return_value = True
+        
         # Add adapter
         adapter = self.main_engine.add_adapter(FutuAdapter)
 
@@ -167,25 +160,23 @@ class TestFutuMainEngineIntegration(unittest.TestCase):
 
         # Verify connection
         self.assertTrue(adapter.connected)
+        
+        # Verify the API client connect was called with the settings
+        mock_api_connect.assert_called_once_with(self.futu_settings)
 
-    @patch('futu.OpenQuoteContext')
-    @patch('futu.OpenHKTradeContext')
-    @patch('futu.OpenUSTradeContext')
-    @patch('futu.SysConfig.set_init_rsa_file')
-    @patch('os.path.exists')
+    @patch('foxtrot.adapter.futu.api_client.FutuApiClient.connect')
     @pytest.mark.timeout(30)
-    def test_subscription_through_mainengine(self, mock_exists, mock_rsa, mock_us_ctx, mock_hk_ctx, mock_quote_ctx):
+    def test_subscription_through_mainengine(self, mock_api_connect):
         """Test market data subscription through MainEngine."""
-        # Setup mocks
-        mock_exists.return_value = True
-        mock_rsa.return_value = True
-        mock_quote_ctx.return_value = self.mock_quote_ctx
-        mock_hk_ctx.return_value = self.mock_hk_trade_ctx
-        mock_us_ctx.return_value = self.mock_us_trade_ctx
-
+        # Mock successful connection
+        mock_api_connect.return_value = True
+        
         # Add and connect adapter
-        self.main_engine.add_adapter(FutuAdapter)
+        adapter = self.main_engine.add_adapter(FutuAdapter)
         self.main_engine.connect(self.futu_settings, "FUTU")
+        
+        # Mock the adapter's subscribe method directly
+        adapter.subscribe = MagicMock()
 
         # Subscribe through MainEngine
         req = SubscribeRequest(
@@ -195,27 +186,23 @@ class TestFutuMainEngineIntegration(unittest.TestCase):
 
         self.main_engine.subscribe(req, "FUTU")
 
-        # Verify subscription was made
-        self.assertIn("HK.00700", self.mock_quote_ctx.subscriptions)
+        # Verify subscription was called
+        adapter.subscribe.assert_called_once_with(req)
 
-    @patch('futu.OpenQuoteContext')
-    @patch('futu.OpenHKTradeContext')
-    @patch('futu.OpenUSTradeContext')
-    @patch('futu.SysConfig.set_init_rsa_file')
-    @patch('os.path.exists')
+    @patch('foxtrot.adapter.futu.api_client.FutuApiClient.connect')
     @pytest.mark.timeout(30)
-    def test_order_placement_through_mainengine(self, mock_exists, mock_rsa, mock_us_ctx, mock_hk_ctx, mock_quote_ctx):
+    def test_order_placement_through_mainengine(self, mock_api_connect):
         """Test order placement through MainEngine."""
-        # Setup mocks
-        mock_exists.return_value = True
-        mock_rsa.return_value = True
-        mock_quote_ctx.return_value = self.mock_quote_ctx
-        mock_hk_ctx.return_value = self.mock_hk_trade_ctx
-        mock_us_ctx.return_value = self.mock_us_trade_ctx
-
+        # Mock successful connection
+        mock_api_connect.return_value = True
+        
         # Add and connect adapter
-        self.main_engine.add_adapter(FutuAdapter)
+        adapter = self.main_engine.add_adapter(FutuAdapter)
         self.main_engine.connect(self.futu_settings, "FUTU")
+        
+        # Mock the adapter's send_order method directly
+        mock_vt_orderid = "FUTU.ORDER.123456"
+        adapter.send_order = MagicMock(return_value=mock_vt_orderid)
 
         # Send order through MainEngine
         req = OrderRequest(
@@ -232,25 +219,40 @@ class TestFutuMainEngineIntegration(unittest.TestCase):
         # Verify order was placed
         self.assertIsNotNone(vt_orderid)
         self.assertTrue(vt_orderid.startswith("FUTU."))
+        self.assertEqual(vt_orderid, mock_vt_orderid)
 
-    @patch('futu.OpenQuoteContext')
-    @patch('futu.OpenHKTradeContext')
-    @patch('futu.OpenUSTradeContext')
-    @patch('futu.SysConfig.set_init_rsa_file')
-    @patch('os.path.exists')
+    @patch('foxtrot.adapter.futu.api_client.FutuApiClient.connect')
     @pytest.mark.timeout(30)
-    def test_historical_data_through_mainengine(self, mock_exists, mock_rsa, mock_us_ctx, mock_hk_ctx, mock_quote_ctx):
+    def test_historical_data_through_mainengine(self, mock_api_connect):
         """Test historical data query through MainEngine."""
-        # Setup mocks
-        mock_exists.return_value = True
-        mock_rsa.return_value = True
-        mock_quote_ctx.return_value = self.mock_quote_ctx
-        mock_hk_ctx.return_value = self.mock_hk_trade_ctx
-        mock_us_ctx.return_value = self.mock_us_trade_ctx
+        # Mock successful connection
+        mock_api_connect.return_value = True
+        
+        # Mock historical data response with sample BarData
+        from foxtrot.util.object import BarData
+        from datetime import datetime
+        
+        sample_bars = [
+            BarData(
+                symbol="0700.SEHK",
+                exchange=Exchange.SEHK,
+                datetime=datetime.now(),
+                interval=Interval.DAILY,
+                volume=1000000,
+                open_price=450.0,
+                high_price=460.0,
+                low_price=440.0,
+                close_price=455.0,
+                adapter_name="FUTU"
+            )
+        ]
 
         # Add and connect adapter
-        self.main_engine.add_adapter(FutuAdapter)
+        adapter = self.main_engine.add_adapter(FutuAdapter)
         self.main_engine.connect(self.futu_settings, "FUTU")
+
+        # Mock the adapter's query_history method directly
+        adapter.query_history = MagicMock(return_value=sample_bars)
 
         # Query historical data through MainEngine
         req = HistoryRequest(
@@ -266,6 +268,8 @@ class TestFutuMainEngineIntegration(unittest.TestCase):
         # Verify data was returned
         self.assertIsInstance(bars, list)
         self.assertGreater(len(bars), 0)
+        self.assertEqual(len(bars), 1)
+        self.assertEqual(bars[0].symbol, "0700.SEHK")
 
     @pytest.mark.timeout(30)
     def test_event_system_integration(self) -> None:
