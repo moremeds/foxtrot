@@ -76,7 +76,7 @@ async def quick_integration_test():
 
         # Test 7: Test dialog system
         print("7. Testing dialog system...")
-        from foxtrot.app.tui.dialogs.modal import ModalManager
+        from foxtrot.app.tui.components.dialogs.modal import ModalManager
         modal_manager = ModalManager()
         assert modal_manager is not None
         print("   ✓ Dialog system available")
@@ -136,11 +136,11 @@ def test_entry_points():
         else:
             print("   ⚠ Shell launcher script not found")
 
-        python_launcher = Path("scripts/run_foxtrot_tui.py")
+        python_launcher = Path("run_tui.py")
         if python_launcher.exists():
-            print("   ✓ Python launcher script exists")
+            print("   ✓ Main TUI script exists")
         else:
-            print("   ⚠ Python launcher script not found")
+            print("   ⚠ Main TUI script not found")
 
         print("\n✅ Entry point test completed")
         return True

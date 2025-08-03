@@ -5,9 +5,10 @@ This module tests the main adapter interface using mock SDK classes.
 """
 
 import pytest
+import pandas as pd
 
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 from foxtrot.adapter.futu import FutuAdapter
 from foxtrot.core.event_engine import EventEngine
@@ -86,9 +87,11 @@ class TestFutuAdapter(unittest.TestCase, MockFutuTestCase):
         mock_hk_ctx.return_value = self.mock_hk_trade_ctx
         mock_us_ctx.return_value = self.mock_us_trade_ctx
 
-        # Test connection
-        self.adapter.connect(self.test_settings)
-        self.assertTrue(self.adapter.connected)
+        # Mock the API client's connect method to return True
+        with patch.object(self.adapter.api_client, 'connect', return_value=True):
+            # Test connection
+            self.adapter.connect(self.test_settings)
+            self.assertTrue(self.adapter.connected)
 
     @patch('futu.OpenQuoteContext')
     @patch('os.path.exists')
@@ -117,19 +120,25 @@ class TestFutuAdapter(unittest.TestCase, MockFutuTestCase):
         mock_hk_ctx.return_value = self.mock_hk_trade_ctx
         mock_us_ctx.return_value = self.mock_us_trade_ctx
 
-        # Connect first
-        self.adapter.connect(self.test_settings)
+        # Mock the API client's connect method to return True
+        with patch.object(self.adapter.api_client, 'connect', return_value=True):
+            # Connect first
+            self.adapter.connect(self.test_settings)
 
-        # Test subscription
-        req = SubscribeRequest(
-            symbol="0700",
-            exchange=Exchange.SEHK
-        )
+            # Mock market data manager to return success
+            with patch.object(self.adapter.api_client, 'market_data') as mock_market_data:
+                mock_market_data.subscribe.return_value = True
+                
+                # Test subscription
+                req = SubscribeRequest(
+                    symbol="0700",
+                    exchange=Exchange.SEHK
+                )
 
-        self.adapter.subscribe(req)
+                self.adapter.subscribe(req)
 
-        # Verify subscription was made
-        self.assertIn("HK.00700", self.mock_quote_ctx.subscriptions)
+                # Verify subscription was made
+                mock_market_data.subscribe.assert_called_once()
 
     @patch('futu.OpenQuoteContext')
     @patch('futu.OpenHKTradeContext')
@@ -146,23 +155,29 @@ class TestFutuAdapter(unittest.TestCase, MockFutuTestCase):
         mock_hk_ctx.return_value = self.mock_hk_trade_ctx
         mock_us_ctx.return_value = self.mock_us_trade_ctx
 
-        # Connect first
-        self.adapter.connect(self.test_settings)
+        # Mock the API client's connect method to return True
+        with patch.object(self.adapter.api_client, 'connect', return_value=True):
+            # Connect first
+            self.adapter.connect(self.test_settings)
 
-        # Test order placement
-        req = OrderRequest(
-            symbol="0700",
-            exchange=Exchange.SEHK,
-            direction=Direction.LONG,
-            type=OrderType.LIMIT,
-            volume=100,
-            price=450.0
-        )
+            # Mock order manager to return a valid order ID
+            with patch.object(self.adapter.api_client, 'order_manager') as mock_order_manager:
+                mock_order_manager.send_order.return_value = "FUTU.HK.12345"
+                
+                # Test order placement
+                req = OrderRequest(
+                    symbol="0700",
+                    exchange=Exchange.SEHK,
+                    direction=Direction.LONG,
+                    type=OrderType.LIMIT,
+                    volume=100,
+                    price=450.0
+                )
 
-        vt_orderid = self.adapter.send_order(req)
-        self.assertIsNotNone(vt_orderid)
-        self.assertNotEqual(vt_orderid, "")
-        self.assertTrue(vt_orderid.startswith("FUTU."))
+                vt_orderid = self.adapter.send_order(req)
+                self.assertIsNotNone(vt_orderid)
+                self.assertNotEqual(vt_orderid, "")
+                self.assertTrue(vt_orderid.startswith("FUTU."))
 
     @patch('futu.OpenQuoteContext')
     @patch('futu.OpenHKTradeContext')
@@ -179,12 +194,20 @@ class TestFutuAdapter(unittest.TestCase, MockFutuTestCase):
         mock_hk_ctx.return_value = self.mock_hk_trade_ctx
         mock_us_ctx.return_value = self.mock_us_trade_ctx
 
-        # Connect first
-        self.adapter.connect(self.test_settings)
+        # Mock the API client's connect method to return True
+        with patch.object(self.adapter.api_client, 'connect', return_value=True):
+            # Connect first
+            self.adapter.connect(self.test_settings)
 
-        # Test account query (should not raise exception)
-        self.adapter.query_account()
-        self.adapter.query_position()
+            # Mock account manager
+            with patch.object(self.adapter.api_client, 'account_manager') as mock_account_manager:
+                # Test account query (should not raise exception)
+                self.adapter.query_account()
+                self.adapter.query_position()
+                
+                # Verify methods were called
+                mock_account_manager.query_account.assert_called_once()
+                mock_account_manager.query_position.assert_called_once()
 
     @patch('futu.OpenQuoteContext')
     @patch('futu.OpenHKTradeContext')
@@ -200,23 +223,32 @@ class TestFutuAdapter(unittest.TestCase, MockFutuTestCase):
         mock_quote_ctx.return_value = self.mock_quote_ctx
         mock_hk_ctx.return_value = self.mock_hk_trade_ctx
         mock_us_ctx.return_value = self.mock_us_trade_ctx
+        
+        # Mock the API client's connect method to return True
+        with patch.object(self.adapter.api_client, 'connect', return_value=True):
+            # Connect first
+            self.adapter.connect(self.test_settings)
 
-        # Connect first
-        self.adapter.connect(self.test_settings)
+            # Mock historical data manager to return some data
+            with patch.object(self.adapter.api_client, 'historical_data') as mock_historical_data:
+                mock_historical_data.query_history.return_value = [
+                    MagicMock(),  # Mock BarData object
+                    MagicMock()   # Mock BarData object
+                ]
+                
+                # Test historical data query
+                req = HistoryRequest(
+                    symbol="0700",
+                    exchange=Exchange.SEHK,
+                    start=None,  # Will use default
+                    end=None,    # Will use default
+                    interval=Interval.DAILY
+                )
 
-        # Test historical data query
-        req = HistoryRequest(
-            symbol="0700",
-            exchange=Exchange.SEHK,
-            start=None,  # Will use default
-            end=None,    # Will use default
-            interval=Interval.DAILY
-        )
-
-        bars = self.adapter.query_history(req)
-        self.assertIsInstance(bars, list)
-        # Should get some mock data
-        self.assertGreater(len(bars), 0)
+                bars = self.adapter.query_history(req)
+                self.assertIsInstance(bars, list)
+                # Should get some mock data
+                self.assertGreater(len(bars), 0)
 
     @pytest.mark.timeout(10)
     def test_connection_status(self) -> None:

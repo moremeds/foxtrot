@@ -146,9 +146,9 @@ class TestFutuApiClient(unittest.TestCase, MockFutuTestCase):
         # Get health status
         health = self.api_client.get_connection_health()
         self.assertIsInstance(health, dict)
-        self.assertIn("quote_connected", health)
-        self.assertIn("hk_trade_connected", health)
-        self.assertIn("us_trade_connected", health)
+        self.assertIn("quote_context_healthy", health)
+        self.assertIn("hk_trade_context_healthy", health)
+        self.assertIn("us_trade_context_healthy", health)
 
     @patch('futu.OpenQuoteContext')
     @patch('futu.OpenHKTradeContext')
@@ -205,7 +205,8 @@ class TestFutuApiClient(unittest.TestCase, MockFutuTestCase):
         status = self.api_client.get_opend_status()
         self.assertTrue(status["connected"])
         self.assertIn("quote_context", status)
-        self.assertIn("trade_contexts", status)
+        self.assertIn("hk_trade_context", status)
+        self.assertIn("us_trade_context", status)
 
     @pytest.mark.timeout(10)
     def test_logging_integration(self) -> None:
@@ -220,7 +221,7 @@ class TestFutuApiClient(unittest.TestCase, MockFutuTestCase):
 
         # Test error logging
         self.api_client._log_error("Test error message")
-        mock_adapter.write_log.assert_called_with("Test error message")
+        mock_adapter.write_log.assert_called_with("ERROR: Test error message")
 
 
 if __name__ == '__main__':

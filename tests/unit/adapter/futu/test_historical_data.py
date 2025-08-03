@@ -29,6 +29,7 @@ class TestFutuHistoricalData(unittest.TestCase, MockFutuTestCase):
         self.api_client = MagicMock(spec=FutuApiClient)
         self.api_client.adapter_name = "FUTU"
         self.api_client.quote_ctx = self.mock_quote_ctx
+        self.mock_quote_ctx.get_cur_kline = MagicMock()
 
         # Create historical data manager
         self.historical_data = FutuHistoricalData(self.api_client)
@@ -105,9 +106,9 @@ class TestFutuHistoricalData(unittest.TestCase, MockFutuTestCase):
         # Verify SDK was called correctly
         self.mock_quote_ctx.get_cur_kline.assert_called_once_with(
             code="HK.00700",
-            num=1000,
+            num=252,
             kl_type=KLType.K_DAY,
-            autype=AuType.QFQ
+            autype='qfq'
         )
 
     @pytest.mark.timeout(10)
@@ -148,9 +149,9 @@ class TestFutuHistoricalData(unittest.TestCase, MockFutuTestCase):
         # Verify SDK was called with hourly interval
         self.mock_quote_ctx.get_cur_kline.assert_called_once_with(
             code="US.AAPL",
-            num=1000,
+            num=168,
             kl_type=KLType.K_60M,
-            autype=AuType.QFQ
+            autype='qfq'
         )
 
     @pytest.mark.timeout(10)
@@ -191,9 +192,9 @@ class TestFutuHistoricalData(unittest.TestCase, MockFutuTestCase):
         # Verify SDK was called with minute interval
         self.mock_quote_ctx.get_cur_kline.assert_called_once_with(
             code="CN.000001",
-            num=1000,
+            num=1440,
             kl_type=KLType.K_1M,
-            autype=AuType.QFQ
+            autype='qfq'
         )
 
     @pytest.mark.timeout(10)
@@ -215,9 +216,9 @@ class TestFutuHistoricalData(unittest.TestCase, MockFutuTestCase):
         # Verify weekly interval was converted correctly
         self.mock_quote_ctx.get_cur_kline.assert_called_once_with(
             code="HK.00700",
-            num=1000,
+            num=104,
             kl_type=KLType.K_WEEK,
-            autype=AuType.QFQ
+            autype='qfq'
         )
 
     @pytest.mark.timeout(10)

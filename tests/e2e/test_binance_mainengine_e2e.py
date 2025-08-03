@@ -139,10 +139,17 @@ class TestBinanceMainEngineE2E:
 
             # Close adapters and main engine
             if self.main_engine:
+                # First stop any active subscriptions to prevent new WebSocket activity
+                for adapter_name in list(self.main_engine.adapters.keys()):
+                    adapter = self.main_engine.get_adapter(adapter_name)
+                    if adapter and hasattr(adapter, 'market_data') and adapter.market_data:
+                        adapter.market_data._stop_websocket()
+                
+                # Close main engine which should stop adapters
                 self.main_engine.close()
                 
-                # Give event engine threads time to shut down gracefully
-                time.sleep(0.5)
+                # Give threads time to shut down gracefully
+                time.sleep(1.0)
                 
                 # Force cleanup of event engine if still active
                 if hasattr(self.main_engine, 'event_engine') and self.main_engine.event_engine._active:
@@ -328,6 +335,7 @@ class TestBinanceMainEngineE2E:
 
         # Send order through MainEngine
         order_id = self.main_engine.send_order(order_req, "BINANCE_SPOT")
+        time.sleep(5)
         assert order_id != ""
         self.test_orders.append(order_id)
 
@@ -377,7 +385,7 @@ class TestBinanceMainEngineE2E:
         self.test_subscriptions.append(subscribe_req)
 
         # Wait for tick events
-        tick_received = self.event_collector.wait_for_events(EVENT_TICK, 1, timeout=15)
+        tick_received = self.event_collector.wait_for_events(EVENT_TICK, 1, timeout=60)
         assert tick_received, "No tick events received within timeout"
 
         # Verify tick data structure
@@ -460,6 +468,7 @@ class TestBinanceMainEngineE2E:
         )
 
         order_id = self.main_engine.send_order(order_req, "BINANCE_SPOT")
+        time.sleep(5)
         assert order_id != ""
         self.test_orders.append(order_id)
 

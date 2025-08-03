@@ -213,7 +213,7 @@ class TestEventTypeConstants:
         import foxtrot.util.event_type as event_type_module
 
         event_constants = [attr for attr in dir(event_type_module) if attr.startswith("EVENT_")]
-        assert len(event_constants) == 9
+        assert len(event_constants) == 13
 
     @pytest.mark.timeout(10)
     def test_constants_naming_convention(self):

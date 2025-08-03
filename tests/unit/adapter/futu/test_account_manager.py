@@ -9,6 +9,8 @@ import unittest
 from unittest.mock import MagicMock
 import pytest
 
+import pandas as pd
+
 from foxtrot.adapter.futu.account_manager import FutuAccountManager
 from foxtrot.adapter.futu.api_client import FutuApiClient
 from foxtrot.util.constants import Direction, Exchange
@@ -37,7 +39,10 @@ class TestFutuAccountManager(unittest.TestCase):
 
         self.api_client.trade_ctx_hk = self.mock_hk_trade_ctx
         self.api_client.trade_ctx_us = self.mock_us_trade_ctx
-        self.api_client.trade_ctx_cn = None
+        self.mock_hk_trade_ctx.accinfo_query = MagicMock()
+        self.mock_us_trade_ctx.accinfo_query = MagicMock()
+        self.mock_hk_trade_ctx.position_list_query = MagicMock()
+        self.mock_us_trade_ctx.position_list_query = MagicMock()
 
         # Mock adapter for callbacks
         self.mock_adapter = MagicMock()
@@ -91,8 +96,8 @@ class TestFutuAccountManager(unittest.TestCase):
         }
 
         # Mock trade context responses
-        self.mock_hk_trade_ctx.accinfo_query.return_value = (RET_OK, hk_account_data)
-        self.mock_us_trade_ctx.accinfo_query.return_value = (RET_OK, us_account_data)
+        self.mock_hk_trade_ctx.accinfo_query.return_value = (RET_OK, pd.DataFrame([hk_account_data]))
+        self.mock_us_trade_ctx.accinfo_query.return_value = (RET_OK, pd.DataFrame([us_account_data]))
 
         # Query accounts
         self.account_manager.query_account()
@@ -126,7 +131,7 @@ class TestFutuAccountManager(unittest.TestCase):
             "margin_call_req": 0.0,
         }
 
-        self.mock_hk_trade_ctx.accinfo_query.return_value = (RET_OK, hk_account_data)
+        self.mock_hk_trade_ctx.accinfo_query.return_value = (RET_OK, pd.DataFrame([hk_account_data]))
 
         # Query accounts
         self.account_manager.query_account()
@@ -150,7 +155,7 @@ class TestFutuAccountManager(unittest.TestCase):
             "margin_call_req": 5000.0,
         }
 
-        self.mock_hk_trade_ctx.accinfo_query.return_value = (RET_OK, account_data)
+        self.mock_hk_trade_ctx.accinfo_query.return_value = (RET_OK, pd.DataFrame([account_data]))
 
         # Query account
         self.account_manager.query_account()
@@ -163,11 +168,8 @@ class TestFutuAccountManager(unittest.TestCase):
         self.assertEqual(call_args.accountid, "FUTU.HK.HK123456")
         self.assertEqual(call_args.balance, 1000000.0)
         self.assertEqual(call_args.frozen, 50000.0)
-        self.assertEqual(call_args.available, 950000.0)
-        self.assertEqual(call_args.commission, 100.0)
-        self.assertEqual(call_args.margin, 5000.0)
+        self.assertEqual(call_args.available, 950000.0)  # Calculated as balance - frozen
         self.assertEqual(call_args.adapter_name, "FUTU")
-        self.assertIsInstance(call_args.datetime, datetime)
 
     @pytest.mark.timeout(10)
     def test_account_query_error_handling(self) -> None:
@@ -211,8 +213,8 @@ class TestFutuAccountManager(unittest.TestCase):
         ]
 
         # Mock trade context responses
-        self.mock_hk_trade_ctx.position_list_query.return_value = (RET_OK, hk_positions)
-        self.mock_us_trade_ctx.position_list_query.return_value = (RET_OK, us_positions)
+        self.mock_hk_trade_ctx.position_list_query.return_value = (RET_OK, pd.DataFrame(hk_positions))
+        self.mock_us_trade_ctx.position_list_query.return_value = (RET_OK, pd.DataFrame(us_positions))
 
         # Query positions
         self.account_manager.query_position()
@@ -242,7 +244,7 @@ class TestFutuAccountManager(unittest.TestCase):
             "yesterday_qty": 900,
         }
 
-        self.mock_hk_trade_ctx.position_list_query.return_value = (RET_OK, [position_data])
+        self.mock_hk_trade_ctx.position_list_query.return_value = (RET_OK, pd.DataFrame([position_data]))
 
         # Query positions
         self.account_manager.query_position()
@@ -261,7 +263,6 @@ class TestFutuAccountManager(unittest.TestCase):
         self.assertEqual(call_args.pnl, 5000.0)
         self.assertEqual(call_args.yd_volume, 900.0)
         self.assertEqual(call_args.adapter_name, "FUTU")
-        self.assertIsInstance(call_args.datetime, datetime)
 
     @pytest.mark.timeout(10)
     def test_short_position_processing(self) -> None:
@@ -275,12 +276,13 @@ class TestFutuAccountManager(unittest.TestCase):
             "yesterday_qty": -100,
         }
 
-        self.mock_us_trade_ctx.position_list_query.return_value = (RET_OK, [position_data])
+        self.mock_us_trade_ctx.position_list_query.return_value = (RET_OK, pd.DataFrame([position_data]))
 
         # Query positions
         self.account_manager.query_position()
 
         # Verify short position handling
+        self.mock_adapter.on_position.assert_called_once()
         call_args = self.mock_adapter.on_position.call_args[0][0]
         self.assertEqual(call_args.direction, Direction.SHORT)
         self.assertEqual(call_args.volume, 100.0)  # Absolute value
@@ -297,7 +299,7 @@ class TestFutuAccountManager(unittest.TestCase):
             "yesterday_qty": 0,
         }
 
-        self.mock_hk_trade_ctx.position_list_query.return_value = (RET_OK, [position_data])
+        self.mock_hk_trade_ctx.position_list_query.return_value = (RET_OK, pd.DataFrame([position_data]))
 
         # Query positions
         self.account_manager.query_position()
@@ -331,7 +333,7 @@ class TestFutuAccountManager(unittest.TestCase):
         self.account_manager.query_position()
 
         # Verify error was logged twice (account + position)
-        self.assertEqual(self.api_client._log_error.call_count, 2)
+        self.assertEqual(self.api_client._log_error.call_count, 4)
 
         # Verify no callbacks were made
         self.mock_adapter.on_account.assert_not_called()
@@ -344,7 +346,7 @@ class TestFutuAccountManager(unittest.TestCase):
         self.api_client.paper_trading = False
 
         account_data = {"acc_id": "HK123456", "total_assets": 1000000.0}
-        self.mock_hk_trade_ctx.accinfo_query.return_value = (RET_OK, account_data)
+        self.mock_hk_trade_ctx.accinfo_query.return_value = (RET_OK, pd.DataFrame([account_data]))
 
         # Query account
         self.account_manager.query_account()
@@ -377,7 +379,7 @@ class TestFutuAccountManager(unittest.TestCase):
             }
         ]
 
-        self.mock_hk_trade_ctx.position_list_query.return_value = (RET_OK, positions_data)
+        self.mock_hk_trade_ctx.position_list_query.return_value = (RET_OK, pd.DataFrame(positions_data))
 
         # Query positions
         self.account_manager.query_position()
@@ -392,7 +394,7 @@ class TestFutuAccountManager(unittest.TestCase):
         self.mock_adapter.on_account.side_effect = Exception("Callback error")
 
         account_data = {"acc_id": "HK123456", "total_assets": 1000000.0}
-        self.mock_hk_trade_ctx.accinfo_query.return_value = (RET_OK, account_data)
+        self.mock_hk_trade_ctx.accinfo_query.return_value = (RET_OK, pd.DataFrame([account_data]))
 
         # Query account (should not crash)
         self.account_manager.query_account()

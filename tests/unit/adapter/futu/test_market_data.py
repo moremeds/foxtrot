@@ -28,6 +28,8 @@ class TestFutuMarketData(unittest.TestCase, MockFutuTestCase):
         self.api_client = MagicMock(spec=FutuApiClient)
         self.api_client.adapter_name = "FUTU"
         self.api_client.quote_ctx = self.mock_quote_ctx
+        self.mock_quote_ctx.subscribe = MagicMock()
+        self.mock_quote_ctx.unsubscribe = MagicMock()
 
         # Create market data manager
         self.market_data = FutuMarketData(self.api_client)

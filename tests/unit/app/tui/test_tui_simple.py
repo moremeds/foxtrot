@@ -213,7 +213,7 @@ def test_entry_points():
 
         # Test launcher scripts exist
         launcher_script = Path("scripts/foxtrot-tui")
-        python_launcher = Path("scripts/run_foxtrot_tui.py")
+        python_launcher = Path("run_tui.py")
 
         if launcher_script.exists():
             print("   ✓ Shell launcher script available")
@@ -221,9 +221,9 @@ def test_entry_points():
             print("   ⚠ Shell launcher script not found")
 
         if python_launcher.exists():
-            print("   ✓ Python launcher script available")
+            print("   ✓ Main TUI script available")
         else:
-            print("   ⚠ Python launcher script not found")
+            print("   ⚠ Main TUI script not found")
 
         print("   ✓ Entry points working")
         return True

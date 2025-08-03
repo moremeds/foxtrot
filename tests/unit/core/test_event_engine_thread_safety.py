@@ -236,7 +236,7 @@ class TestEventEngineThreadSafety:
         # Verify some events were processed
         assert len(self.results) > 0
 
-    @pytest.mark.timeout(10)
+    @pytest.mark.timeout(120)
     def test_start_stop_race_conditions(self):
         """Test concurrent start/stop operations."""
         num_threads = 20

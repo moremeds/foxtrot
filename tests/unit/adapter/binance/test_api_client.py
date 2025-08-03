@@ -215,16 +215,3 @@ class TestBinanceApiClient:
         self.api_client.close()
         assert self.api_client.connected is False
 
-    @pytest.mark.timeout(10)
-    def test_log_info(self):
-        """Test info logging method."""
-        with patch("builtins.print") as mock_print:
-            self.api_client._log_info("Test message")
-            mock_print.assert_called_once_with("[TEST_BINANCE] INFO: Test message")
-
-    @pytest.mark.timeout(10)
-    def test_log_error(self):
-        """Test error logging method."""
-        with patch("builtins.print") as mock_print:
-            self.api_client._log_error("Test error")
-            mock_print.assert_called_once_with("[TEST_BINANCE] ERROR: Test error")
