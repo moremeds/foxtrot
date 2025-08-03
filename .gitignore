@@ -168,10 +168,16 @@ tmp/
 *.backup
 *~
 
-# Interactive Brokers specific
+# Interactive Brokers specific (not properly set up on Linux yet)
 tws_api/
 ib_gateway/
 *.twslog
+foxtrot/adapter/ibrokers/
+tests/unit/adapter/ibrokers/
+tests/integration/test_ibrokers*
+*ibrokers*test*
+ib_api/
+ib_insync/
 
 # Binance specific
 binance_cache/
