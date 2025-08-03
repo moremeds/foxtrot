@@ -21,6 +21,7 @@ from textual.widgets import DataTable, Static
 from foxtrot.core.event_engine import Event, EventEngine
 from foxtrot.server.engine import MainEngine
 from foxtrot.util.utility import TRADER_DIR
+from foxtrot.util.logger import get_component_logger
 
 from ..config.settings import get_settings
 from ..integration.event_adapter import TUIEventMixin
@@ -79,6 +80,9 @@ class TUIDataMonitor(Container, TUIEventMixin):
         self.main_engine = main_engine
         self.event_engine = event_engine
         self.monitor_name = monitor_name
+
+        # Initialize logger
+        self._logger = get_component_logger(f"TUI{monitor_name.replace(' ', '')}")
 
         # Data storage
         self.cells: dict[str, dict[str, Any]] = {}
@@ -352,7 +356,9 @@ class TUIDataMonitor(Container, TUIEventMixin):
 
     async def _log_error(self, message: str) -> None:
         """Log an error message."""
-        # This could emit a log event or write to a log file
+        # MIGRATION: Replace print with ERROR logging
+        self._logger.error(message, extra={"monitor": self.monitor_name})
+        # Keep print as fallback for TUI console display
         print(f"ERROR [{self.monitor_name}]: {message}")
 
     # Action handlers for key bindings
@@ -430,6 +436,9 @@ class TUIDataMonitor(Container, TUIEventMixin):
 
     async def _log_message(self, message: str) -> None:
         """Log an informational message."""
+        # MIGRATION: Replace print with INFO logging
+        self._logger.info(message, extra={"monitor": self.monitor_name})
+        # Keep print as fallback for TUI console display
         print(f"INFO [{self.monitor_name}]: {message}")
 
     # Custom messages

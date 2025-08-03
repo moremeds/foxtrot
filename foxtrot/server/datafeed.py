@@ -4,6 +4,7 @@ from types import ModuleType
 
 from util.object import BarData, HistoryRequest, TickData
 from util.settings import SETTINGS
+from util.logger import get_component_logger
 
 
 class BaseDatafeed:
@@ -36,15 +37,17 @@ class BaseDatafeed:
         return []
 
 
-datafeed: BaseDatafeed = BaseDatafeed()
+datafeed: BaseDatafeed | None = None
 
 
 def get_datafeed() -> BaseDatafeed:
     """"""
     # Return datafeed object if already inited
     global datafeed
-    if datafeed:
+    if datafeed is not None:
         return datafeed
+    
+    logger = get_component_logger("DatafeedManager")
 
     # Read datafeed related global setting
     datafeed_name: str = SETTINGS["datafeed.name"]
@@ -52,6 +55,8 @@ def get_datafeed() -> BaseDatafeed:
     if not datafeed_name:
         datafeed = BaseDatafeed()
 
+        # MIGRATION: Replace print with WARNING logging for missing datafeed config
+        logger.warning("No datafeed service configured in global settings")
         print(
             "No data service configured, please modify the datafeed related content in the global configuration"
         )
@@ -68,6 +73,14 @@ def get_datafeed() -> BaseDatafeed:
         except ModuleNotFoundError:
             datafeed = BaseDatafeed()
 
+            # MIGRATION: Replace print with ERROR logging for missing datafeed module
+            logger.error(
+                "Datafeed module not found",
+                extra={
+                    "module_name": module_name,
+                    "datafeed_name": datafeed_name
+                }
+            )
             print(
                 f"Can't load data service module, please run pip install {module_name} to try install"
             )

@@ -17,6 +17,7 @@ import foxtrot
 from foxtrot.core.event_engine import EventEngine
 from foxtrot.server.engine import MainEngine
 from foxtrot.util.utility import TRADER_DIR
+from foxtrot.util.logger import get_component_logger
 
 from .components.monitors.account_monitor import create_account_monitor
 from .components.monitors.log_monitor import TUILogMonitor
@@ -401,6 +402,8 @@ def main() -> None:
     This function should be called when running the TUI version of Foxtrot.
     """
     import sys
+    
+    logger = get_component_logger("TUIMain")
 
     try:
         # Import foxtrot components
@@ -426,17 +429,35 @@ def main() -> None:
         app.run()
 
     except ImportError as e:
+        # MIGRATION: Replace print with ERROR logging for import failures
+        logger.error(
+            "TUI startup failed due to missing dependencies",
+            extra={
+                "error_type": type(e).__name__,
+                "error_msg": str(e)
+            }
+        )
         print(f"Import Error: {e}")
         print("Make sure all dependencies are installed: uv sync")
         sys.exit(1)
 
     except Exception as e:
+        # MIGRATION: Replace print with ERROR logging for startup failures
+        logger.error(
+            "TUI application startup failed",
+            extra={
+                "error_type": type(e).__name__,
+                "error_msg": str(e)
+            }
+        )
         print(f"Failed to start TUI: {e}")
         print("Falling back to GUI mode...")
         try:
             # Try to start GUI as fallback
+            logger.warning("GUI fallback requested but not implemented")
             print("GUI fallback not implemented yet")
         except ImportError:
+            logger.error("GUI fallback unavailable")
             print("GUI fallback also unavailable")
         sys.exit(1)
 

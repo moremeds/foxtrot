@@ -9,6 +9,8 @@ from threading import Thread
 from time import sleep
 from typing import Any
 
+from ..util.logger import get_performance_logger
+
 EVENT_TIMER = "eTimer"
 
 
@@ -50,6 +52,9 @@ class EventEngine:
         self._timer: Thread = Thread(target=self._run_timer)
         self._handlers: defaultdict[str, list[HandlerType]] = defaultdict(list)
         self._general_handlers: list[HandlerType] = []
+        
+        # Performance-optimized logger for hot path
+        self._logger = get_performance_logger("EventEngine")
 
     def _run(self) -> None:
         """
@@ -75,11 +80,17 @@ class EventEngine:
                 try:
                     handler(event)
                 except Exception as e:
-                    # Don't hold reference to exception object to prevent memory leaks
-                    error_msg = (
-                        f"Handler failed for event {event.type}: {type(e).__name__}: {str(e)}"
+                    # Don't hold reference to exception object to prevent memory leaks  
+                    # MIGRATION: Replace print with structured logging
+                    self._logger.error(
+                        "Event handler failed",
+                        extra={
+                            "event_type": event.type,
+                            "error_type": type(e).__name__,
+                            "error_msg": str(e),
+                            "handler_name": getattr(handler, '__name__', 'unknown')
+                        }
                     )
-                    print(error_msg)
 
         if self._general_handlers:
             for handler in self._general_handlers:
@@ -87,8 +98,17 @@ class EventEngine:
                     handler(event)
                 except Exception as e:
                     # Don't hold reference to exception object to prevent memory leaks
-                    error_msg = f"General handler failed for event {event.type}: {type(e).__name__}: {str(e)}"
-                    print(error_msg)
+                    # MIGRATION: Replace print with structured logging
+                    self._logger.error(
+                        "General event handler failed", 
+                        extra={
+                            "event_type": event.type,
+                            "error_type": type(e).__name__,
+                            "error_msg": str(e),
+                            "handler_name": getattr(handler, '__name__', 'unknown'),
+                            "handler_type": "general"
+                        }
+                    )
 
     def _run_timer(self) -> None:
         """
@@ -143,12 +163,20 @@ class EventEngine:
         if hasattr(self, "_timer") and self._timer.is_alive():
             self._timer.join(timeout=5.0)
             if self._timer.is_alive():
-                print("Warning: Timer thread didn't terminate within timeout")
+                # MIGRATION: Replace print with WARNING logging
+                self._logger.warning(
+                    "Timer thread didn't terminate within timeout",
+                    extra={"thread_type": "timer", "timeout_seconds": 5.0}
+                )
 
         if hasattr(self, "_thread") and self._thread.is_alive():
             self._thread.join(timeout=5.0)
             if self._thread.is_alive():
-                print("Warning: Main thread didn't terminate within timeout")
+                # MIGRATION: Replace print with WARNING logging
+                self._logger.warning(
+                    "Main thread didn't terminate within timeout",
+                    extra={"thread_type": "main", "timeout_seconds": 5.0}
+                )
 
     def put(self, event: Event) -> None:
         """

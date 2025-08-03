@@ -14,6 +14,8 @@ import sys
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
+from foxtrot.util.logger import get_component_logger
+
 
 def parse_arguments():
     """Parse command line arguments."""
@@ -71,6 +73,7 @@ def setup_logging(debug: bool = False):
 
 def check_dependencies():
     """Check if all required dependencies are available."""
+    logger = get_component_logger("TUILauncher")
     missing_deps = []
 
     try:
@@ -84,6 +87,8 @@ def check_dependencies():
         missing_deps.append("foxtrot")
 
     if missing_deps:
+        # MIGRATION: Replace print with ERROR logging for dependency issues
+        logger.error("Missing critical dependencies for TUI", extra={"missing_deps": missing_deps})
         print("Missing dependencies:")
         for dep in missing_deps:
             print(f"  - {dep}")
@@ -96,6 +101,7 @@ def check_dependencies():
 def main():
     """Main entry point for the TUI application."""
     args = parse_arguments()
+    logger = get_component_logger("TUILauncher")
 
     # Setup logging
     setup_logging(args.debug)
@@ -159,6 +165,15 @@ def main():
         sys.exit(0)
 
     except Exception as e:
+        # MIGRATION: Replace print with ERROR logging for startup failures
+        logger.error(
+            "TUI application startup failed",
+            extra={
+                "error_type": type(e).__name__,
+                "error_msg": str(e),
+                "debug_mode": args.debug
+            }
+        )
         print(f"Error: {e}")
 
         if args.debug:
@@ -167,11 +182,22 @@ def main():
             traceback.print_exc()
 
         if args.fallback_gui:
+            # MIGRATION: Replace print with INFO logging for fallback attempts
+            logger.info("Attempting GUI fallback after TUI failure")
             print("Attempting to start GUI fallback...")
             try:
                 # TODO: Implement GUI fallback
+                logger.warning("GUI fallback requested but not yet implemented")
                 print("GUI fallback not yet implemented")
             except Exception as gui_error:
+                # MIGRATION: Replace print with ERROR logging for fallback failures
+                logger.error(
+                    "GUI fallback failed",
+                    extra={
+                        "gui_error_type": type(gui_error).__name__,
+                        "gui_error_msg": str(gui_error)
+                    }
+                )
                 print(f"GUI fallback also failed: {gui_error}")
 
         sys.exit(1)

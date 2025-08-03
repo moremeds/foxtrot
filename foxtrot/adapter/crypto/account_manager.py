@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 from foxtrot.util.constants import Direction, Exchange
 from foxtrot.util.object import PositionData
+from foxtrot.util.logger import get_adapter_logger
 
 from .account_object import CryptoAccountData
 
@@ -22,6 +23,9 @@ class AccountManager:
         """Initialize the account manager."""
         self.adapter = adapter
         self._account_cache: dict | None = None
+        
+        # Adapter-specific logger
+        self._logger = get_adapter_logger("CryptoAccount")
 
     def query_account(self) -> CryptoAccountData | None:
         """
@@ -47,7 +51,14 @@ class AccountManager:
             )
 
         except Exception as e:
-            print(f"Failed to query account: {str(e)}")
+            # MIGRATION: Replace print with ERROR logging
+            self._logger.error(
+                "Failed to query account information",
+                extra={
+                    "error_type": type(e).__name__,
+                    "error_msg": str(e)
+                }
+            )
             return None
 
     def query_position(self) -> list[PositionData]:
@@ -77,7 +88,14 @@ class AccountManager:
                     positions.append(position)
 
         except Exception as e:
-            print(f"Failed to query positions: {str(e)}")
+            # MIGRATION: Replace print with ERROR logging
+            self._logger.error(
+                "Failed to query position information", 
+                extra={
+                    "error_type": type(e).__name__,
+                    "error_msg": str(e)
+                }
+            )
 
         return positions
 

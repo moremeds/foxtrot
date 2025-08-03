@@ -5,6 +5,7 @@ This module handles order placement, cancellation, and tracking via the Futu Ope
 with enhanced error handling, retry logic, and performance optimization.
 """
 
+from datetime import datetime
 import threading
 import time
 from typing import TYPE_CHECKING
@@ -113,7 +114,7 @@ class FutuOrderManager:
                 volume=req.volume,
                 price=req.price,
                 status=Status.SUBMITTING,
-                datetime=req.datetime,
+                datetime=datetime.now(),
                 adapter_name=self.api_client.adapter_name,
             )
 

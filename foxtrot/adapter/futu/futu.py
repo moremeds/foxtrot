@@ -110,6 +110,7 @@ class FutuAdapter(BaseAdapter):
             self.query_position()
 
         else:
+            self.connected = False
             self.write_log("Failed to connect to Futu OpenD")
 
     def close(self) -> None:

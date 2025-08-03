@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 
 from foxtrot.util.constants import Direction, Exchange, OrderType, Status
 from foxtrot.util.object import CancelRequest, OrderData, OrderRequest
+from foxtrot.util.logger import get_adapter_logger
 
 if TYPE_CHECKING:
     from .crypto_adapter import CryptoAdapter
@@ -25,6 +26,9 @@ class OrderManager:
         self._orders: dict[str, OrderData] = {}
         self._order_lock = threading.Lock()
         self._local_order_id = 0
+        
+        # Adapter-specific logger
+        self._logger = get_adapter_logger("CryptoOrder")
 
     def send_order(self, req: OrderRequest) -> str:
         """
@@ -32,7 +36,8 @@ class OrderManager:
         """
         try:
             if not self.adapter.exchange:
-                print("Exchange not connected")
+                # MIGRATION: Replace print with ERROR logging
+                self._logger.error("Exchange not connected for order placement")
                 return ""
 
             with self._order_lock:
@@ -41,7 +46,8 @@ class OrderManager:
 
             ccxt_symbol = self._convert_symbol_to_ccxt(req.symbol)
             if not ccxt_symbol:
-                print(f"Invalid symbol: {req.symbol}")
+                # MIGRATION: Replace print with WARNING logging
+                self._logger.warning("Invalid symbol provided for order", extra={"symbol": req.symbol})
                 return ""
 
             side = "buy" if req.direction == Direction.LONG else "sell"
@@ -77,13 +83,24 @@ class OrderManager:
                 with self._order_lock:
                     self._orders[local_orderid] = order
 
-                print(f"Order sent successfully: {local_orderid}")
+                # MIGRATION: Replace print with INFO logging
+                self._logger.info("Order sent successfully", extra={"order_id": local_orderid})
                 return local_orderid
-            print("Failed to send order - no response")
+            
+            # MIGRATION: Replace print with ERROR logging
+            self._logger.error("Failed to send order - no response from exchange")
             return ""
 
         except Exception as e:
-            print(f"Failed to send order for symbol {req.symbol}: {str(e)}")
+            # MIGRATION: Replace print with ERROR logging
+            self._logger.error(
+                "Failed to send order",
+                extra={
+                    "symbol": req.symbol,
+                    "error_type": type(e).__name__,
+                    "error_msg": str(e)
+                }
+            )
             traceback.print_exc()
             return ""
 
@@ -99,7 +116,8 @@ class OrderManager:
                 order = self._orders.get(req.orderid)
 
             if not order:
-                print(f"Order not found: {req.orderid}")
+                # MIGRATION: Replace print with WARNING logging
+                self._logger.warning("Order not found for cancellation", extra={"order_id": req.orderid})
                 return False
 
             ccxt_symbol = self._convert_symbol_to_ccxt(order.symbol)
@@ -113,12 +131,20 @@ class OrderManager:
                 with self._order_lock:
                     self._orders[req.orderid] = order
 
-                print(f"Order cancelled: {req.orderid}")
+                # MIGRATION: Replace print with INFO logging
+                self._logger.info("Order cancelled successfully", extra={"order_id": req.orderid})
                 return True
             return False
 
         except Exception as e:
-            print(f"Failed to cancel order: {str(e)}")
+            # MIGRATION: Replace print with ERROR logging
+            self._logger.error(
+                "Failed to cancel order",
+                extra={
+                    "error_type": type(e).__name__,
+                    "error_msg": str(e)
+                }
+            )
             return False
 
     def query_order(self, orderid: str) -> OrderData | None:

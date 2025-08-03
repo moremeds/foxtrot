@@ -258,7 +258,26 @@ def validate_symbol_format(vt_symbol: str) -> bool:
             return False
 
         # Basic symbol validation
-        return not (not symbol or len(symbol) > 20)
+        if not symbol or len(symbol) > 20:
+            return False
+
+        # Exchange-specific validation
+        if exchange == "SEHK":
+            # Hong Kong stocks are typically numeric (e.g., "0700", "00700")
+            # Also allow some special symbols like ETFs
+            if not (symbol.isdigit() or 
+                   (len(symbol) >= 4 and symbol[:2].isdigit() and symbol[2:].isdigit())):
+                return False
+        elif exchange in ["NASDAQ", "NYSE"]:
+            # US stocks are typically alphabetic symbols (e.g., "AAPL", "TSLA")
+            if not symbol.replace(".", "").isalpha():
+                return False
+        elif exchange in ["SZSE", "SSE"]:
+            # China A-shares are typically numeric (e.g., "000001", "600000")
+            if not symbol.isdigit():
+                return False
+
+        return True
 
     except ValueError:
         return False

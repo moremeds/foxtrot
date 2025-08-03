@@ -116,10 +116,15 @@ class BinanceMarketData:
         self._ws_thread.start()
 
     def _stop_websocket(self) -> None:
-        """Stop WebSocket connection thread."""
+        """Stop WebSocket connection thread with improved cleanup."""
         self._active = False
         if self._ws_thread and self._ws_thread.is_alive():
-            self._ws_thread.join(timeout=5)
+            # First attempt: normal join with timeout
+            self._ws_thread.join(timeout=2.0)
+            
+            # If thread is still alive, log warning (thread cleanup issue)
+            if self._ws_thread.is_alive():
+                self.api_client._log_warning("WebSocket thread did not terminate cleanly")
 
     def _run_websocket(self) -> None:
         """Run WebSocket connection (simplified implementation)."""
@@ -128,6 +133,8 @@ class BinanceMarketData:
                 # Simplified implementation - fetch ticker data periodically
                 # In a full implementation, this would use WebSocket streaming
                 for symbol in list(self._subscribed_symbols):
+                    if not self._active:  # Check active status within loop
+                        break
                     try:
                         tick_data = self._fetch_tick_data(symbol)
                         if tick_data:
@@ -135,8 +142,9 @@ class BinanceMarketData:
                     except Exception as e:
                         self.api_client._log_error(f"Error fetching data for {symbol}: {str(e)}")
 
-                # Simple rate limiting
-                time.sleep(1)
+                # Rate limiting with early exit check
+                if self._active:
+                    time.sleep(1)
 
         except Exception as e:
             self.api_client._log_error(f"WebSocket error: {str(e)}")

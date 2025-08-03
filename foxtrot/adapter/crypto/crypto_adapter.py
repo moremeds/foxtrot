@@ -9,6 +9,7 @@ import ccxt
 from foxtrot.adapter.base_adapter import BaseAdapter
 from foxtrot.core.event_engine import EventEngine
 from foxtrot.util.constants import Exchange
+from foxtrot.util.logger import get_adapter_logger
 from foxtrot.util.object import (
     BarData,
     CancelRequest,
@@ -57,6 +58,9 @@ class CryptoAdapter(BaseAdapter):
         self.account_manager: AccountManager = None
         self.market_data: MarketData = None
         self.order_manager: OrderManager = None
+        
+        # Adapter-specific logger
+        self._logger = get_adapter_logger(f"Crypto{adapter_name}")
 
     def connect(self, setting: dict[str, Any]) -> bool:
         """
@@ -90,7 +94,15 @@ class CryptoAdapter(BaseAdapter):
         try:
             self.exchange.load_markets()
         except Exception as e:
-            print(f"Failed to connect to {self.exchange_name}: {e}")
+            # MIGRATION: Replace print with ERROR logging
+            self._logger.error(
+                "Failed to connect to exchange",
+                extra={
+                    "exchange_name": self.exchange_name,
+                    "error_type": type(e).__name__,
+                    "error_msg": str(e)
+                }
+            )
             return False
 
         self.account_manager = AccountManager(self)

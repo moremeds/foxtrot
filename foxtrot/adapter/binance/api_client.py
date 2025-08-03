@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Any
 import ccxt
 
 from foxtrot.core.event_engine import EventEngine
+from foxtrot.util.logger import get_adapter_logger
 
 if TYPE_CHECKING:
     from .account_manager import BinanceAccountManager
@@ -45,6 +46,9 @@ class BinanceApiClient:
 
         # Connection state
         self.connected = False
+        
+        # Adapter-specific logger
+        self._logger = get_adapter_logger(f"Binance{adapter_name}")
 
     def initialize_managers(self) -> None:
         """Initialize all manager instances."""
@@ -130,8 +134,10 @@ class BinanceApiClient:
 
     def _log_info(self, message: str) -> None:
         """Log info message."""
-        print(f"[{self.adapter_name}] INFO: {message}")
+        # MIGRATION: Replace print with INFO logging
+        self._logger.info(message)
 
     def _log_error(self, message: str) -> None:
         """Log error message."""
-        print(f"[{self.adapter_name}] ERROR: {message}")
+        # MIGRATION: Replace print with ERROR logging
+        self._logger.error(message)

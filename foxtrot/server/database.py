@@ -8,6 +8,7 @@ from util.constants import Exchange, Interval
 from util.object import BarData, TickData
 from util.settings import SETTINGS
 from util.utility import ZoneInfo
+from util.logger import get_component_logger
 
 DB_TZ = ZoneInfo(SETTINGS["database.timezone"])
 
@@ -114,6 +115,8 @@ def get_database() -> BaseDatabase:
     global database
     if database:
         return database
+    
+    logger = get_component_logger("DatabaseManager")
 
     # Read database related global setting
     database_name: str = SETTINGS["database.name"]
@@ -123,6 +126,14 @@ def get_database() -> BaseDatabase:
     try:
         module: ModuleType = import_module(module_name)
     except ModuleNotFoundError:
+        # MIGRATION: Replace print with WARNING logging for database fallback
+        logger.warning(
+            "Database driver not found, falling back to SQLite",
+            extra={
+                "requested_driver": module_name,
+                "fallback_driver": "silvertine_sqlite"
+            }
+        )
         print(f"Can't find database driver {module_name}, using default SQLite database")
         module = import_module("silvertine_sqlite")
 

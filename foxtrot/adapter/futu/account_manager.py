@@ -78,6 +78,9 @@ class FutuAccountManager:
             if isinstance(data, list):
                 for acc_data in data:
                     self._process_account_data(market, acc_data)
+            elif hasattr(data, 'to_dict'):  # Handle pandas DataFrame
+                for acc_data in data.to_dict('records'):
+                    self._process_account_data(market, acc_data)
             else:
                 self._process_account_data(market, data)
 
@@ -97,10 +100,6 @@ class FutuAccountManager:
                 accountid=f"FUTU.{market}.{acc_data.get('acc_id', '')}",
                 balance=float(acc_data.get("total_assets", 0)),
                 frozen=float(acc_data.get("frozen_cash", 0)),
-                available=float(acc_data.get("avl_withdrawal_cash", 0)),
-                commission=float(acc_data.get("total_fee", 0)),
-                margin=float(acc_data.get("margin_call_req", 0)),
-                datetime=datetime.now(),
                 adapter_name=self.api_client.adapter_name,
             )
 
@@ -159,6 +158,9 @@ class FutuAccountManager:
             if isinstance(data, list):
                 for pos_data in data:
                     self._process_position_data(market, pos_data)
+            elif hasattr(data, 'to_dict'):  # Handle pandas DataFrame
+                for pos_data in data.to_dict('records'):
+                    self._process_position_data(market, pos_data)
             else:
                 self._process_position_data(market, data)
 
@@ -198,7 +200,6 @@ class FutuAccountManager:
                 price=float(pos_data.get("cost_price", 0)),
                 pnl=float(pos_data.get("unrealized_pl", 0)),
                 yd_volume=float(pos_data.get("yesterday_qty", 0)),
-                datetime=datetime.now(),
                 adapter_name=self.api_client.adapter_name,
             )
 
