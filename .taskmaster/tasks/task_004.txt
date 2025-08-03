@@ -1,0 +1,93 @@
+# Task ID: 4
+# Title: Stabilize Thread Management and Implement Graceful Shutdown
+# Status: pending
+# Dependencies: 3
+# Priority: high
+# Description: Resolve memory leaks in event handlers and implement robust thread lifecycle management, including graceful shutdown with timeouts and a monitoring system to improve overall system stability and reliability.
+# Details:
+This task addresses critical stability issues related to threading, memory management, and application shutdown, which are exacerbated by the persistent connections introduced in the WebSocket streaming task.
+
+1. **Memory Leak Remediation in Event Handlers:**
+   - Utilize memory profiling tools (e.g., `memory-profiler`, `objgraph`) to inspect the `EventEngine` and `StreamingBaseAdapter` lifecycles.
+   - Focus on identifying reference cycles where event handlers keep adapter instances alive after they are disconnected.
+   - Implement explicit deregistration of all event listeners within the adapter's `disconnect` method to ensure proper garbage collection.
+
+2. **Graceful Shutdown Mechanism:**
+   - Implement a central shutdown hook that catches system signals (SIGINT, SIGTERM) or a dedicated 'shutdown' event.
+   - This hook will signal all active threads to stop using a `threading.Event` or similar mechanism.
+   - The main application thread will wait for all worker threads to terminate using `thread.join(timeout)` with a configurable timeout (e.g., 15 seconds).
+   - If any thread fails to terminate within the timeout, log a critical error and force the application to exit to prevent hangs.
+
+3. **Robust Thread Cleanup Logic:**
+   - Refactor the `StreamingBaseAdapter.disconnect()` method to be idempotent and comprehensive.
+   - It must guarantee that the underlying WebSocket client connection is closed, the worker thread is stopped, and all associated resources are released.
+   - This ensures that calling `disconnect` multiple times does not cause errors and that the adapter is left in a clean state.
+
+4. **Thread Monitoring and Diagnostics:**
+   - Create a `ThreadMonitor` service that runs as a daemon thread.
+   - This monitor will maintain a registry of all critical application threads (e.g., WebSocket adapter threads).
+   - Periodically, it will check `thread.is_alive()` on all registered threads. It will log thread counts and statuses.
+   - If a thread has terminated unexpectedly, the monitor will post a `THREAD_CRASHED` event to the `EventEngine`, including the thread's identity. This event can be used to trigger automated connection recovery logic.
+
+# Test Strategy:
+1. **Memory Leak Verification:**
+   - Create a long-running test that repeatedly instantiates, connects, and disconnects a `StreamingBaseAdapter` (e.g., 1,000 iterations).
+   - Use `tracemalloc` to snapshot memory usage before and after the test loop. Assert that memory growth is minimal and not proportional to the number of iterations, confirming that objects are being garbage collected correctly.
+
+2. **Graceful Shutdown Testing:**
+   - Write an integration test that starts multiple mock adapters in separate threads and then triggers the application shutdown sequence.
+   - Verify that the `stop()` method is called on each adapter and that all threads are joined successfully within the timeout.
+   - Create a negative test with a 'rogue' mock adapter that intentionally ignores the stop signal. Assert that the shutdown process times out as expected, logs a critical error, and the main process still exits.
+
+3. **Thread Cleanup Unit Tests:**
+   - Write unit tests for the `StreamingBaseAdapter.disconnect()` method.
+   - Use mocks to verify that the underlying WebSocket client's `close()` method is called, the thread's `join()` method is invoked, and `EventEngine.unregister()` is called for all relevant event handlers.
+
+4. **Thread Monitor and Recovery Simulation:**
+   - Write a test where a mock adapter's thread is designed to crash after a few seconds.
+   - Assert that the `ThreadMonitor` detects the failure on its next check and correctly posts a `THREAD_CRASHED` event to the `EventEngine`.
+   - Create a mock listener for this event to verify that the recovery mechanism can be triggered.
+
+# Subtasks:
+## 1. Audit and Document Existing Thread Usage [pending]
+### Dependencies: None
+### Description: Conduct a comprehensive audit of the codebase to identify all instances of thread creation. Document the purpose, lifecycle, ownership, and shutdown mechanism for each thread, with a focus on the `StreamingBaseAdapter` and core services.
+### Details:
+Use static analysis tools and manual code review to trace `threading.Thread` instantiations. The output should be a markdown document in the project's `docs/` directory, detailing each thread's role, how it's started, how it's intended to stop, and any potential for unmanaged proliferation. This document will serve as the foundation for all subsequent threading work.
+
+## 2. Remediate Memory Leaks from Event Handler Reference Cycles [pending]
+### Dependencies: 4.1
+### Description: Utilize memory profiling tools to diagnose and fix memory leaks caused by persistent reference cycles between the `EventEngine` and `StreamingBaseAdapter` instances. Ensure adapters are properly garbage collected after disconnection.
+### Details:
+Focus on the pattern where an adapter method is registered as an event handler, creating a cycle: `Adapter -> handler -> EventEngine -> handlers_list -> handler -> Adapter`. Implement an explicit `deregister` call within the adapter's `disconnect` method for all subscribed events. Use `objgraph` to visualize reference chains and `tracemalloc` to confirm memory is reclaimed.
+
+## 3. Implement a Centralized, Thread-Safe Shutdown Signal [pending]
+### Dependencies: 4.1
+### Description: Establish a single, globally accessible `threading.Event` to signal a system-wide shutdown. Refactor all long-running threads, particularly in `StreamingBaseAdapter`, to periodically check this event and exit their main loops cleanly when it is set.
+### Details:
+Create a singleton or a context-managed object that holds the shutdown `threading.Event`. All worker threads' main loops (e.g., `while not self.shutdown_event.is_set():`) must be modified to honor this event. This provides a non-blocking, thread-safe way to request termination.
+
+## 4. Implement Graceful Shutdown Logic with Timeout and Forced Exit [pending]
+### Dependencies: 4.3
+### Description: Develop the main application's shutdown sequence. This involves catching system signals (SIGINT, SIGTERM), triggering the central shutdown event, and then waiting for all registered threads to terminate using `thread.join()` with a configurable timeout.
+### Details:
+Use Python's `signal` module to register handlers for SIGINT and SIGTERM. The handler will set the shutdown event from subtask 4.3. The main thread will maintain a list of all critical worker threads. After setting the event, it will loop through this list, calling `join(timeout)`. If a join times out, log a critical error message specifying the hanging thread and call `os._exit(1)` to ensure the process terminates.
+
+## 5. Develop a Thread Monitoring and Recovery Service [pending]
+### Dependencies: 4.1
+### Description: Create a `ThreadMonitor` daemon service to track the health of critical application threads. If a monitored thread terminates unexpectedly, the monitor will log the event and publish a `THREAD_CRASHED` message to the `EventEngine`.
+### Details:
+The `ThreadMonitor` will run as a `daemon=True` thread. It will expose `register(thread, name)` and `deregister(thread)` methods. In its main loop, it will periodically iterate through registered threads, check `thread.is_alive()`, and if a thread that was previously alive is now dead, it will post an event with the thread's name and ID. This allows other systems, like a connection manager, to react.
+
+## 6. Refactor Connection Handling to Use a Centralized Thread Pool [pending]
+### Dependencies: 4.1
+### Description: Replace the current model of creating one dedicated thread per `StreamingBaseAdapter` with a shared, bounded `concurrent.futures.ThreadPoolExecutor`. This will improve resource management, limit system load, and centralize thread lifecycle control.
+### Details:
+Instantiate a single `ThreadPoolExecutor` in a central service or the `MainEngine`. Modify `StreamingBaseAdapter`'s `connect` method to submit its long-running data processing loop to this shared pool, rather than creating its own `threading.Thread`. The `disconnect` method will need to be updated to correctly cancel the corresponding `Future` and ensure cleanup.
+
+## 7. Create a Comprehensive Threading and Shutdown Test Suite [pending]
+### Dependencies: 4.2, 4.4, 4.5, 4.6
+### Description: Develop a new integration test suite focused on validating the robustness of the entire threading and shutdown system. The suite must test for race conditions, shutdown reliability, and memory leak regressions under load.
+### Details:
+This test suite (`tests/integration/test_threading.py`) will include: 1) A 'chaos' test that rapidly starts and stops adapters to look for race conditions. 2) A shutdown-under-load test that initiates a graceful shutdown while many adapters are active. 3) A validation test for the `ThreadMonitor` that kills a worker thread and confirms the recovery event is fired. 4) A long-running memory test that combines all features to ensure no new leaks have been introduced.
+

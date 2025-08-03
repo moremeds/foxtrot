@@ -1,0 +1,105 @@
+# Task ID: 7
+# Title: Complete Logging Migration
+# Status: pending
+# Dependencies: 3, 4, 6
+# Priority: medium
+# Description: Overhaul the application's logging system by migrating all print statements to loguru, implementing structured JSON logging, optimizing performance in hot-paths, and adding robust configuration, rotation, and metrics collection.
+# Details:
+This task involves a complete refactoring of the application's logging infrastructure to establish a modern, performant, and maintainable system.
+
+1. **Audit and Migrate to Loguru:**
+   - Perform a codebase-wide search for all instances of `print()`.
+   - Replace each `print()` statement with an appropriate `loguru` logger call (e.g., `logger.debug()`, `logger.info()`, `logger.warning()`, `logger.error()`).
+   - Differentiate between temporary debug prints, which should become `logger.debug()`, and essential operational messages, which should be `logger.info()` or higher.
+
+2. **Implement Structured Logging:**
+   - Configure `loguru` to serialize all log records to JSON format for file-based sinks. The console sink can remain human-readable for development.
+   - The standard JSON log entry must include: `timestamp`, `level`, `message`, `name`, `function`, and `line`.
+   - Utilize `logger.bind()` to add structured context to logs where appropriate (e.g., `logger.bind(exchange='binance', symbol='BTC/USDT').info('Order book updated')`).
+
+3. **Hot-Path Performance Optimization:**
+   - Identify performance-critical code paths, specifically within the WebSocket message handling loops (from Task 3) and the core `EventEngine`.
+   - Configure `loguru` sinks with `enqueue=True` to make logging calls in these hot-paths non-blocking, preventing I/O from impacting application latency.
+   - The default production log level should be set to `INFO` to avoid the performance cost of processing `DEBUG` level messages.
+
+4. **Centralized Configuration System:**
+   - Create a `logging.yaml` or similar configuration file to manage all logging settings.
+   - The application must load this configuration on startup.
+   - The configuration file will control sinks (file, console), log levels per module, format (JSON vs. plain text), rotation, and retention policies.
+
+5. **Log Rotation and Archival:**
+   - Configure file sinks to use built-in `loguru` rotation based on size (e.g., `rotation='100 MB'`) and time (e.g., `rotation='00:00'`).
+   - Implement a retention policy to automatically clean up old log files (e.g., `retention='14 days'`).
+   - Enable compression for rotated log files to save disk space (e.g., `compression='zip'`).
+
+6. **Performance Metrics Collection:**
+   - Establish a dedicated logger for performance metrics.
+   - This logger will write to a separate `metrics.log` file in a machine-parseable format (e.g., key-value or JSON).
+   - Instrument key functions to log execution time, e.g., `logger_metrics.info(f'event_processing_time={{duration}}ms')`.
+
+# Test Strategy:
+1. **Static Code Analysis:**
+   - Run a script (`grep -r 'print(' ./src`) to verify that no `print()` statements remain in the main application source code. Exceptions for specific tools or scripts must be justified.
+
+2. **Structured Log Validation:**
+   - In unit tests, redirect log output to an in-memory stream (e.g., `io.StringIO`).
+   - Generate a log message with bound context using `logger.bind()`.
+   - Parse the resulting JSON from the stream and assert that all required fields (`timestamp`, `level`, `message`) and the custom context fields are present and correctly formatted.
+
+3. **Configuration Testing:**
+   - Write unit tests that load different logging configuration files.
+   - Assert that the logger's level and sink configurations change as expected based on the loaded file.
+   - Test edge cases like malformed configuration files, ensuring the application handles them gracefully.
+
+4. **Rotation and Retention Simulation:**
+   - Write an integration test that generates enough log data to trigger a size-based rotation. Verify that a new log file is created and the old one is archived/compressed.
+   - Use a library like `freezegun` to manipulate the system clock and test time-based rotation (e.g., daily) and retention (e.g., deleting files older than 7 days).
+
+5. **Performance Benchmarking:**
+   - Using the test infrastructure from Task 6, create benchmarks for a hot-path function (e.g., a WebSocket message handler).
+   - Run the benchmark with logging disabled, with synchronous logging, and with asynchronous (`enqueue=True`) logging.
+   - Assert that the performance degradation from asynchronous logging is minimal and within an acceptable threshold compared to synchronous logging.
+
+# Subtasks:
+## 1. Audit and Replace `print()` with Basic Loguru Calls [pending]
+### Dependencies: None
+### Description: Perform a comprehensive codebase audit to find all instances of `print()` and replace them with the appropriate `loguru` equivalent. This initial pass will establish a baseline for the new logging system.
+### Details:
+Use a global search tool (e.g., `grep`, IDE search) to locate all `print()` statements. Replace them with `logger.debug()` for temporary or verbose development messages, and `logger.info()`, `logger.warning()`, or `logger.error()` for significant operational events. A single, globally configured logger is sufficient for this stage.
+
+## 2. Implement Centralized YAML-based Logging Configuration [pending]
+### Dependencies: None
+### Description: Create a `logging.yaml` file and a corresponding loader module. The application must parse this file on startup to dynamically configure all aspects of the logging system, decoupling configuration from the code.
+### Details:
+The configuration file should define sections for sinks, log levels (global and per-module), and formats. The loader module will be responsible for reading the YAML, removing `loguru`'s default handler, and adding new handlers as specified in the configuration.
+
+## 3. Configure Structured JSON and Human-Readable Console Sinks [pending]
+### Dependencies: 7.2
+### Description: Using the new configuration system, implement two primary logging sinks: a human-readable, colorized sink for console output during development, and a structured JSON sink for file output.
+### Details:
+In `logging.yaml`, define a console sink with standard formatting and a file sink with `serialize=True`. The JSON output must include standard fields like `timestamp`, `level`, `message`, `name`, `function`, and `line` to facilitate automated parsing and analysis.
+
+## 4. Implement Log Rotation, Retention, and Compression [pending]
+### Dependencies: 7.3
+### Description: Enhance the file-based JSON sink to include robust, production-ready features for log file management, including automatic rotation, retention, and compression.
+### Details:
+Extend the file sink configuration in `logging.yaml` to include parameters for `rotation` (e.g., '100 MB' or '00:00'), `retention` (e.g., '14 days'), and `compression` (e.g., 'zip'). `loguru` will handle the lifecycle of these files automatically.
+
+## 5. Optimize Logging Performance in Hot-Paths [pending]
+### Dependencies: 7.3
+### Description: Identify performance-critical code paths, specifically the WebSocket message handling loops and the core EventEngine, and configure their logging to be non-blocking to prevent I/O latency from impacting application performance.
+### Details:
+In the `logging.yaml` configuration, set `enqueue=True` for the file sink. This offloads the I/O operations to a separate process. Additionally, set the default production log level to `INFO` to avoid the performance cost of serializing and processing `DEBUG` messages.
+
+## 6. Enrich Logs with Structured Context using `logger.bind()` [pending]
+### Dependencies: 7.1, 7.3
+### Description: Refactor key application modules to add dynamic, structured context to log records. This will make logs more searchable and useful for debugging without cluttering the log message itself.
+### Details:
+In areas handling specific contexts, such as an exchange adapter or order manager, use `logger.bind(exchange='binance', symbol='BTC/USDT')` to create context-specific loggers. This bound data will automatically be included as key-value pairs in the JSON log output.
+
+## 7. Implement Dedicated Performance Metrics Logging [pending]
+### Dependencies: 7.2
+### Description: Establish a separate logger and file sink (`metrics.log`) specifically for collecting performance metrics in a machine-parseable format, distinct from the main application event logs.
+### Details:
+Add a new sink to `logging.yaml` for `metrics.log`, configured to use JSON serialization. Create a dedicated logger instance (e.g., `metrics_logger`). Instrument key functions to log metrics like execution time or queue size, e.g., `metrics_logger.info('event_processing', duration_ms=55)`.
+

@@ -57,11 +57,582 @@
             "testStrategy": "The primary activity is to execute the integration test suite against the Binance testnet. These tests will require live testnet credentials (provided via environment variables) and will validate the complete, end-to-end functionality and reliability of the adapter under real network conditions, confirming it works correctly within the foxtrot framework."
           }
         ]
+      },
+      {
+        "id": 2,
+        "title": "Fix all failed unit tests",
+        "description": "Fix all failed unit tests, grouping them by the reasons for failure and the classes being tested.\n\nThe following workflow must be followed:\n1. Each failing test must be analyzed by examining the source code first\n2. Make the necessary changes to fix the test\n3. Run the tests to verify the fix works\n4. Do not move on to the next test until the current one passes successfully\n\nThis systematic approach ensures each test is properly fixed before proceeding to the next one.",
+        "status": "done",
+        "dependencies": [],
+        "priority": "medium",
+        "details": "",
+        "testStrategy": "",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Fix AttributeError in Futu Adapter Tests",
+            "description": "Fix `AttributeError` in Futu Adapter Tests due to incorrect mocking.",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Fix NameError in Futu Order Manager Tests",
+            "description": "Fix `NameError` in Futu Order Manager Tests due to missing pandas import.",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Fix AssertionError in Futu Account Manager Tests",
+            "description": "Fix `AssertionError` in Futu Account Manager Tests due to incorrect mock setups and assertions.",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Fix AssertionError in Futu Historical Data Tests",
+            "description": "Fix `AssertionError` in Futu Historical Data Tests due to incorrect mock calls.",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "Fix AssertionError in Futu Market Data Tests",
+            "description": "Fix `AssertionError` in Futu Market Data Tests due to an unexpected method call.",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 6,
+            "title": "Fix Failures in TUI Integration Tests",
+            "description": "Fix `TypeError` and `AttributeError` in TUI Integration Tests.",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 7,
+            "title": "Fix Failures in Binance E2E Tests",
+            "description": "Fix `AssertionError` in Binance E2E Tests.",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 8,
+            "title": "Fix Failures in Event Engine Performance Tests",
+            "description": "Fix performance issues in Event Engine Performance Tests.",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          },
+          {
+            "id": 9,
+            "title": "Fix Failure in Event Type Tests",
+            "description": "Fix `AssertionError` in Event Type Tests due to a change in the number of event types.",
+            "status": "done",
+            "dependencies": [],
+            "details": "",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Implement Real-Time WebSocket Streaming for Exchange Adapters",
+        "description": "Replace the inefficient HTTP polling mechanism with a true WebSocket implementation to receive real-time market data, reduce latency, and avoid API rate limit issues. This will be implemented for all exchange adapters using ccxt.pro or native exchange APIs.",
+        "details": "1. **Dependency Integration:**\n   - Add the `ccxt.pro` library to the project's dependencies. This will be the primary tool for exchanges it supports, such as Binance.\n\n2. **Architectural Refactoring:**\n   - Modify the `foxtrot.gateway.BaseAdapter` or create a new `StreamingBaseAdapter` to support persistent, asynchronous WebSocket connections.\n   - The adapter interface must include methods for `connect()`, `disconnect()`, `subscribe(symbol)`, and `unsubscribe(symbol)`.\n   - The adapter must manage the WebSocket connection in a non-blocking manner (e.g., using asyncio in Python or a separate thread) to avoid halting the `MainEngine`.\n\n3. **Adapter Implementation (ccxt.pro for Binance):**\n   - Update the `BinanceAdapter` to utilize `ccxt.pro` for streaming data.\n   - Implement a long-running task that calls methods like `watch_order_book` or `watch_trades`.\n   - On receipt of data, transform it into the standardized `foxtrot` framework event objects and push them to the `EventEngine`.\n\n4. **Adapter Implementation (Native APIs for Futu/IB):**\n   - For adapters like Futu and Interactive Brokers (IB) that are not covered by `ccxt.pro`, implement streaming clients using their native APIs.\n   - Abstract the exchange-specific connection and subscription logic within each adapter, ensuring they adhere to the common streaming interface defined in step 2.\n\n5. **Robust Connection Management:**\n   - Implement a resilient auto-reconnect mechanism with exponential backoff for all streaming adapters to handle network interruptions and exchange-side disconnects.\n   - Integrate heartbeat handling as specified by each exchange's API documentation to maintain connection health.\n   - Add comprehensive logging for connection status (connecting, connected, disconnected), subscription changes, and errors.",
+        "testStrategy": "1. **Unit Testing (Mocked Clients):**\n   - In `tests/unit/adapter/`, create tests that mock the `ccxt.pro` client and native WebSocket clients.\n   - Simulate a full lifecycle of WebSocket events: connection success, data messages, heartbeats, errors, and disconnections.\n   - Verify that the adapter correctly parses incoming data payloads and pushes standardized events to a mock `EventEngine`.\n   - Test the auto-reconnect logic by simulating a disconnection and asserting that the adapter attempts to reconnect according to the backoff strategy.\n\n2. **Integration Testing (Live Testnet):**\n   - Configure tests to connect to exchange testnet environments (e.g., Binance Spot Testnet).\n   - Write tests that subscribe to a live data feed (e.g., BTC/USDT order book), receive at least 10 updates, and then unsubscribe.\n   - Verify that the received data is correctly structured and reflects real-time market activity.\n   - Test connection resilience by programmatically interrupting the network connection and confirming that the adapter successfully reconnects and resumes the data stream without manual intervention.\n\n3. **Performance & Latency Benchmarking:**\n   - Create a benchmark test to measure the end-to-end latency from message receipt at the socket to event processing in the `EventEngine`.\n   - Compare latency metrics against the legacy HTTP polling system to formally validate the performance improvement.\n   - Conduct a stress test by subscribing to 20+ different streams simultaneously to monitor CPU, memory, and network usage under load.",
+        "status": "pending",
+        "dependencies": [
+          1,
+          2
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Research and Integrate WebSocket Libraries",
+            "description": "Research and select the optimal WebSocket libraries for the project. Integrate `ccxt.pro` for supported exchanges and identify/integrate native WebSocket client libraries for Futu and Interactive Brokers.",
+            "dependencies": [],
+            "details": "Add `ccxt.pro` to the project's `requirements.txt`. For Futu and IB, investigate their official Python SDKs (e.g., `futu-api`, `ibapi`) for WebSocket/streaming capabilities and add them to dependencies. Document the chosen libraries and versions.",
+            "status": "pending",
+            "testStrategy": "Verify successful import of the new libraries in a test environment and ensure no dependency conflicts arise."
+          },
+          {
+            "id": 2,
+            "title": "Design and Implement `StreamingBaseAdapter`",
+            "description": "Create a new abstract base class, `StreamingBaseAdapter`, to define a common interface for all WebSocket-based exchange adapters, ensuring a consistent architecture for managing real-time data streams.",
+            "dependencies": [
+              "3.1"
+            ],
+            "details": "Create `foxtrot.gateway.StreamingBaseAdapter` inheriting from `foxtrot.gateway.BaseAdapter`. It must define abstract methods for `connect()`, `disconnect()`, `subscribe(symbol)`, and `unsubscribe(symbol)`. It should also include a non-blocking main loop structure (e.g., using `asyncio.Task`) to handle the persistent connection.",
+            "status": "pending",
+            "testStrategy": "Create unit tests in `tests/unit/gateway/` to ensure the `StreamingBaseAdapter` class structure is correctly defined and that child classes must implement the required abstract methods."
+          },
+          {
+            "id": 3,
+            "title": "Implement Binance Adapter with `ccxt.pro`",
+            "description": "Refactor the `BinanceAdapter` to inherit from `StreamingBaseAdapter` and use `ccxt.pro` to stream real-time market data, replacing the old HTTP polling mechanism.",
+            "dependencies": [
+              "3.2"
+            ],
+            "details": "Implement the `connect`, `disconnect`, `subscribe`, and `unsubscribe` methods. Create a long-running `asyncio` task that uses `ccxt.pro`'s `watch_order_book` and `watch_trades` methods. Received data must be transformed into standardized `foxtrot` event objects and pushed to the `EventEngine`.",
+            "status": "pending",
+            "testStrategy": "In `tests/unit/adapter/binance/`, use a mocked `ccxt.pro` client to simulate a full lifecycle of WebSocket events (connection, data, errors, disconnection). Verify that the adapter correctly transforms data into `foxtrot` events and pushes them to a mock `EventEngine`."
+          },
+          {
+            "id": 4,
+            "title": "Implement Futu Adapter with Native API",
+            "description": "Implement a streaming adapter for Futu by inheriting from `StreamingBaseAdapter` and using its native Python API (`futu-api`) for real-time data.",
+            "dependencies": [
+              "3.2"
+            ],
+            "details": "Create a `FutuAdapter` that implements the `StreamingBaseAdapter` interface. Manage the connection lifecycle and subscription logic specific to the Futu API (e.g., `subscribe_ticker`, `on_recv_push`). Transform incoming data packets into standard `foxtrot` event objects before dispatching them.",
+            "status": "pending",
+            "testStrategy": "In `tests/unit/adapter/futu/`, use a mocked `futu-api` client to simulate WebSocket events. Verify that the adapter correctly handles connection, subscription, and data transformation logic."
+          },
+          {
+            "id": 5,
+            "title": "Implement Interactive Brokers (IB) Adapter with Native API",
+            "description": "Implement a streaming adapter for Interactive Brokers by inheriting from `StreamingBaseAdapter` and using its native Python API (`ibapi`) for real-time market data.",
+            "dependencies": [
+              "3.2"
+            ],
+            "details": "Create an `IBAdapter` that implements the `StreamingBaseAdapter` interface. Handle the complexities of the `ibapi`'s asynchronous event-driven model within the adapter's non-blocking loop. Abstract the connection and data subscription logic (e.g., `reqMktData`) and transform data into `foxtrot` events.",
+            "status": "pending",
+            "testStrategy": "In `tests/unit/adapter/ib/`, use a mocked `ibapi` client and wrapper to simulate TWS/Gateway events. Verify that market data callbacks are correctly processed and transformed into `foxtrot` events."
+          },
+          {
+            "id": 6,
+            "title": "Implement Connection Recovery and Health Monitoring",
+            "description": "Enhance all streaming adapters with a resilient auto-reconnect mechanism and connection health monitoring to handle network issues and exchange-side disconnects gracefully.",
+            "dependencies": [
+              "3.3",
+              "3.4",
+              "3.5"
+            ],
+            "details": "Implement an auto-reconnect loop with exponential backoff logic, potentially in the `StreamingBaseAdapter` to be reused. Integrate heartbeat handling as required by each exchange's API. Add comprehensive logging for connection state changes (connecting, connected, disconnected, reconnecting), errors, and heartbeats.",
+            "status": "pending",
+            "testStrategy": "For each adapter's unit tests, simulate unexpected disconnections and verify that the auto-reconnect logic is triggered with the correct backoff strategy. Mock heartbeat failures and confirm the connection is reset."
+          },
+          {
+            "id": 7,
+            "title": "Implement WebSocket Connection and Subscription Rate Limiting",
+            "description": "Implement rate-limiting logic for WebSocket connections and subscription messages to comply with exchange-specific limits and prevent API bans.",
+            "dependencies": [
+              "3.2"
+            ],
+            "details": "Research and document the connection, subscription, and message rate limits for Binance, Futu, and IB. Implement a token bucket or similar algorithm, likely within the `StreamingBaseAdapter`, to throttle outgoing `subscribe`/`unsubscribe` requests. Log any throttled actions.",
+            "status": "pending",
+            "testStrategy": "Create unit tests that attempt to make rapid, successive calls to `subscribe`. Verify that the calls are throttled according to the defined rate limits and that no requests are lost, only delayed."
+          },
+          {
+            "id": 8,
+            "title": "Develop Integration Tests for WebSocket Streaming",
+            "description": "Create a suite of integration tests to validate the end-to-end functionality of the WebSocket streaming adapters against live or sandbox exchange environments.",
+            "dependencies": [
+              "3.3",
+              "3.4",
+              "3.5",
+              "3.6"
+            ],
+            "details": "In `tests/integration/adapter/`, create tests for each streaming adapter (Binance, Futu, IB). The tests should cover the full lifecycle: connect, subscribe to a symbol, receive at least one data update (e.g., a trade or order book tick), unsubscribe, and disconnect. Assert that the correct `foxtrot` event objects are generated.",
+            "status": "pending",
+            "testStrategy": "These tests will run against sandbox/paper-trading environments. Use environment variables for API keys to run tests in a CI/CD pipeline. The test passes if the full connect-subscribe-receive-unsubscribe-disconnect cycle completes successfully for each adapter."
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Stabilize Thread Management and Implement Graceful Shutdown",
+        "description": "Resolve memory leaks in event handlers and implement robust thread lifecycle management, including graceful shutdown with timeouts and a monitoring system to improve overall system stability and reliability.",
+        "details": "This task addresses critical stability issues related to threading, memory management, and application shutdown, which are exacerbated by the persistent connections introduced in the WebSocket streaming task.\n\n1. **Memory Leak Remediation in Event Handlers:**\n   - Utilize memory profiling tools (e.g., `memory-profiler`, `objgraph`) to inspect the `EventEngine` and `StreamingBaseAdapter` lifecycles.\n   - Focus on identifying reference cycles where event handlers keep adapter instances alive after they are disconnected.\n   - Implement explicit deregistration of all event listeners within the adapter's `disconnect` method to ensure proper garbage collection.\n\n2. **Graceful Shutdown Mechanism:**\n   - Implement a central shutdown hook that catches system signals (SIGINT, SIGTERM) or a dedicated 'shutdown' event.\n   - This hook will signal all active threads to stop using a `threading.Event` or similar mechanism.\n   - The main application thread will wait for all worker threads to terminate using `thread.join(timeout)` with a configurable timeout (e.g., 15 seconds).\n   - If any thread fails to terminate within the timeout, log a critical error and force the application to exit to prevent hangs.\n\n3. **Robust Thread Cleanup Logic:**\n   - Refactor the `StreamingBaseAdapter.disconnect()` method to be idempotent and comprehensive.\n   - It must guarantee that the underlying WebSocket client connection is closed, the worker thread is stopped, and all associated resources are released.\n   - This ensures that calling `disconnect` multiple times does not cause errors and that the adapter is left in a clean state.\n\n4. **Thread Monitoring and Diagnostics:**\n   - Create a `ThreadMonitor` service that runs as a daemon thread.\n   - This monitor will maintain a registry of all critical application threads (e.g., WebSocket adapter threads).\n   - Periodically, it will check `thread.is_alive()` on all registered threads. It will log thread counts and statuses.\n   - If a thread has terminated unexpectedly, the monitor will post a `THREAD_CRASHED` event to the `EventEngine`, including the thread's identity. This event can be used to trigger automated connection recovery logic.",
+        "testStrategy": "1. **Memory Leak Verification:**\n   - Create a long-running test that repeatedly instantiates, connects, and disconnects a `StreamingBaseAdapter` (e.g., 1,000 iterations).\n   - Use `tracemalloc` to snapshot memory usage before and after the test loop. Assert that memory growth is minimal and not proportional to the number of iterations, confirming that objects are being garbage collected correctly.\n\n2. **Graceful Shutdown Testing:**\n   - Write an integration test that starts multiple mock adapters in separate threads and then triggers the application shutdown sequence.\n   - Verify that the `stop()` method is called on each adapter and that all threads are joined successfully within the timeout.\n   - Create a negative test with a 'rogue' mock adapter that intentionally ignores the stop signal. Assert that the shutdown process times out as expected, logs a critical error, and the main process still exits.\n\n3. **Thread Cleanup Unit Tests:**\n   - Write unit tests for the `StreamingBaseAdapter.disconnect()` method.\n   - Use mocks to verify that the underlying WebSocket client's `close()` method is called, the thread's `join()` method is invoked, and `EventEngine.unregister()` is called for all relevant event handlers.\n\n4. **Thread Monitor and Recovery Simulation:**\n   - Write a test where a mock adapter's thread is designed to crash after a few seconds.\n   - Assert that the `ThreadMonitor` detects the failure on its next check and correctly posts a `THREAD_CRASHED` event to the `EventEngine`.\n   - Create a mock listener for this event to verify that the recovery mechanism can be triggered.",
+        "status": "pending",
+        "dependencies": [
+          3
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Audit and Document Existing Thread Usage",
+            "description": "Conduct a comprehensive audit of the codebase to identify all instances of thread creation. Document the purpose, lifecycle, ownership, and shutdown mechanism for each thread, with a focus on the `StreamingBaseAdapter` and core services.",
+            "dependencies": [],
+            "details": "Use static analysis tools and manual code review to trace `threading.Thread` instantiations. The output should be a markdown document in the project's `docs/` directory, detailing each thread's role, how it's started, how it's intended to stop, and any potential for unmanaged proliferation. This document will serve as the foundation for all subsequent threading work.",
+            "status": "pending",
+            "testStrategy": "Verification will be done via peer review of the generated documentation. The review will confirm that all known threaded components, especially those related to Task 3 (WebSocket Streaming), have been accurately identified and described."
+          },
+          {
+            "id": 2,
+            "title": "Remediate Memory Leaks from Event Handler Reference Cycles",
+            "description": "Utilize memory profiling tools to diagnose and fix memory leaks caused by persistent reference cycles between the `EventEngine` and `StreamingBaseAdapter` instances. Ensure adapters are properly garbage collected after disconnection.",
+            "dependencies": [
+              "4.1"
+            ],
+            "details": "Focus on the pattern where an adapter method is registered as an event handler, creating a cycle: `Adapter -> handler -> EventEngine -> handlers_list -> handler -> Adapter`. Implement an explicit `deregister` call within the adapter's `disconnect` method for all subscribed events. Use `objgraph` to visualize reference chains and `tracemalloc` to confirm memory is reclaimed.",
+            "status": "pending",
+            "testStrategy": "Create a long-running integration test that instantiates, connects, and disconnects an adapter in a loop (e.g., 10,000 iterations). Use `gc.collect()` and `tracemalloc` snapshots to assert that the memory usage of `StreamingBaseAdapter` objects does not grow over time."
+          },
+          {
+            "id": 3,
+            "title": "Implement a Centralized, Thread-Safe Shutdown Signal",
+            "description": "Establish a single, globally accessible `threading.Event` to signal a system-wide shutdown. Refactor all long-running threads, particularly in `StreamingBaseAdapter`, to periodically check this event and exit their main loops cleanly when it is set.",
+            "dependencies": [
+              "4.1"
+            ],
+            "details": "Create a singleton or a context-managed object that holds the shutdown `threading.Event`. All worker threads' main loops (e.g., `while not self.shutdown_event.is_set():`) must be modified to honor this event. This provides a non-blocking, thread-safe way to request termination.",
+            "status": "pending",
+            "testStrategy": "Unit test the components that are modified to listen for the event. Mock the event object, set it, and assert that the thread's main loop terminates as expected within a short time frame. Verify that the thread does not terminate if the event is not set."
+          },
+          {
+            "id": 4,
+            "title": "Implement Graceful Shutdown Logic with Timeout and Forced Exit",
+            "description": "Develop the main application's shutdown sequence. This involves catching system signals (SIGINT, SIGTERM), triggering the central shutdown event, and then waiting for all registered threads to terminate using `thread.join()` with a configurable timeout.",
+            "dependencies": [
+              "4.3"
+            ],
+            "details": "Use Python's `signal` module to register handlers for SIGINT and SIGTERM. The handler will set the shutdown event from subtask 4.3. The main thread will maintain a list of all critical worker threads. After setting the event, it will loop through this list, calling `join(timeout)`. If a join times out, log a critical error message specifying the hanging thread and call `os._exit(1)` to ensure the process terminates.",
+            "status": "pending",
+            "testStrategy": "Create an integration test with a mock 'hanging' thread that ignores the shutdown event. Run the application's shutdown procedure and assert that: 1) The shutdown event is set. 2) `join` is called on the hanging thread. 3) A critical error is logged after the timeout expires. 4) The process attempts to exit forcefully."
+          },
+          {
+            "id": 5,
+            "title": "Develop a Thread Monitoring and Recovery Service",
+            "description": "Create a `ThreadMonitor` daemon service to track the health of critical application threads. If a monitored thread terminates unexpectedly, the monitor will log the event and publish a `THREAD_CRASHED` message to the `EventEngine`.",
+            "dependencies": [
+              "4.1"
+            ],
+            "details": "The `ThreadMonitor` will run as a `daemon=True` thread. It will expose `register(thread, name)` and `deregister(thread)` methods. In its main loop, it will periodically iterate through registered threads, check `thread.is_alive()`, and if a thread that was previously alive is now dead, it will post an event with the thread's name and ID. This allows other systems, like a connection manager, to react.",
+            "status": "pending",
+            "testStrategy": "Unit test the `ThreadMonitor`. Register a mock thread, then simulate its death (e.g., have the thread's run method exit immediately). Assert that the monitor detects the termination and correctly posts a `THREAD_CRASHED` event to a mock `EventEngine` with the correct payload."
+          },
+          {
+            "id": 6,
+            "title": "Refactor Connection Handling to Use a Centralized Thread Pool",
+            "description": "Replace the current model of creating one dedicated thread per `StreamingBaseAdapter` with a shared, bounded `concurrent.futures.ThreadPoolExecutor`. This will improve resource management, limit system load, and centralize thread lifecycle control.",
+            "dependencies": [
+              "4.1"
+            ],
+            "details": "Instantiate a single `ThreadPoolExecutor` in a central service or the `MainEngine`. Modify `StreamingBaseAdapter`'s `connect` method to submit its long-running data processing loop to this shared pool, rather than creating its own `threading.Thread`. The `disconnect` method will need to be updated to correctly cancel the corresponding `Future` and ensure cleanup.",
+            "status": "pending",
+            "testStrategy": "Refactor existing adapter tests to work with the new thread pool architecture. Create a stress test that rapidly connects and disconnects many adapters, asserting that the number of active threads never exceeds the pool's configured maximum size. Verify that resources are released correctly on disconnect."
+          },
+          {
+            "id": 7,
+            "title": "Create a Comprehensive Threading and Shutdown Test Suite",
+            "description": "Develop a new integration test suite focused on validating the robustness of the entire threading and shutdown system. The suite must test for race conditions, shutdown reliability, and memory leak regressions under load.",
+            "dependencies": [
+              "4.2",
+              "4.4",
+              "4.5",
+              "4.6"
+            ],
+            "details": "This test suite (`tests/integration/test_threading.py`) will include: 1) A 'chaos' test that rapidly starts and stops adapters to look for race conditions. 2) A shutdown-under-load test that initiates a graceful shutdown while many adapters are active. 3) A validation test for the `ThreadMonitor` that kills a worker thread and confirms the recovery event is fired. 4) A long-running memory test that combines all features to ensure no new leaks have been introduced.",
+            "status": "pending",
+            "testStrategy": "This task is the test strategy itself. Success is defined by the creation of the test suite and all tests passing reliably in the CI/CD pipeline. The tests must be able to detect regressions in thread safety, shutdown logic, and memory management."
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Complete TUI Implementation and Integration",
+        "description": "Finalize the Textual User Interface (TUI) by resolving async integration issues, implementing robust state management and error handling, and adding comprehensive integration tests to ensure seamless interaction with the backend.",
+        "details": "This task involves a full overhaul of the TUI to ensure stability, reliability, and a seamless user experience. It addresses core architectural issues from async integration to state management.\n\n1. **Async/Await Integration:**\n   - Refactor all TUI interactions with the backend `EventEngine` to be fully asynchronous. Utilize `textual`'s `run_async` method to spawn background tasks for fetching data or dispatching actions without blocking the UI thread.\n   - Ensure the application's main `asyncio` event loop and the `textual` event loop are properly integrated to prevent conflicts and deadlocks.\n\n2. **Centralized State Management:**\n   - Implement a dedicated state management system (e.g., a singleton 'Store' class using an observable pattern) to act as the single source of truth for all UI components.\n   - Widgets will subscribe to state changes rather than holding their own state. This decouples UI components from business logic and simplifies data flow (e.g., `Store.subscribe('market_data', self.on_market_data_update)`).\n\n3. **Input Validation Framework:**\n   - Integrate `Pydantic` models for all user-configurable parameters (e.g., `TradeOrderModel`).\n   - Use `textual`'s built-in `Validator` objects on input fields for real-time client-side validation (e.g., checking for numeric input, valid symbol format).\n   - On submission, validate the input data against the Pydantic model and display clear, user-friendly error messages in a dedicated status area.\n\n4. **Race Condition Mitigation & Initialization:**\n   - Modify UI panels to initially render in a 'loading' state.\n   - Panels must subscribe to backend status events (e.g., `AdapterConnectedEvent`, `InitialStateLoadedEvent`) from the `EventEngine`.\n   - Only after receiving the appropriate 'ready' event should a panel request and render its data, preventing crashes due to uninitialized backend components.\n\n5. **Error Boundaries and Graceful Degradation:**\n   - Wrap widget update logic and event handlers in `try...except` blocks to catch unexpected errors and prevent a single widget failure from crashing the entire application. Log errors to a dedicated TUI log panel.\n   - Implement handlers for backend error/disconnection events. When a connection is lost, UI elements dependent on it should enter a 'disconnected' or 'stale data' state (e.g., grayed out, showing a warning icon) instead of failing.",
+        "testStrategy": "Testing will focus on the interaction between the TUI and the backend systems, ensuring both functionality and stability under various conditions.\n\n1. **Component-Level Testing (Headless):**\n   - Use `textual.pilot` to test individual widgets and screens in isolation.\n   - For each widget, simulate user input (e.g., `pilot.press()`, `pilot.click()`) and assert the resulting state changes and visual output (via screen snapshots).\n   - Mock the state store to provide data and verify that the widget renders correctly for different states (loading, data-filled, error).\n\n2. **Integration Testing (TUI + Mocked Backend):**\n   - Create a test suite that runs the full TUI application in headless mode against a mocked `EventEngine`.\n   - **Backend-to-Frontend:** Simulate the `EventEngine` firing various events (`TickEvent`, `OrderUpdateEvent`, `AdapterErrorEvent`) and assert that the corresponding TUI widgets update their content and appearance correctly.\n   - **Frontend-to-Backend:** Use `pilot` to simulate user actions like placing an order. Verify that the correct action/event is dispatched to the mocked `EventEngine` with the validated parameters.\n\n3. **Race Condition and Stress Testing:**\n   - Develop a test that rapidly fires a sequence of connection, disconnection, and data events from the mocked `EventEngine` immediately upon TUI startup. Assert that the application remains stable and does not raise any unhandled exceptions.\n\n4. **Manual E2E Verification:**\n   - Create a testing checklist for manual verification against a live (or staging) backend.\n   - The checklist must include: verifying real-time data updates, successful order submission, correct display of error messages for invalid inputs, and graceful handling of a manual backend service restart.",
+        "status": "pending",
+        "dependencies": [
+          3,
+          4
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Refactor TUI for Full Asynchronous Operation",
+            "description": "Overhaul all TUI-to-backend interactions to be fully asynchronous using textual's async capabilities, preventing UI blocking and resolving event loop conflicts.",
+            "dependencies": [],
+            "details": "Refactor all calls to the backend `EventEngine` to use `textual`'s `run_async` method. This ensures that long-running operations like data fetching or action dispatching occur in background tasks, keeping the UI responsive. Critically, ensure the application's main `asyncio` event loop and the `textual` event loop are correctly integrated to prevent deadlocks or race conditions.",
+            "status": "pending",
+            "testStrategy": "Manually verify UI responsiveness during simulated long-running backend operations. Check logs for any `asyncio` related warnings or errors. Use `textual.pilot` to trigger async actions and assert the UI does not freeze."
+          },
+          {
+            "id": 2,
+            "title": "Implement Centralized TUI State Management",
+            "description": "Create a centralized 'Store' to act as the single source of truth for all UI components, simplifying data flow and decoupling UI from business logic.",
+            "dependencies": [
+              "5.1"
+            ],
+            "details": "Implement a singleton 'Store' class that manages the application's UI state. Widgets will no longer maintain their own state but will instead subscribe to relevant state changes in the Store using an observable pattern (e.g., `Store.subscribe('market_data', self.on_market_data_update)`). This change centralizes state logic and makes UI updates predictable and easier to debug.",
+            "status": "pending",
+            "testStrategy": "Unit test the Store class to verify that subscriptions, notifications, and state updates work correctly. Use `textual.pilot` to verify that a widget correctly updates its view when the corresponding state in the Store is changed externally."
+          },
+          {
+            "id": 3,
+            "title": "Integrate Pydantic-Based Input Validation",
+            "description": "Implement a robust, two-tiered input validation system using `textual`'s real-time validators and `Pydantic` models for submission-time validation.",
+            "dependencies": [
+              "5.2"
+            ],
+            "details": "For all user inputs (e.g., trade orders, configuration settings), apply `textual.Validator` objects directly to input fields for immediate feedback (e.g., numeric-only, regex patterns). On form submission, validate the collected data against a corresponding `Pydantic` model. If validation fails, display clear, user-friendly error messages in a dedicated status widget, which reads its content from the central state.",
+            "status": "pending",
+            "testStrategy": "Use `textual.pilot` to enter both valid and invalid data into input fields. Assert that client-side validators prevent invalid characters and that Pydantic validation errors are correctly displayed in the status area upon submission attempts."
+          },
+          {
+            "id": 4,
+            "title": "Mitigate Initialization Race Conditions with Loading States",
+            "description": "Prevent UI crashes on startup by ensuring widgets render in a 'loading' state and only request data after the backend confirms it is ready.",
+            "dependencies": [
+              "5.1",
+              "5.2"
+            ],
+            "details": "Modify all data-dependent widgets to initially display a 'loading' or placeholder state. Each widget must subscribe to backend status events (e.g., `AdapterConnectedEvent`, `InitialStateLoadedEvent`) via the `EventEngine` and state store. Only after receiving the necessary 'ready' event will the widget trigger an async task to fetch and render its initial data, eliminating race conditions where the UI requests data from an uninitialized backend.",
+            "status": "pending",
+            "testStrategy": "Use `textual.pilot` to launch the application with a simulated delay in backend initialization. Verify that all relevant panels correctly display their 'loading' state and transition to a 'data-loaded' state only after a mock `InitialStateLoadedEvent` is processed."
+          },
+          {
+            "id": 5,
+            "title": "Implement Widget-Level Error Boundaries",
+            "description": "Wrap widget update logic in `try...except` blocks to isolate failures, preventing a single widget error from crashing the entire TUI.",
+            "dependencies": [
+              "5.1"
+            ],
+            "details": "Encapsulate the core logic within event handlers and data update methods of each major widget (e.g., Order Book, Charts, Positions Panel) inside a `try...except` block. Any caught exceptions should be logged to a dedicated TUI log panel for debugging and prevent the exception from propagating and crashing the application. The widget should ideally display a localized error state.",
+            "status": "pending",
+            "testStrategy": "Inject faulty data or raise exceptions deliberately within a widget's update method during a test. Use `textual.pilot` to verify that the specific widget shows an error state but the rest of the application remains responsive and functional."
+          },
+          {
+            "id": 6,
+            "title": "Implement Graceful Degradation on Backend Disconnection",
+            "description": "Ensure the UI remains stable and informative when the backend connection is lost by transitioning data-dependent widgets to a 'disconnected' state.",
+            "dependencies": [
+              "5.1",
+              "5.2"
+            ],
+            "details": "Create handlers for backend disconnection and error events. When such an event is received, update the central state to reflect the disconnected status. Widgets subscribed to this state should automatically re-render into a 'disconnected' or 'stale data' mode (e.g., grayed out, displaying a warning icon, showing last known values). This provides clear feedback to the user and prevents errors from attempting to interact with a disconnected backend.",
+            "status": "pending",
+            "testStrategy": "Simulate a backend disconnection event. Use `textual.pilot` to assert that all relevant UI components change their appearance to a 'disconnected' state and that interactive elements that require a connection (e.g., 'Place Order' button) become disabled."
+          },
+          {
+            "id": 7,
+            "title": "Develop Comprehensive TUI Integration Test Suite",
+            "description": "Create a suite of headless integration tests using `textual.pilot` to validate the end-to-end functionality, stability, and responsiveness of the TUI.",
+            "dependencies": [
+              "5.1",
+              "5.2",
+              "5.3",
+              "5.4",
+              "5.5",
+              "5.6"
+            ],
+            "details": "Using the `textual.pilot` testing framework, create a test suite that simulates user interactions and verifies the TUI's response. Tests should cover key user workflows: entering and submitting orders, navigating between screens, and verifying data updates from mock backend events. The suite will run headlessly in CI/CD to catch regressions.",
+            "status": "pending",
+            "testStrategy": "The implementation of this task *is* the test strategy for the parent task. The suite will cover component-level tests (widget isolation) and screen-level tests (workflow simulation) to ensure the entire TUI is stable and interacts correctly with a mocked backend."
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Fix and Enhance Test Infrastructure",
+        "description": "Overhaul the project's testing infrastructure by resolving dependency issues, creating a stable test environment, fixing broken tests, and implementing a CI pipeline, performance benchmarking, and WebSocket mocking.",
+        "details": "1. **Dependency Management Consolidation:**\n   - Identify and add the missing `packaging` module to the project's core dependencies.\n   - Audit all existing code (including from Tasks 1 & 3) to identify all required libraries (e.g., `ccxt`, `ccxt.pro`, `textual`, `pytest`, `pytest-benchmark`, `pytest-asyncio`).\n   - Consolidate all project and development dependencies into `pyproject.toml` under `[project.dependencies]` and `[project.optional-dependencies]`, deprecating any `requirements.txt` files.\n\n2. **Test Environment Setup:**\n   - Create a `Makefile` or a shell script (`scripts/setup-dev.sh`) that automates the creation of a virtual environment and installation of all project and test dependencies using `pip install -e .[test]`.\n   - Ensure the script is executable and documented in the project's `README.md`.\n\n3. **Test Codebase Refactoring:**\n   - Systematically review all files under the `tests/` directory.\n   - Correct all broken `import` statements and file paths that resulted from recent refactoring. Ensure all tests can be discovered and run by `pytest` from the project root.\n\n4. **WebSocket Mocking Framework:**\n   - Create a new mock server/client infrastructure in `tests/mocks/websocket.py`.\n   - The mock must be able to simulate the lifecycle of a WebSocket connection as defined in Task 3: successful connection, authentication, subscription, data message pushes (e.g., mock trades, order book updates), heartbeats, and graceful/abrupt disconnections.\n   - It should be easily configurable within `pytest` fixtures to simulate various scenarios, including high-volume data and error conditions.\n\n5. **Performance Benchmarking Suite:**\n   - Integrate the `pytest-benchmark` library.\n   - Create a new test suite `tests/performance/` for benchmarking critical code paths.\n   - Initial benchmarks should target data transformation logic in adapters and event processing throughput in the `EventEngine`.\n\n6. **Continuous Integration (CI) Pipeline:**\n   - Set up a CI workflow using GitHub Actions (in `.github/workflows/ci.yml`).\n   - The pipeline should trigger on every push and pull request to the `main` branch.\n   - Workflow steps must include:\n     - Checking out the code.\n     - Setting up a specific Python version.\n     - Installing dependencies using the new setup script.\n     - Running static analysis/linting tools (e.g., `flake8`, `black`).\n     - Executing the full `pytest` suite.",
+        "testStrategy": "1. **Environment Script Verification:**\n   - In a clean, containerized environment (e.g., Docker), execute the new setup script. Verify that the virtual environment is created and all dependencies from `pyproject.toml` are installed correctly.\n   - Confirm that `pytest` can be run successfully from the command line after setup.\n\n2. **CI Pipeline Validation:**\n   - Create a test branch and a pull request.\n   - Confirm that the CI pipeline triggers automatically.\n   - Intentionally introduce a failing test and a linting error to ensure the respective CI steps fail as expected.\n   - Fix the errors and confirm the pipeline passes successfully.\n\n3. **Mock Infrastructure Test:**\n   - Write a new unit test for a component that will use the WebSocket streaming (e.g., a test for the `StreamingBaseAdapter`).\n   - Use the new WebSocket mock fixture to simulate a data stream and assert that the component processes the mock data correctly. This validates the usability of the mock framework.\n\n4. **Benchmark Execution:**\n   - Run the performance test suite locally using `pytest --benchmark-only`.\n   - Verify that benchmark results are generated and saved. Review the initial report to establish a performance baseline.\n\n5. **Full Test Suite Execution:**\n   - Run the entire test suite (`pytest`) from the project root. Assert that all tests pass, confirming that broken imports and paths have been resolved.",
+        "status": "pending",
+        "dependencies": [
+          1,
+          3
+        ],
+        "priority": "medium",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Consolidate Project Dependencies into pyproject.toml",
+            "description": "Audit the entire codebase to identify all production and development dependencies, and consolidate them into a single `pyproject.toml` file, deprecating any existing `requirements.txt` files.",
+            "dependencies": [],
+            "details": "Identify all required libraries, including `packaging`, `ccxt`, `ccxt.pro`, `textual`, `pytest`, `pytest-benchmark`, and `pytest-asyncio`. Add production libraries to `[project.dependencies]` and development/testing libraries to `[project.optional-dependencies.test]`.",
+            "status": "pending",
+            "testStrategy": "Manually inspect the `pyproject.toml` file for correctness. The ultimate test will be the successful execution of the setup script in the next subtask."
+          },
+          {
+            "id": 2,
+            "title": "Create Automated Development Environment Setup Script",
+            "description": "Develop a script to automate the creation of a virtual environment and the installation of all project and test dependencies from the `pyproject.toml` file.",
+            "dependencies": [
+              "6.1"
+            ],
+            "details": "Create a `Makefile` or a shell script (e.g., `scripts/setup-dev.sh`) that automates the setup process. The script should execute `pip install -e .[test]`. Ensure the script is executable and document its usage in the `README.md`.",
+            "status": "pending",
+            "testStrategy": "Execute the script in a clean, containerized environment (e.g., Docker) to verify it creates a virtual environment and installs all dependencies correctly. Confirm `pytest` can be invoked."
+          },
+          {
+            "id": 3,
+            "title": "Refactor and Fix Broken Test Suite Imports",
+            "description": "Systematically review and repair the existing test suite under the `tests/` directory by fixing all broken import statements and incorrect file paths resulting from recent code refactoring.",
+            "dependencies": [
+              "6.2"
+            ],
+            "details": "Go through each file in the `tests/` directory and correct all `import` statements. The goal is to make the entire test suite discoverable and runnable by `pytest` from the project root without any import-related errors.",
+            "status": "pending",
+            "testStrategy": "Run `pytest` from the project root. Success is defined as `pytest` discovering and running all existing tests without raising any `ModuleNotFoundError` or `ImportError` exceptions."
+          },
+          {
+            "id": 4,
+            "title": "Implement WebSocket Mocking Framework",
+            "description": "Create a configurable and reusable WebSocket mocking framework to simulate real-time data streams for testing exchange adapters.",
+            "dependencies": [
+              "6.3"
+            ],
+            "details": "Develop a mock server/client in `tests/mocks/websocket.py`. It must simulate the full WebSocket lifecycle: connection, authentication, subscription, data messages, heartbeats, and disconnections. It should be integrated with `pytest` fixtures for easy configuration in tests.",
+            "status": "pending",
+            "testStrategy": "Write new unit tests that utilize the mock fixtures. These tests should assert that the application logic correctly handles various simulated WebSocket events, including successful data reception and error conditions."
+          },
+          {
+            "id": 5,
+            "title": "Establish Performance Benchmarking Suite",
+            "description": "Integrate the `pytest-benchmark` library and create an initial suite of performance tests for critical application components.",
+            "dependencies": [
+              "6.3"
+            ],
+            "details": "Add and configure `pytest-benchmark`. Create a new test suite in `tests/performance/`. Implement initial benchmarks targeting data transformation logic within adapters and the event processing throughput of the `EventEngine`.",
+            "status": "pending",
+            "testStrategy": "Run `pytest --benchmark-only` to ensure the new performance tests execute and generate reports. Analyze the initial results to establish a performance baseline."
+          },
+          {
+            "id": 6,
+            "title": "Set Up CI Workflow with Static Analysis",
+            "description": "Create a foundational Continuous Integration (CI) pipeline using GitHub Actions that automatically performs linting and static code analysis.",
+            "dependencies": [
+              "6.2"
+            ],
+            "details": "Create a `.github/workflows/ci.yml` file. The workflow must trigger on pushes and pull requests to `main`. It should include steps to check out code, set up Python, install dependencies via the setup script, and run static analysis tools like `flake8` and `black --check`.",
+            "status": "pending",
+            "testStrategy": "Create a pull request with intentional linting errors to verify that the CI pipeline correctly identifies the issues and fails. Subsequently, fix the errors and confirm the pipeline passes."
+          },
+          {
+            "id": 7,
+            "title": "Integrate Full Test Suite into CI Pipeline",
+            "description": "Enhance the CI pipeline to execute the complete test suite, including all unit, integration, and performance tests, to validate code changes.",
+            "dependencies": [
+              "6.3",
+              "6.4",
+              "6.5",
+              "6.6"
+            ],
+            "details": "Add a new step to the `ci.yml` workflow that executes the full `pytest` suite. This step should run after the static analysis step has passed. The CI run's success or failure must depend on the test results.",
+            "status": "pending",
+            "testStrategy": "Create a pull request with a deliberately failing test to ensure the CI pipeline fails at the testing step. After fixing the test, confirm that the entire CI pipeline completes successfully."
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Complete Logging Migration",
+        "description": "Overhaul the application's logging system by migrating all print statements to loguru, implementing structured JSON logging, optimizing performance in hot-paths, and adding robust configuration, rotation, and metrics collection.",
+        "details": "This task involves a complete refactoring of the application's logging infrastructure to establish a modern, performant, and maintainable system.\n\n1. **Audit and Migrate to Loguru:**\n   - Perform a codebase-wide search for all instances of `print()`.\n   - Replace each `print()` statement with an appropriate `loguru` logger call (e.g., `logger.debug()`, `logger.info()`, `logger.warning()`, `logger.error()`).\n   - Differentiate between temporary debug prints, which should become `logger.debug()`, and essential operational messages, which should be `logger.info()` or higher.\n\n2. **Implement Structured Logging:**\n   - Configure `loguru` to serialize all log records to JSON format for file-based sinks. The console sink can remain human-readable for development.\n   - The standard JSON log entry must include: `timestamp`, `level`, `message`, `name`, `function`, and `line`.\n   - Utilize `logger.bind()` to add structured context to logs where appropriate (e.g., `logger.bind(exchange='binance', symbol='BTC/USDT').info('Order book updated')`).\n\n3. **Hot-Path Performance Optimization:**\n   - Identify performance-critical code paths, specifically within the WebSocket message handling loops (from Task 3) and the core `EventEngine`.\n   - Configure `loguru` sinks with `enqueue=True` to make logging calls in these hot-paths non-blocking, preventing I/O from impacting application latency.\n   - The default production log level should be set to `INFO` to avoid the performance cost of processing `DEBUG` level messages.\n\n4. **Centralized Configuration System:**\n   - Create a `logging.yaml` or similar configuration file to manage all logging settings.\n   - The application must load this configuration on startup.\n   - The configuration file will control sinks (file, console), log levels per module, format (JSON vs. plain text), rotation, and retention policies.\n\n5. **Log Rotation and Archival:**\n   - Configure file sinks to use built-in `loguru` rotation based on size (e.g., `rotation='100 MB'`) and time (e.g., `rotation='00:00'`).\n   - Implement a retention policy to automatically clean up old log files (e.g., `retention='14 days'`).\n   - Enable compression for rotated log files to save disk space (e.g., `compression='zip'`).\n\n6. **Performance Metrics Collection:**\n   - Establish a dedicated logger for performance metrics.\n   - This logger will write to a separate `metrics.log` file in a machine-parseable format (e.g., key-value or JSON).\n   - Instrument key functions to log execution time, e.g., `logger_metrics.info(f'event_processing_time={{duration}}ms')`.",
+        "testStrategy": "1. **Static Code Analysis:**\n   - Run a script (`grep -r 'print(' ./src`) to verify that no `print()` statements remain in the main application source code. Exceptions for specific tools or scripts must be justified.\n\n2. **Structured Log Validation:**\n   - In unit tests, redirect log output to an in-memory stream (e.g., `io.StringIO`).\n   - Generate a log message with bound context using `logger.bind()`.\n   - Parse the resulting JSON from the stream and assert that all required fields (`timestamp`, `level`, `message`) and the custom context fields are present and correctly formatted.\n\n3. **Configuration Testing:**\n   - Write unit tests that load different logging configuration files.\n   - Assert that the logger's level and sink configurations change as expected based on the loaded file.\n   - Test edge cases like malformed configuration files, ensuring the application handles them gracefully.\n\n4. **Rotation and Retention Simulation:**\n   - Write an integration test that generates enough log data to trigger a size-based rotation. Verify that a new log file is created and the old one is archived/compressed.\n   - Use a library like `freezegun` to manipulate the system clock and test time-based rotation (e.g., daily) and retention (e.g., deleting files older than 7 days).\n\n5. **Performance Benchmarking:**\n   - Using the test infrastructure from Task 6, create benchmarks for a hot-path function (e.g., a WebSocket message handler).\n   - Run the benchmark with logging disabled, with synchronous logging, and with asynchronous (`enqueue=True`) logging.\n   - Assert that the performance degradation from asynchronous logging is minimal and within an acceptable threshold compared to synchronous logging.",
+        "status": "pending",
+        "dependencies": [
+          3,
+          4,
+          6
+        ],
+        "priority": "medium",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Audit and Replace `print()` with Basic Loguru Calls",
+            "description": "Perform a comprehensive codebase audit to find all instances of `print()` and replace them with the appropriate `loguru` equivalent. This initial pass will establish a baseline for the new logging system.",
+            "dependencies": [],
+            "details": "Use a global search tool (e.g., `grep`, IDE search) to locate all `print()` statements. Replace them with `logger.debug()` for temporary or verbose development messages, and `logger.info()`, `logger.warning()`, or `logger.error()` for significant operational events. A single, globally configured logger is sufficient for this stage.",
+            "status": "pending",
+            "testStrategy": "Run a static code analysis script (e.g., `grep -r 'print(' ./src`) to confirm that no `print()` statements remain in the main application source code. Manually review a sample of the replacements to ensure correct log levels were chosen."
+          },
+          {
+            "id": 2,
+            "title": "Implement Centralized YAML-based Logging Configuration",
+            "description": "Create a `logging.yaml` file and a corresponding loader module. The application must parse this file on startup to dynamically configure all aspects of the logging system, decoupling configuration from the code.",
+            "dependencies": [],
+            "details": "The configuration file should define sections for sinks, log levels (global and per-module), and formats. The loader module will be responsible for reading the YAML, removing `loguru`'s default handler, and adding new handlers as specified in the configuration.",
+            "status": "pending",
+            "testStrategy": "Write unit tests for the configuration loader. Verify that it correctly parses a sample YAML file and that the `loguru` logger object is configured with the expected handlers and levels."
+          },
+          {
+            "id": 3,
+            "title": "Configure Structured JSON and Human-Readable Console Sinks",
+            "description": "Using the new configuration system, implement two primary logging sinks: a human-readable, colorized sink for console output during development, and a structured JSON sink for file output.",
+            "dependencies": [
+              "7.2"
+            ],
+            "details": "In `logging.yaml`, define a console sink with standard formatting and a file sink with `serialize=True`. The JSON output must include standard fields like `timestamp`, `level`, `message`, `name`, `function`, and `line` to facilitate automated parsing and analysis.",
+            "status": "pending",
+            "testStrategy": "In a test environment, capture log output. Verify the console output is human-readable. Read the generated log file and use a JSON parser to validate that each line is a well-formed JSON object matching the required schema."
+          },
+          {
+            "id": 4,
+            "title": "Implement Log Rotation, Retention, and Compression",
+            "description": "Enhance the file-based JSON sink to include robust, production-ready features for log file management, including automatic rotation, retention, and compression.",
+            "dependencies": [
+              "7.3"
+            ],
+            "details": "Extend the file sink configuration in `logging.yaml` to include parameters for `rotation` (e.g., '100 MB' or '00:00'), `retention` (e.g., '14 days'), and `compression` (e.g., 'zip'). `loguru` will handle the lifecycle of these files automatically.",
+            "status": "pending",
+            "testStrategy": "Create a test script that generates a large volume of logs to trigger the size-based rotation. Manually inspect the log directory to confirm that files are rotated, compressed into zip archives, and that old files are purged according to the retention policy."
+          },
+          {
+            "id": 5,
+            "title": "Optimize Logging Performance in Hot-Paths",
+            "description": "Identify performance-critical code paths, specifically the WebSocket message handling loops and the core EventEngine, and configure their logging to be non-blocking to prevent I/O latency from impacting application performance.",
+            "dependencies": [
+              "7.3"
+            ],
+            "details": "In the `logging.yaml` configuration, set `enqueue=True` for the file sink. This offloads the I/O operations to a separate process. Additionally, set the default production log level to `INFO` to avoid the performance cost of serializing and processing `DEBUG` messages.",
+            "status": "pending",
+            "testStrategy": "Conduct a benchmark test on a critical function (e.g., WebSocket message processor). Measure the execution latency with `enqueue=False` and `enqueue=True` to verify that non-blocking logging significantly reduces I/O-related delays."
+          },
+          {
+            "id": 6,
+            "title": "Enrich Logs with Structured Context using `logger.bind()`",
+            "description": "Refactor key application modules to add dynamic, structured context to log records. This will make logs more searchable and useful for debugging without cluttering the log message itself.",
+            "dependencies": [
+              "7.1",
+              "7.3"
+            ],
+            "details": "In areas handling specific contexts, such as an exchange adapter or order manager, use `logger.bind(exchange='binance', symbol='BTC/USDT')` to create context-specific loggers. This bound data will automatically be included as key-value pairs in the JSON log output.",
+            "status": "pending",
+            "testStrategy": "In unit tests for modules like exchange adapters, trigger a log-producing event. Capture the JSON log output and assert that the record contains the extra context fields (e.g., 'extra.exchange': 'binance') that were added via `bind()`."
+          },
+          {
+            "id": 7,
+            "title": "Implement Dedicated Performance Metrics Logging",
+            "description": "Establish a separate logger and file sink (`metrics.log`) specifically for collecting performance metrics in a machine-parseable format, distinct from the main application event logs.",
+            "dependencies": [
+              "7.2"
+            ],
+            "details": "Add a new sink to `logging.yaml` for `metrics.log`, configured to use JSON serialization. Create a dedicated logger instance (e.g., `metrics_logger`). Instrument key functions to log metrics like execution time or queue size, e.g., `metrics_logger.info('event_processing', duration_ms=55)`.",
+            "status": "pending",
+            "testStrategy": "Write a unit test that executes an instrumented function. Verify that a new line is written to `metrics.log` and that it is a valid JSON object containing the expected metric name and value (e.g., `{'message': 'event_processing', 'extra': {'duration_ms': 55}}`)."
+          }
+        ]
       }
     ],
     "metadata": {
       "created": "2025-07-27T17:18:34.572Z",
-      "updated": "2025-07-27T17:48:55.572Z",
+      "updated": "2025-08-03T13:56:57.918Z",
       "description": "Tasks for master context"
     }
   }

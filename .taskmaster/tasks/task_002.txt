@@ -1,0 +1,75 @@
+# Task ID: 2
+# Title: Fix all failed unit tests
+# Status: pending
+# Dependencies: None
+# Priority: medium
+# Description: Fix all failed unit tests, grouping them by the reasons for failure and the classes being tested.
+
+The following workflow must be followed:
+1. Each failing test must be analyzed by examining the source code first
+2. Make the necessary changes to fix the test
+3. Run the tests to verify the fix works
+4. Do not move on to the next test until the current one passes successfully
+
+This systematic approach ensures each test is properly fixed before proceeding to the next one.
+# Details:
+
+
+# Test Strategy:
+
+
+# Subtasks:
+## 1. Fix AttributeError in Futu Adapter Tests [pending]
+### Dependencies: None
+### Description: Fix `AttributeError` in Futu Adapter Tests due to incorrect mocking.
+### Details:
+
+
+## 2. Fix NameError in Futu Order Manager Tests [pending]
+### Dependencies: None
+### Description: Fix `NameError` in Futu Order Manager Tests due to missing pandas import.
+### Details:
+
+
+## 3. Fix AssertionError in Futu Account Manager Tests [pending]
+### Dependencies: None
+### Description: Fix `AssertionError` in Futu Account Manager Tests due to incorrect mock setups and assertions.
+### Details:
+
+
+## 4. Fix AssertionError in Futu Historical Data Tests [pending]
+### Dependencies: None
+### Description: Fix `AssertionError` in Futu Historical Data Tests due to incorrect mock calls.
+### Details:
+
+
+## 5. Fix AssertionError in Futu Market Data Tests [pending]
+### Dependencies: None
+### Description: Fix `AssertionError` in Futu Market Data Tests due to an unexpected method call.
+### Details:
+
+
+## 6. Fix Failures in TUI Integration Tests [pending]
+### Dependencies: None
+### Description: Fix `TypeError` and `AttributeError` in TUI Integration Tests.
+### Details:
+
+
+## 7. Fix Failures in Binance E2E Tests [pending]
+### Dependencies: None
+### Description: Fix `AssertionError` in Binance E2E Tests.
+### Details:
+
+
+## 8. Fix Failures in Event Engine Performance Tests [pending]
+### Dependencies: None
+### Description: Fix performance issues in Event Engine Performance Tests.
+### Details:
+
+
+## 9. Fix Failure in Event Type Tests [pending]
+### Dependencies: None
+### Description: Fix `AssertionError` in Event Type Tests due to a change in the number of event types.
+### Details:
+
+

@@ -155,6 +155,7 @@ logs/
 trading_logs/
 error_logs/
 debug_logs/
+foxtrot_cache/
 
 # Temporary files
 temp/

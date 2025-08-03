@@ -60,7 +60,7 @@ The implementation should follow these steps:
     -   Execute an abstract, high-level test suite against both the existing IB adapter and the new Binance adapter to ensure they produce identical outputs and events for equivalent actions. This test is critical to validate the 'drop-in replacement' requirement and confirm strict interface compatibility.
 
 # Subtasks:
-## 1. Initial Project Setup and Adapter Scaffolding [pending]
+## 1. Initial Project Setup and Adapter Scaffolding [done]
 ### Dependencies: None
 ### Description: Set up the project structure for the new Binance adapter and create the main `BinanceAdapter` class. This class will serve as the skeleton, inheriting from the `BaseAdapter` class and implementing its abstract methods with placeholder logic.
 ### Details:

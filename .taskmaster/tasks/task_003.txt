@@ -1,0 +1,96 @@
+# Task ID: 3
+# Title: Implement Real-Time WebSocket Streaming for Exchange Adapters
+# Status: pending
+# Dependencies: 1, 2
+# Priority: high
+# Description: Replace the inefficient HTTP polling mechanism with a true WebSocket implementation to receive real-time market data, reduce latency, and avoid API rate limit issues. This will be implemented for all exchange adapters using ccxt.pro or native exchange APIs.
+# Details:
+1. **Dependency Integration:**
+   - Add the `ccxt.pro` library to the project's dependencies. This will be the primary tool for exchanges it supports, such as Binance.
+
+2. **Architectural Refactoring:**
+   - Modify the `foxtrot.gateway.BaseAdapter` or create a new `StreamingBaseAdapter` to support persistent, asynchronous WebSocket connections.
+   - The adapter interface must include methods for `connect()`, `disconnect()`, `subscribe(symbol)`, and `unsubscribe(symbol)`.
+   - The adapter must manage the WebSocket connection in a non-blocking manner (e.g., using asyncio in Python or a separate thread) to avoid halting the `MainEngine`.
+
+3. **Adapter Implementation (ccxt.pro for Binance):**
+   - Update the `BinanceAdapter` to utilize `ccxt.pro` for streaming data.
+   - Implement a long-running task that calls methods like `watch_order_book` or `watch_trades`.
+   - On receipt of data, transform it into the standardized `foxtrot` framework event objects and push them to the `EventEngine`.
+
+4. **Adapter Implementation (Native APIs for Futu/IB):**
+   - For adapters like Futu and Interactive Brokers (IB) that are not covered by `ccxt.pro`, implement streaming clients using their native APIs.
+   - Abstract the exchange-specific connection and subscription logic within each adapter, ensuring they adhere to the common streaming interface defined in step 2.
+
+5. **Robust Connection Management:**
+   - Implement a resilient auto-reconnect mechanism with exponential backoff for all streaming adapters to handle network interruptions and exchange-side disconnects.
+   - Integrate heartbeat handling as specified by each exchange's API documentation to maintain connection health.
+   - Add comprehensive logging for connection status (connecting, connected, disconnected), subscription changes, and errors.
+
+# Test Strategy:
+1. **Unit Testing (Mocked Clients):**
+   - In `tests/unit/adapter/`, create tests that mock the `ccxt.pro` client and native WebSocket clients.
+   - Simulate a full lifecycle of WebSocket events: connection success, data messages, heartbeats, errors, and disconnections.
+   - Verify that the adapter correctly parses incoming data payloads and pushes standardized events to a mock `EventEngine`.
+   - Test the auto-reconnect logic by simulating a disconnection and asserting that the adapter attempts to reconnect according to the backoff strategy.
+
+2. **Integration Testing (Live Testnet):**
+   - Configure tests to connect to exchange testnet environments (e.g., Binance Spot Testnet).
+   - Write tests that subscribe to a live data feed (e.g., BTC/USDT order book), receive at least 10 updates, and then unsubscribe.
+   - Verify that the received data is correctly structured and reflects real-time market activity.
+   - Test connection resilience by programmatically interrupting the network connection and confirming that the adapter successfully reconnects and resumes the data stream without manual intervention.
+
+3. **Performance & Latency Benchmarking:**
+   - Create a benchmark test to measure the end-to-end latency from message receipt at the socket to event processing in the `EventEngine`.
+   - Compare latency metrics against the legacy HTTP polling system to formally validate the performance improvement.
+   - Conduct a stress test by subscribing to 20+ different streams simultaneously to monitor CPU, memory, and network usage under load.
+
+# Subtasks:
+## 1. Research and Integrate WebSocket Libraries [pending]
+### Dependencies: None
+### Description: Research and select the optimal WebSocket libraries for the project. Integrate `ccxt.pro` for supported exchanges and identify/integrate native WebSocket client libraries for Futu and Interactive Brokers.
+### Details:
+Add `ccxt.pro` to the project's `requirements.txt`. For Futu and IB, investigate their official Python SDKs (e.g., `futu-api`, `ibapi`) for WebSocket/streaming capabilities and add them to dependencies. Document the chosen libraries and versions.
+
+## 2. Design and Implement `StreamingBaseAdapter` [pending]
+### Dependencies: 3.1
+### Description: Create a new abstract base class, `StreamingBaseAdapter`, to define a common interface for all WebSocket-based exchange adapters, ensuring a consistent architecture for managing real-time data streams.
+### Details:
+Create `foxtrot.gateway.StreamingBaseAdapter` inheriting from `foxtrot.gateway.BaseAdapter`. It must define abstract methods for `connect()`, `disconnect()`, `subscribe(symbol)`, and `unsubscribe(symbol)`. It should also include a non-blocking main loop structure (e.g., using `asyncio.Task`) to handle the persistent connection.
+
+## 3. Implement Binance Adapter with `ccxt.pro` [pending]
+### Dependencies: 3.2
+### Description: Refactor the `BinanceAdapter` to inherit from `StreamingBaseAdapter` and use `ccxt.pro` to stream real-time market data, replacing the old HTTP polling mechanism.
+### Details:
+Implement the `connect`, `disconnect`, `subscribe`, and `unsubscribe` methods. Create a long-running `asyncio` task that uses `ccxt.pro`'s `watch_order_book` and `watch_trades` methods. Received data must be transformed into standardized `foxtrot` event objects and pushed to the `EventEngine`.
+
+## 4. Implement Futu Adapter with Native API [pending]
+### Dependencies: 3.2
+### Description: Implement a streaming adapter for Futu by inheriting from `StreamingBaseAdapter` and using its native Python API (`futu-api`) for real-time data.
+### Details:
+Create a `FutuAdapter` that implements the `StreamingBaseAdapter` interface. Manage the connection lifecycle and subscription logic specific to the Futu API (e.g., `subscribe_ticker`, `on_recv_push`). Transform incoming data packets into standard `foxtrot` event objects before dispatching them.
+
+## 5. Implement Interactive Brokers (IB) Adapter with Native API [pending]
+### Dependencies: 3.2
+### Description: Implement a streaming adapter for Interactive Brokers by inheriting from `StreamingBaseAdapter` and using its native Python API (`ibapi`) for real-time market data.
+### Details:
+Create an `IBAdapter` that implements the `StreamingBaseAdapter` interface. Handle the complexities of the `ibapi`'s asynchronous event-driven model within the adapter's non-blocking loop. Abstract the connection and data subscription logic (e.g., `reqMktData`) and transform data into `foxtrot` events.
+
+## 6. Implement Connection Recovery and Health Monitoring [pending]
+### Dependencies: 3.3, 3.4, 3.5
+### Description: Enhance all streaming adapters with a resilient auto-reconnect mechanism and connection health monitoring to handle network issues and exchange-side disconnects gracefully.
+### Details:
+Implement an auto-reconnect loop with exponential backoff logic, potentially in the `StreamingBaseAdapter` to be reused. Integrate heartbeat handling as required by each exchange's API. Add comprehensive logging for connection state changes (connecting, connected, disconnected, reconnecting), errors, and heartbeats.
+
+## 7. Implement WebSocket Connection and Subscription Rate Limiting [pending]
+### Dependencies: 3.2
+### Description: Implement rate-limiting logic for WebSocket connections and subscription messages to comply with exchange-specific limits and prevent API bans.
+### Details:
+Research and document the connection, subscription, and message rate limits for Binance, Futu, and IB. Implement a token bucket or similar algorithm, likely within the `StreamingBaseAdapter`, to throttle outgoing `subscribe`/`unsubscribe` requests. Log any throttled actions.
+
+## 8. Develop Integration Tests for WebSocket Streaming [pending]
+### Dependencies: 3.3, 3.4, 3.5, 3.6
+### Description: Create a suite of integration tests to validate the end-to-end functionality of the WebSocket streaming adapters against live or sandbox exchange environments.
+### Details:
+In `tests/integration/adapter/`, create tests for each streaming adapter (Binance, Futu, IB). The tests should cover the full lifecycle: connect, subscribe to a symbol, receive at least one data update (e.g., a trade or order book tick), unsubscribe, and disconnect. Assert that the correct `foxtrot` event objects are generated.
+

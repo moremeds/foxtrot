@@ -1,6 +1,34 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository. I use both English and Chinese in this project development, but all comments, logs, codes are in English. You should understand the Chinese.
+This file provides guidance to Claude Code (claude.ai/code) when working with the Foxtrot trading platform framework. While I use both English and Chinese in project development, all code, comments, logs, and documentation must be in English. Claude should understand Chinese instructions but respond and code in English.
+
+## Code Architecture Standards
+
+### Hard Requirements 硬性指标
+
+1. **File Length Limits**
+   - Dynamic languages (Python, JavaScript, TypeScript): Maximum 200 lines per file
+   - Static languages (Java, Go, Rust): Maximum 250 lines per file
+   - Maximum 8 files per directory - create subdirectories when exceeded
+
+### BAD TASTE to  AVOID
+
+1.  除了硬性指标以外，还需要时刻关注优雅的架构设计，避免出现以下可能侵蚀我们代码质量的「坏味道」：
+  （1）僵化 (Rigidity): 系统难以变更，任何微小的改动都会引发一连串的连锁修改。
+  （2）冗余 (Redundancy): 同样的代码逻辑在多处重复出现，导致维护困难且容易产生不一致。
+  （3）循环依赖 (Circular Dependency): 两个或多个模块互相纠缠，形成无法解耦的“死结”，导致难以测试与复用。
+  （4）脆弱性 (Fragility): 对代码一处的修改，导致了系统中其他看似无关部分功能的意外损坏。
+  （5）晦涩性 (Obscurity): 代码意图不明，结构混乱，导致阅读者难以理解其功能和设计。
+  （6）数据泥团 (Data Clump): 多个数据项总是一起出现在不同方法的参数中，暗示着它们应该被组合成一个独立的对象。
+  （7）不必要的复杂性 (Needless Complexity): 用“杀牛刀”去解决“杀鸡”的问题，过度设计使系统变得臃肿且难以理解。
+
+- 【非常重要！！】无论是你自己编写代码，还是阅读或审核他人代码时，都要严格遵守上述硬性指标，以及时刻关注优雅的架构设计。
+- 【非常重要！！】无论何时，一旦你识别出那些可能侵蚀我们代码质量的「坏味道」，都应当立即询问用户是否需要优化，并给出合理的优化建议
+ 
+### Critical Rules
+- **ALWAYS** enforce file length limits and directory organization
+- **IMMEDIATELY** flag any code bad taste and propose optimizations
+- **NEVER** compromise on these architectural standards
 
 ## Project Overview
 
@@ -32,36 +60,42 @@ Foxtrot is an event-driven trading platform framework built with Python. It foll
 
 ### Adapter Architecture
 
-Both adapters follow a modular pattern with specialized managers:
+Both adapters follow a consistent modular pattern with specialized managers:
 
 #### Binance Adapter (`foxtrot/adapter/binance/`)
-- `binance.py` - Main adapter facade implementing BaseAdapter interface
-- `api_client.py` - CCXT exchange coordinator and manager factory
-- `account_manager.py` - Account queries, balances, and positions
-- `order_manager.py` - Order placement, cancellation, and tracking
-- `market_data.py` - Real-time market data subscriptions
-- `historical_data.py` - Historical OHLCV data queries
-- `contract_manager.py` - Symbol/contract information
-- `binance_mappings.py` - Data format conversions between CCXT and VT
+| File | Purpose |
+|------|---------|
+| `binance.py` | Main adapter facade implementing BaseAdapter interface |
+| `api_client.py` | CCXT exchange coordinator and manager factory |
+| `account_manager.py` | Account queries, balances, and positions |
+| `order_manager.py` | Order placement, cancellation, and tracking |
+| `market_data.py` | Real-time market data subscriptions |
+| `historical_data.py` | Historical OHLCV data queries |
+| `contract_manager.py` | Symbol/contract information |
+| `binance_mappings.py` | Data format conversions between CCXT and VT |
 
 #### Interactive Brokers Adapter (`foxtrot/adapter/ibrokers/`)
-- `ibrokers.py` - Main adapter facade implementing BaseAdapter interface
-- `api_client.py` - IB API wrapper and manager coordinator
-- `account_manager.py` - Account information and portfolio management
-- `order_manager.py` - Order lifecycle management
-- `market_data.py` - Tick data and market subscriptions
-- `historical_data.py` - Historical data requests
-- `contract_manager.py` - Contract searches and definitions
-- `ib_mappings.py` - Data format conversions between IB API and VT
-- `ibrokers_legacy.py` - Legacy monolithic implementation (deprecated)
+| File | Purpose |
+|------|---------|
+| `ibrokers.py` | Main adapter facade implementing BaseAdapter interface |
+| `api_client.py` | IB API wrapper and manager coordinator |
+| `account_manager.py` | Account information and portfolio management |
+| `order_manager.py` | Order lifecycle management |
+| `market_data.py` | Tick data and market subscriptions |
+| `historical_data.py` | Historical data requests |
+| `contract_manager.py` | Contract searches and definitions |
+| `ib_mappings.py` | Data format conversions between IB API and VT |
+| `ibrokers_legacy.py` | Legacy monolithic implementation (deprecated) |
 
 ### Module Structure
 
-- `foxtrot/adapter/` - Broker/exchange adapters (Binance, Interactive Brokers)
-- `foxtrot/app/` - Application modules with engine and widget components
-- `foxtrot/core/` - Core event system (event_engine.py, event.py)
-- `foxtrot/server/` - Main engine, OMS, database, datafeed
-- `foxtrot/util/` - Constants, converters, logging, settings, utilities
+| Directory | Purpose |
+|-----------|---------|
+| `foxtrot/adapter/` | Broker/exchange adapters (Binance, Interactive Brokers) |
+| `foxtrot/app/` | Application modules with engine and widget components |
+| `foxtrot/core/` | Core event system (event_engine.py, event.py) |
+| `foxtrot/server/` | Main engine, OMS, database, datafeed |
+| `foxtrot/util/` | Constants, converters, logging, settings, utilities |
 
 ## Development Setup
 
@@ -99,10 +133,9 @@ poetry run mypy foxtrot/
 ```
 
 ### Key Dependencies
-- `ibapi` - Interactive Brokers API
-- `ccxt` - Cryptocurrency exchange trading library
-- `tzlocal` - Timezone handling
-- Development: `pytest`, `black`, `ruff`, `mypy`
+- **Runtime**: `ibapi`, `ccxt`, `tzlocal`
+- **Development**: `pytest`, `black`, `ruff`, `mypy`
+- **Testing**: `pytest-asyncio`, `pytest-cov`, `pytest-mock`
 
 ## Key Patterns
 
@@ -157,6 +190,38 @@ Global settings in `util/settings.py`, loaded from `vt_setting.json`:
 - Logging levels
 - Datafeed credentials
 
+## Testing Strategy
+
+### Test Organization
+- Unit tests: `tests/unit/` - Test individual components in isolation
+- Integration tests: `tests/integration/` - Test component interactions
+- E2E tests: `tests/e2e/` - Test complete workflows
+
+### Testing Guidelines
+1. **Mock external dependencies** - Never connect to real brokers/exchanges in tests
+2. **Use fixtures** - Centralize test data in `tests/fixtures/`
+3. **Test one behavior per test** - Keep tests focused and simple
+4. **Follow AAA pattern** - Arrange, Act, Assert
+5. **Use descriptive names** - `test_<method>_<condition>_<expected_result>`
+
+### Common Test Patterns
+```python
+# Mock adapter connections
+@patch('foxtrot.adapter.binance.api_client.ccxt.binance')
+def test_connect_success(mock_exchange):
+    # Test implementation
+
+# Use pytest fixtures
+@pytest.fixture
+def mock_event_engine():
+    return MagicMock(spec=EventEngine)
+
+# Test async methods
+@pytest.mark.asyncio
+async def test_async_operation():
+    # Test async code
+```
+
 ## Important Notes
 
 - All imports should use `foxtrot` as the root package (e.g., `from foxtrot.core.event_engine import EventEngine`)
@@ -167,27 +232,28 @@ Global settings in `util/settings.py`, loaded from `vt_setting.json`:
 - No emojis anywhere in the project - keep all code and documentation text-only
 
 ## MANDATORY PRE-CODING CHECKLIST
+
 **BEFORE ANY CODING ACTION, I MUST ANSWER THESE QUESTIONS:**
 
-### IMPORTS检查 (EVERY TIME)
-- 所有imports都在文件顶部？**必须回答：是**
-- 没有在函数/方法内部import？**必须回答：是**
+### 1. IMPORTS Check 导入检查
+- All imports at file top? **MUST ANSWER: YES**
+- No imports inside functions/methods? **MUST ANSWER: YES**
 
-### KISS检查 (EVERY TIME)
-- 这行代码100%必要吗？**必须回答：是**
-- 有没有全局实例/变量？**必须回答：没有，或者有充分理由**
-- 模块能独立导入吗？**必须回答：是，无副作用**
+### 2. KISS Check 简洁性检查
+- Is this code 100% necessary? **MUST ANSWER: YES**
+- Any global instances/variables? **MUST ANSWER: NO (or justified reason)**
+- Module imports independently? **MUST ANSWER: YES, no side effects**
 
-### TDD检查 (EVERY TIME)
-- 我要写几个测试？**必须回答：一个**
-- 用数据库吗？**必须回答：不，用mock**
-- TDD步骤？**必须回答：RED/GREEN/REFACTOR之一**
-- 具体行为？**必须一句话描述**
+### 3. TDD Check 测试驱动检查
+- How many tests will I write? **MUST ANSWER: ONE**
+- Using database? **MUST ANSWER: NO, use mocks**
+- TDD stage? **MUST ANSWER: RED, GREEN, or REFACTOR**
+- Specific behavior? **MUST DESCRIBE IN ONE SENTENCE**
 
-### 违规警告
-如果我开始编码而没有先做这个检查，用户应该立刻说"停！检查CLAUDE.md"
+### Violation Warning 违规警告
+If I start coding without this checklist, user should immediately say: **"STOP! Check CLAUDE.md"**
 
-**这个检查是MANDATORY的，不是可选的**
+**This checklist is MANDATORY, not optional**
 
 ## Task Master AI Instructions
 **Import Task Master's development workflow commands and guidelines, treat as if import is in the main CLAUDE.md file.**

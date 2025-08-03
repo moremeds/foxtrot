@@ -1,0 +1,94 @@
+# Task ID: 5
+# Title: Complete TUI Implementation and Integration
+# Status: pending
+# Dependencies: 3, 4
+# Priority: high
+# Description: Finalize the Textual User Interface (TUI) by resolving async integration issues, implementing robust state management and error handling, and adding comprehensive integration tests to ensure seamless interaction with the backend.
+# Details:
+This task involves a full overhaul of the TUI to ensure stability, reliability, and a seamless user experience. It addresses core architectural issues from async integration to state management.
+
+1. **Async/Await Integration:**
+   - Refactor all TUI interactions with the backend `EventEngine` to be fully asynchronous. Utilize `textual`'s `run_async` method to spawn background tasks for fetching data or dispatching actions without blocking the UI thread.
+   - Ensure the application's main `asyncio` event loop and the `textual` event loop are properly integrated to prevent conflicts and deadlocks.
+
+2. **Centralized State Management:**
+   - Implement a dedicated state management system (e.g., a singleton 'Store' class using an observable pattern) to act as the single source of truth for all UI components.
+   - Widgets will subscribe to state changes rather than holding their own state. This decouples UI components from business logic and simplifies data flow (e.g., `Store.subscribe('market_data', self.on_market_data_update)`).
+
+3. **Input Validation Framework:**
+   - Integrate `Pydantic` models for all user-configurable parameters (e.g., `TradeOrderModel`).
+   - Use `textual`'s built-in `Validator` objects on input fields for real-time client-side validation (e.g., checking for numeric input, valid symbol format).
+   - On submission, validate the input data against the Pydantic model and display clear, user-friendly error messages in a dedicated status area.
+
+4. **Race Condition Mitigation & Initialization:**
+   - Modify UI panels to initially render in a 'loading' state.
+   - Panels must subscribe to backend status events (e.g., `AdapterConnectedEvent`, `InitialStateLoadedEvent`) from the `EventEngine`.
+   - Only after receiving the appropriate 'ready' event should a panel request and render its data, preventing crashes due to uninitialized backend components.
+
+5. **Error Boundaries and Graceful Degradation:**
+   - Wrap widget update logic and event handlers in `try...except` blocks to catch unexpected errors and prevent a single widget failure from crashing the entire application. Log errors to a dedicated TUI log panel.
+   - Implement handlers for backend error/disconnection events. When a connection is lost, UI elements dependent on it should enter a 'disconnected' or 'stale data' state (e.g., grayed out, showing a warning icon) instead of failing.
+
+# Test Strategy:
+Testing will focus on the interaction between the TUI and the backend systems, ensuring both functionality and stability under various conditions.
+
+1. **Component-Level Testing (Headless):**
+   - Use `textual.pilot` to test individual widgets and screens in isolation.
+   - For each widget, simulate user input (e.g., `pilot.press()`, `pilot.click()`) and assert the resulting state changes and visual output (via screen snapshots).
+   - Mock the state store to provide data and verify that the widget renders correctly for different states (loading, data-filled, error).
+
+2. **Integration Testing (TUI + Mocked Backend):**
+   - Create a test suite that runs the full TUI application in headless mode against a mocked `EventEngine`.
+   - **Backend-to-Frontend:** Simulate the `EventEngine` firing various events (`TickEvent`, `OrderUpdateEvent`, `AdapterErrorEvent`) and assert that the corresponding TUI widgets update their content and appearance correctly.
+   - **Frontend-to-Backend:** Use `pilot` to simulate user actions like placing an order. Verify that the correct action/event is dispatched to the mocked `EventEngine` with the validated parameters.
+
+3. **Race Condition and Stress Testing:**
+   - Develop a test that rapidly fires a sequence of connection, disconnection, and data events from the mocked `EventEngine` immediately upon TUI startup. Assert that the application remains stable and does not raise any unhandled exceptions.
+
+4. **Manual E2E Verification:**
+   - Create a testing checklist for manual verification against a live (or staging) backend.
+   - The checklist must include: verifying real-time data updates, successful order submission, correct display of error messages for invalid inputs, and graceful handling of a manual backend service restart.
+
+# Subtasks:
+## 1. Refactor TUI for Full Asynchronous Operation [pending]
+### Dependencies: None
+### Description: Overhaul all TUI-to-backend interactions to be fully asynchronous using textual's async capabilities, preventing UI blocking and resolving event loop conflicts.
+### Details:
+Refactor all calls to the backend `EventEngine` to use `textual`'s `run_async` method. This ensures that long-running operations like data fetching or action dispatching occur in background tasks, keeping the UI responsive. Critically, ensure the application's main `asyncio` event loop and the `textual` event loop are correctly integrated to prevent deadlocks or race conditions.
+
+## 2. Implement Centralized TUI State Management [pending]
+### Dependencies: 5.1
+### Description: Create a centralized 'Store' to act as the single source of truth for all UI components, simplifying data flow and decoupling UI from business logic.
+### Details:
+Implement a singleton 'Store' class that manages the application's UI state. Widgets will no longer maintain their own state but will instead subscribe to relevant state changes in the Store using an observable pattern (e.g., `Store.subscribe('market_data', self.on_market_data_update)`). This change centralizes state logic and makes UI updates predictable and easier to debug.
+
+## 3. Integrate Pydantic-Based Input Validation [pending]
+### Dependencies: 5.2
+### Description: Implement a robust, two-tiered input validation system using `textual`'s real-time validators and `Pydantic` models for submission-time validation.
+### Details:
+For all user inputs (e.g., trade orders, configuration settings), apply `textual.Validator` objects directly to input fields for immediate feedback (e.g., numeric-only, regex patterns). On form submission, validate the collected data against a corresponding `Pydantic` model. If validation fails, display clear, user-friendly error messages in a dedicated status widget, which reads its content from the central state.
+
+## 4. Mitigate Initialization Race Conditions with Loading States [pending]
+### Dependencies: 5.1, 5.2
+### Description: Prevent UI crashes on startup by ensuring widgets render in a 'loading' state and only request data after the backend confirms it is ready.
+### Details:
+Modify all data-dependent widgets to initially display a 'loading' or placeholder state. Each widget must subscribe to backend status events (e.g., `AdapterConnectedEvent`, `InitialStateLoadedEvent`) via the `EventEngine` and state store. Only after receiving the necessary 'ready' event will the widget trigger an async task to fetch and render its initial data, eliminating race conditions where the UI requests data from an uninitialized backend.
+
+## 5. Implement Widget-Level Error Boundaries [pending]
+### Dependencies: 5.1
+### Description: Wrap widget update logic in `try...except` blocks to isolate failures, preventing a single widget error from crashing the entire TUI.
+### Details:
+Encapsulate the core logic within event handlers and data update methods of each major widget (e.g., Order Book, Charts, Positions Panel) inside a `try...except` block. Any caught exceptions should be logged to a dedicated TUI log panel for debugging and prevent the exception from propagating and crashing the application. The widget should ideally display a localized error state.
+
+## 6. Implement Graceful Degradation on Backend Disconnection [pending]
+### Dependencies: 5.1, 5.2
+### Description: Ensure the UI remains stable and informative when the backend connection is lost by transitioning data-dependent widgets to a 'disconnected' state.
+### Details:
+Create handlers for backend disconnection and error events. When such an event is received, update the central state to reflect the disconnected status. Widgets subscribed to this state should automatically re-render into a 'disconnected' or 'stale data' mode (e.g., grayed out, displaying a warning icon, showing last known values). This provides clear feedback to the user and prevents errors from attempting to interact with a disconnected backend.
+
+## 7. Develop Comprehensive TUI Integration Test Suite [pending]
+### Dependencies: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6
+### Description: Create a suite of headless integration tests using `textual.pilot` to validate the end-to-end functionality, stability, and responsiveness of the TUI.
+### Details:
+Using the `textual.pilot` testing framework, create a test suite that simulates user interactions and verifies the TUI's response. Tests should cover key user workflows: entering and submitting orders, navigating between screens, and verifying data updates from mock backend events. The suite will run headlessly in CI/CD to catch regressions.
+
