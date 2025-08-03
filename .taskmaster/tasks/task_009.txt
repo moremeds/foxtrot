@@ -1,0 +1,43 @@
+# Task ID: 9
+# Title: Implement Native WebSocket Streaming for Interactive Brokers Adapter
+# Status: pending
+# Dependencies: 3, 4, 6, 7
+# Priority: medium
+# Description: Create a dedicated task for implementing WebSocket streaming for the Interactive Brokers adapter using its native ibapi SDK, handling its complex event-driven architecture, TWS/Gateway integration, and unique callback system.
+# Details:
+This task requires a high-effort, bespoke implementation due to the unique architecture of the Interactive Brokers API. Unlike unified libraries, this involves direct integration with the `ibapi` Python SDK, managing a persistent connection to the Trader Workstation (TWS) or IB Gateway, and handling its asynchronous, callback-driven nature.
+
+1. **Dependency Integration:**
+   - Add the official `ibapi` library to the project's dependencies in `pyproject.toml`.
+
+2. **Adapter Implementation (`InteractiveBrokersAdapter`):
+   - Create a new `InteractiveBrokersAdapter` class that inherits from the `StreamingBaseAdapter` defined in Task #3.
+   - The adapter will implement a wrapper around the `ibapi.EClient` and `ibapi.EWrapper` classes.
+
+3. **Connection and Thread Management:**
+   - The `connect()` method will instantiate the `EClient` and a custom `EWrapper` subclass. It will then call `client.connect(host, port, clientId)` and start the client's event processing loop (`client.run()`) in a dedicated background thread, leveraging the robust threading model from Task #4.
+   - The `disconnect()` method must gracefully call `client.disconnect()` and ensure the background thread is properly joined.
+
+4. **Callback-Driven Event Handling:**
+   - The custom `EWrapper` subclass will override methods like `tickPrice()`, `tickSize()`, `orderStatus()`, `openOrder()`, and `error()`.
+   - Inside these callback methods, transform the raw IB data into the framework's standardized event objects (e.g., `TickEvent`, `OrderEvent`).
+   - Push the transformed events onto the central `EventEngine` for consumption by other parts of the system.
+
+5. **Subscription Management:**
+   - The `subscribe(symbol)` method will generate a unique request ID (`tickerId`) and call the appropriate client method, such as `client.reqMktData(tickerId, contract, ...)`. The adapter must maintain a mapping between `tickerId` and the symbol.
+   - The `unsubscribe(symbol)` method will use the stored `tickerId` to call `client.cancelMktData(tickerId)`.
+
+# Test Strategy:
+Testing must focus on mocking the complex, stateful, and callback-based nature of the `ibapi` SDK.
+
+1. **Unit Testing (Mocked SDK):**
+   - In `tests/unit/adapter/ib/`, create a comprehensive test suite that mocks the `ibapi.EClient` and the custom `EWrapper`.
+   - **Connection Lifecycle:** Simulate connection success by triggering the `connectAck` callback. Simulate failures by triggering the `error` callback with connection-related error codes. Assert that the adapter's internal state (`is_connected`) updates correctly.
+   - **Subscription and Data Flow:**
+     - Test that calling `adapter.subscribe(symbol)` results in a call to the mocked `EClient.reqMktData` with the correct `tickerId` and a properly formed `Contract` object.
+     - Manually invoke callback methods on the adapter's `EWrapper` instance (e.g., `wrapper.tickPrice(tickerId, tickType, price, ...)`). Assert that the adapter correctly identifies the symbol from the `tickerId`, transforms the data into a standard `TickEvent`, and puts it on the mocked `EventEngine`.
+   - **Error Handling:** Simulate API errors by invoking the `error(reqId, errorCode, errorString)` callback. Verify that the error is logged correctly using the logging system from Task #7 and that the system remains stable.
+   - **Unsubscription:** Test that `adapter.unsubscribe(symbol)` correctly calls `EClient.cancelMktData` with the corresponding `tickerId`.
+
+2. **Integration Testing (Manual):**
+   - As a final verification step, manually run the adapter against a paper-trading account via TWS or IB Gateway. Subscribe to a few instruments and monitor the logs to ensure a stable stream of correctly formatted data is received.

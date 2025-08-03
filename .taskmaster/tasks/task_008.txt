@@ -1,0 +1,45 @@
+# Task ID: 8
+# Title: Implement Native WebSocket Streaming for Futu Adapter
+# Status: pending
+# Dependencies: 3, 4, 6
+# Priority: medium
+# Description: Create a bespoke WebSocket streaming implementation for the Futu adapter using its native futu-api SDK. This involves building connection management, data parsing, and event transformation from scratch to handle Futu's unique API architecture and data formats.
+# Details:
+This task requires a high-effort, native implementation as it cannot use the unified CCXT library. The implementation must adhere to the framework's streaming architecture.
+
+1. **Dependency Integration:**
+   - Add the `futu-api` library to the project's dependencies in `pyproject.toml`.
+
+2. **Adapter Implementation (`FutuAdapter`):**
+   - Create a new `FutuAdapter` class that inherits from the `StreamingBaseAdapter` defined in Task #3.
+   - Implement the required `connect()`, `disconnect()`, `subscribe()`, and `unsubscribe()` methods.
+
+3. **Connection and Authentication:**
+   - The `connect()` method must handle the connection to the FutuOpenD client, including configuration for host, port, and the trading password required to unlock the API.
+   - Implement robust logic for handling connection state, including automatic reconnection attempts with exponential backoff upon disconnection.
+
+4. **Subscription Management:**
+   - The `subscribe()` method must map the framework's standardized symbol format to Futu's specific instrument codes and data types (e.g., `SubType.QUOTE`, `SubType.ORDER_BOOK`).
+   - Maintain an internal state of active subscriptions to prevent duplicates and manage unsubscriptions correctly.
+
+5. **Data Parsing and Transformation:**
+   - Register callback handlers with the `futu-api` client (e.g., using `set_handler`).
+   - Implement parsers within these handlers to process the native Futu data formats (often pandas DataFrames) for quotes, order books, and trades.
+   - Transform the parsed data into the framework's standardized event objects (`TickEvent`, `OrderBookEvent`, etc.) and push them to the `EventEngine` for system-wide consumption.
+
+6. **Error Handling:**
+   - Implement comprehensive error handling for API-specific issues, such as authentication failure, invalid subscription requests, rate limits, and connection errors. Log all errors using the structured logging system.
+
+# Test Strategy:
+1. **Unit Testing (Mocked SDK):**
+   - In `tests/unit/adapter/futu/`, create a comprehensive test suite that uses a mock of the `futu-api`'s `OpenQuoteContext`.
+   - **Connection Lifecycle:** Simulate connection success, authentication failure, and disconnection events. Assert that the adapter's internal state changes correctly.
+   - **Data Transformation:** Create mock Futu data payloads (for quotes, order books) and pass them to the adapter's callback handlers. Assert that the correct, fully-populated `foxtrot` event objects are generated and passed to the mocked `EventEngine`.
+   - **Subscription Logic:** Verify that calls to the adapter's `subscribe()` and `unsubscribe()` methods result in the correct underlying `futu-api` functions being called with the correct parameters.
+
+2. **Integration Testing (Live Client):**
+   - In `tests/integration/adapter/futu/`, create tests that connect to a live (or paper trading) instance of the FutuOpenD client. These tests should be marked to be skipped in CI environments where the client is unavailable.
+   - The test should perform a full lifecycle: connect, authenticate, subscribe to a real-time instrument (e.g., `HK.00700`), receive at least one `TickEvent`, and then gracefully disconnect.
+
+3. **Longevity and Stability Testing:**
+   - Develop a long-running test that leaves the adapter connected and subscribed for an extended period (e.g., 30+ minutes) to check for memory leaks or connection stability issues, leveraging the profiling and monitoring tools from Task #4.

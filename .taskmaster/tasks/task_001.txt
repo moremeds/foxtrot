@@ -1,6 +1,6 @@
 # Task ID: 1
 # Title: Implement Binance API Adapter using CCXT
-# Status: pending
+# Status: done
 # Dependencies: None
 # Priority: medium
 # Description: Create a new Binance API adapter using the ccxt library. The adapter must be a 'drop-in' replacement for other adapters, strictly adhering to the existing foxtrot framework. It must mirror the structure, interface, and data transformations of the existing Interactive Brokers adapter to ensure system-wide compatibility without requiring any changes to the core system.
@@ -66,25 +66,25 @@ The implementation should follow these steps:
 ### Details:
 Create the directory `foxtrot/adapter/binance/`. Add `ccxt` to the project's dependencies. Create the `BinanceAdapter` class inheriting from `BaseAdapter`. The constructor should accept API credentials and be prepared to receive the `EventEngine` from the `MainEngine`. Implement all required public methods with their bodies raising `NotImplementedError`.
 
-## 2. Implement RESTful Account and Order Management [pending]
+## 2. Implement RESTful Account and Order Management [done]
 ### Dependencies: None
 ### Description: Implement the essential account and order management methods using CCXT's REST API. This includes fetching account balances, placing, and canceling orders, along with the necessary data transformations into foxtrot objects and error handling.
 ### Details:
 Implement `connect()`, `query_account()`, `send_order()`, and `cancel_order()` using the corresponding `ccxt` methods (`fetchBalance`, `createOrder`, `cancelOrder`). Implement the data transformation layer for these methods, converting `ccxt` responses into the framework's `AccountData` and `OrderData` objects. Ensure all numeric values for price and quantity use the `Decimal` type. Handle specific `ccxt` exceptions by creating and queueing `ErrorEvent` objects.
 
-## 3. Implement RESTful Market Data Retrieval [pending]
+## 3. Implement RESTful Market Data Retrieval [done]
 ### Dependencies: None
 ### Description: Implement the functionality to fetch historical market data, specifically OHLCV (candlestick) data, from Binance via CCXT. This involves handling data requests and transforming the results into the framework's standard `BarData` format.
 ### Details:
 Implement the `query_market_data()` method using `ccxt.fetchOHLCV()`. The implementation must handle parameters such as symbol, timeframe, and date ranges. Create and apply data transformation logic to convert the OHLCV array from `ccxt` into a list of the framework's `BarData` objects, ensuring timestamps are converted to ISO 8601 strings and all price/volume values are `Decimal` objects.
 
-## 4. Implement Real-time WebSocket Data Streams [pending]
+## 4. Implement Real-time WebSocket Data Streams [done]
 ### Dependencies: None
 ### Description: Integrate CCXT's unified WebSocket client to subscribe to real-time market data (ticks) and user-specific data (order updates). Received data must be transformed into standard foxtrot events and put on the EventEngine.
 ### Details:
 Implement `subscribe_tick()` and the logic for order updates using `ccxt.watchTicker()` and `ccxt.watchOrders()` respectively. In the asynchronous loop handling WebSocket messages, transform the data payload into `TickData` and `OrderData` objects. Wrap these objects in `TickEvent` and `OrderEvent` respectively, and put them onto the `EventEngine` queue. Implement the `disconnect()` method to gracefully close WebSocket connections.
 
-## 5. Finalize Error Handling and Perform Integration Testing [pending]
+## 5. Finalize Error Handling and Perform Integration Testing [done]
 ### Dependencies: None
 ### Description: Conduct a comprehensive review of the adapter's error handling and perform integration testing against the Binance testnet. The goal is to ensure all API interactions are robust and exceptions are handled gracefully and consistently across the adapter.
 ### Details:
