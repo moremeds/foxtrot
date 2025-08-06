@@ -624,11 +624,429 @@
         "details": "This task requires a high-effort, bespoke implementation due to the unique architecture of the Interactive Brokers API. Unlike unified libraries, this involves direct integration with the `ibapi` Python SDK, managing a persistent connection to the Trader Workstation (TWS) or IB Gateway, and handling its asynchronous, callback-driven nature.\n\n1. **Dependency Integration:**\n   - Add the official `ibapi` library to the project's dependencies in `pyproject.toml`.\n\n2. **Adapter Implementation (`InteractiveBrokersAdapter`):\n   - Create a new `InteractiveBrokersAdapter` class that inherits from the framework's `BaseAdapter`.\n   - The adapter will implement a wrapper around the `ibapi.EClient` and `ibapi.EWrapper` classes.\n\n3. **Connection and Thread Management:**\n   - The `connect()` method will instantiate the `EClient` and a custom `EWrapper` subclass. It will then call `client.connect(host, port, clientId)` and start the client's event processing loop (`client.run()`) in a dedicated background thread, leveraging the robust threading model from Task #4.\n   - The `disconnect()` method must gracefully call `client.disconnect()` and ensure the background thread is properly joined.\n\n4. **Callback-Driven Event Handling:**\n   - The custom `EWrapper` subclass will override methods like `tickPrice()`, `tickSize()`, `orderStatus()`, `openOrder()`, and `error()`.\n   - Inside these callback methods, transform the raw IB data into the framework's standardized event objects (e.g., `TickEvent`, `OrderEvent`).\n   - Push the transformed events onto the central `EventEngine` for consumption by other parts of the system.\n\n5. **Subscription Management:**\n   - The `subscribe(symbol)` method will generate a unique request ID (`tickerId`) and call the appropriate client method, such as `client.reqMktData(tickerId, contract, ...)`. The adapter must maintain a mapping between `tickerId` and the symbol.\n   - The `unsubscribe(symbol)` method will use the stored `tickerId` to call `client.cancelMktData(tickerId)`.",
         "testStrategy": "Testing must focus on mocking the complex, stateful, and callback-based nature of the `ibapi` SDK.\n\n1. **Unit Testing (Mocked SDK):**\n   - In `tests/unit/adapter/ib/`, create a comprehensive test suite that mocks the `ibapi.EClient` and the custom `EWrapper`.\n   - **Connection Lifecycle:** Simulate connection success by triggering the `connectAck` callback. Simulate failures by triggering the `error` callback with connection-related error codes. Assert that the adapter's internal state (`is_connected`) updates correctly.\n   - **Subscription and Data Flow:**\n     - Test that calling `adapter.subscribe(symbol)` results in a call to the mocked `EClient.reqMktData` with the correct `tickerId` and a properly formed `Contract` object.\n     - Manually invoke callback methods on the adapter's `EWrapper` instance (e.g., `wrapper.tickPrice(tickerId, tickType, price, ...)`). Assert that the adapter correctly identifies the symbol from the `tickerId`, transforms the data into a standard `TickEvent`, and puts it on the mocked `EventEngine`.\n   - **Error Handling:** Simulate API errors by invoking the `error(reqId, errorCode, errorString)` callback. Verify that the error is logged correctly using the logging system from Task #7 and that the system remains stable.\n   - **Unsubscription:** Test that `adapter.unsubscribe(symbol)` correctly calls `EClient.cancelMktData` with the corresponding `tickerId`.\n\n2. **Integration Testing (Manual):**\n   - As a final verification step, manually run the adapter against a paper-trading account via TWS or IB Gateway. Subscribe to a few instruments and monitor the logs to ensure a stable stream of correctly formatted data is received.",
         "subtasks": []
+      },
+      {
+        "id": 10,
+        "title": "Phase 1: Emergency File Splitting (widget.py)",
+        "description": "Split the massive 1290-line widget.py file into modular components following the 200-line limit",
+        "details": "Critical violation: widget.py has 1290 lines (6x over limit). Break into: base_widget.py (150 lines), table_widget.py (180 lines), monitor_widget.py (180 lines), trading_widget.py (180 lines), chart_widget.py (180 lines), dialog_widget.py (150 lines), utils_widget.py (100 lines). Each file must be independently testable with clear single responsibility.",
+        "testStrategy": "Unit test each extracted widget independently. Verify imports work correctly. Test that original functionality is preserved after splitting.",
+        "status": "pending",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Analyze widget.py and Plan Component Mapping",
+            "description": "Perform a detailed analysis of the 1290-line widget.py to identify all classes, functions, constants, and imports. Create a clear mapping of each code block to its new target module to guide the extraction process and prevent dependency issues.",
+            "dependencies": [],
+            "details": "The primary output of this subtask is a plan. Document which lines/classes/functions will move to which of the 7 new files. This initial planning is critical to ensure a smooth split and avoid circular dependencies later on.",
+            "status": "pending",
+            "testStrategy": "Review the generated plan to confirm that every part of widget.py is accounted for and that the proposed modules adhere to the single responsibility principle."
+          },
+          {
+            "id": 2,
+            "title": "Extract Foundational Modules: base_widget.py and utils_widget.py",
+            "description": "Create `base_widget.py` and `utils_widget.py`. Migrate all identified abstract base classes and core widget structures to `base_widget.py`. Move all shared helper functions, formatters, and non-widget utility classes to `utils_widget.py`.",
+            "dependencies": [
+              "10.1"
+            ],
+            "details": "These two modules will serve as dependencies for all other widget modules. Ensure `utils_widget.py` has no dependencies on any other new widget files. `base_widget.py` will define the common interface for all widgets.",
+            "status": "pending",
+            "testStrategy": "Create a temporary test script that imports both new modules and attempts to instantiate any exported classes to verify there are no syntax or basic import errors."
+          },
+          {
+            "id": 3,
+            "title": "Extract Table Widget Components into table_widget.py",
+            "description": "Create `table_widget.py` and move all code related to data tables, such as order books, trade histories, and position tables. Update internal imports to use `base_widget` and `utils_widget`.",
+            "dependencies": [
+              "10.2"
+            ],
+            "details": "This file should encapsulate all logic for displaying tabular data. Refactor the moved code to import its parent class from `base_widget.py` and any helpers from `utils_widget.py`.",
+            "status": "pending",
+            "testStrategy": "Write a basic unit test (per Task 14) to instantiate the main table widget class(es) to ensure all dependencies are correctly resolved and the file is independently importable."
+          },
+          {
+            "id": 4,
+            "title": "Extract Monitor and Trading Widgets",
+            "description": "Create `monitor_widget.py` for status displays and `trading_widget.py` for order entry/management panels. Migrate the relevant classes to each file.",
+            "dependencies": [
+              "10.2"
+            ],
+            "details": "Isolate the `PerformanceMonitor` and `ConnectionStatus` components into `monitor_widget.py`. Move the `OrderEntry` and other interactive trading forms into `trading_widget.py`. Update their imports.",
+            "status": "pending",
+            "testStrategy": "For each new file, create a simple instantiation test to confirm the classes can be created without error, verifying that their dependencies on base/util modules are correct."
+          },
+          {
+            "id": 5,
+            "title": "Extract Charting Widget Components into chart_widget.py",
+            "description": "Create `chart_widget.py` and migrate all code responsible for graphical data visualization, including price charts and related data processing logic.",
+            "dependencies": [
+              "10.2"
+            ],
+            "details": "This module should contain all logic for rendering charts. Ensure it correctly imports its base class from `base_widget.py` and any necessary utilities.",
+            "status": "pending",
+            "testStrategy": "Use `textual.pilot` (as mentioned in Task 5) for a headless test that mounts the chart widget with mock data to ensure it renders without crashing."
+          },
+          {
+            "id": 6,
+            "title": "Extract Dialog Widget Components into dialog_widget.py",
+            "description": "Create `dialog_widget.py` and move all modal components, such as confirmation prompts, error messages, and input dialogs, into this new file.",
+            "dependencies": [
+              "10.2"
+            ],
+            "details": "Consolidate all classes that implement `textual`'s `Screen` for modal behavior into this file. These should be generic and reusable components.",
+            "status": "pending",
+            "testStrategy": "Write a unit test that instantiates a dialog class to verify it's self-contained and its dependencies are met."
+          },
+          {
+            "id": 7,
+            "title": "Update All Imports Across the Application",
+            "description": "Perform a codebase-wide search for any remaining imports from the old `widget.py`. Refactor these import statements to point to the new, specific modules (`table_widget`, `chart_widget`, etc.).",
+            "dependencies": [
+              "10.3",
+              "10.4",
+              "10.5",
+              "10.6"
+            ],
+            "details": "This subtask focuses exclusively on updating consumer code. The main TUI application file that assembles the UI is the primary target. Be meticulous to ensure all references are updated.",
+            "status": "pending",
+            "testStrategy": "Use static analysis or a simple `grep` command to find any remaining `from widget import` statements in the codebase. The command should return no results."
+          },
+          {
+            "id": 8,
+            "title": "Final Integration Test and Removal of widget.py",
+            "description": "Run the application and perform a full smoke test to ensure all UI components load and function as expected with the new modular structure. Once verified, delete the original `widget.py` file.",
+            "dependencies": [
+              "10.7"
+            ],
+            "details": "This final step validates the entire refactoring effort. The goal is to confirm that the application's functionality is 100% preserved before removing the legacy file to complete the task.",
+            "status": "pending",
+            "testStrategy": "Launch the application and manually interact with every widget that was extracted: view tables, open dialogs, see the chart, etc. Confirm no runtime errors occur. After successful validation, delete `widget.py`."
+          }
+        ]
+      },
+      {
+        "id": 11,
+        "title": "Phase 1: Split All Oversized Python Files",
+        "description": "Identify and split all Python files exceeding 200-line limit across the entire codebase",
+        "details": "Run grep -c '^' to find all violations. Files to split: server/engine.py (400+ lines), adapter/ibrokers/ibrokers_legacy.py (700+ lines), app/ui/ui.py (400+ lines). Each split must maintain single responsibility principle and be independently importable.",
+        "testStrategy": "Verify no import errors after splitting. Test that all split modules can be imported independently. Ensure no functionality is lost.",
+        "status": "pending",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 12,
+        "title": "Phase 1: Eliminate Global Instances",
+        "description": "Remove all global mutable state and singleton patterns from the codebase",
+        "details": "Find and eliminate: global event_engine instances, global logger instances, shared mutable state in utils. Replace with dependency injection pattern. MainEngine should create and pass dependencies. No module should have side effects on import.",
+        "testStrategy": "Import each module independently and verify no global state is created. Mock all dependencies in tests. Verify no import side effects.",
+        "status": "pending",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 13,
+        "title": "Phase 2: Fix Pytest Test Collection",
+        "description": "Make pytest actually collect and run tests (currently collects 0 items)",
+        "details": "Root cause: missing __init__.py files, incorrect imports, no pytest markers. Fix: Add __init__.py to all test directories, fix import paths to use 'from foxtrot.X import Y', add pytest.ini with testpaths configuration, ensure test files start with test_ or end with _test.py.",
+        "testStrategy": "Run 'pytest tests/unit/' and verify it collects >0 items. Run 'pytest --collect-only' to see all discovered tests. Ensure at least one test passes.",
+        "status": "pending",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Add __init__.py to all test directories",
+            "description": "Create empty __init__.py files in the 'tests/' directory and all its subdirectories to ensure they are treated as Python packages, which is essential for pytest discovery and proper module imports.",
+            "dependencies": [],
+            "details": "Recursively scan the 'tests/' directory and place an empty '__init__.py' file in each subfolder. This is the first step to fixing module resolution issues.",
+            "status": "pending",
+            "testStrategy": "Verify that directories like 'tests/unit' and 'tests/integration' contain an '__init__.py' file."
+          },
+          {
+            "id": 2,
+            "title": "Create and configure pytest.ini",
+            "description": "Create a 'pytest.ini' file in the project root to explicitly tell pytest where to find tests, improving discovery reliability and speed.",
+            "dependencies": [
+              "13.1"
+            ],
+            "details": "Create a file named 'pytest.ini' in the root. Add a '[pytest]' section and set 'testpaths = tests' to configure the primary test discovery path.",
+            "status": "pending",
+            "testStrategy": "Run 'pytest --collect-only' and check if pytest is attempting to search within the 'tests' directory."
+          },
+          {
+            "id": 3,
+            "title": "Standardize test file naming convention",
+            "description": "Rename all test files to match pytest's default discovery pattern (starting with 'test_' or ending with '_test.py') so they are automatically detected.",
+            "dependencies": [
+              "13.1"
+            ],
+            "details": "Review all files in the 'tests/' directory. Rename any files containing tests to follow the 'test_*.py' or '*_test.py' convention. For example, 'ordertests.py' should become 'test_orders.py'.",
+            "status": "pending",
+            "testStrategy": "Manually inspect file names in the 'tests/' directory to confirm they adhere to the standard."
+          },
+          {
+            "id": 4,
+            "title": "Refactor import paths in test files",
+            "description": "Update all import statements within the test files to use absolute paths from the project root ('foxtrot') to resolve 'ModuleNotFoundError' and ensure consistency.",
+            "dependencies": [
+              "13.1",
+              "13.3"
+            ],
+            "details": "Go through each test file (e.g., 'tests/unit/test_engine.py') and change relative imports like 'from ..engine import Engine' to absolute imports like 'from foxtrot.engine import Engine'.",
+            "status": "pending",
+            "testStrategy": "After refactoring, run 'python -m pytest --collect-only' to check for import errors. The command should not raise any 'ModuleNotFoundError'."
+          },
+          {
+            "id": 5,
+            "title": "Verify test collection",
+            "description": "Run pytest in 'collect-only' mode to confirm that all structural and import fixes have successfully enabled test discovery.",
+            "dependencies": [
+              "13.2",
+              "13.4"
+            ],
+            "details": "Execute 'pytest --collect-only' from the project root. The primary goal is to see an output indicating that pytest collected more than 0 items.",
+            "status": "pending",
+            "testStrategy": "The command 'pytest --collect-only' must report 'collected X items' where X is greater than 0. Address any remaining collection errors."
+          },
+          {
+            "id": 6,
+            "title": "Execute tests and ensure at least one test passes",
+            "description": "Run the full test suite to ensure that the collected tests can execute without runtime errors and that the testing environment is correctly configured.",
+            "dependencies": [
+              "13.5"
+            ],
+            "details": "Run 'pytest' or 'pytest tests/unit/'. Fix any failing tests that are due to setup issues (e.g., incorrect mocks, path problems) until at least one test passes, confirming the test runner is functional.",
+            "status": "pending",
+            "testStrategy": "The output of 'pytest' should show at least one test passing. This confirms the end-to-end viability of the test setup."
+          }
+        ]
+      },
+      {
+        "id": 14,
+        "title": "Phase 2: Create Basic Unit Tests (One per Component)",
+        "description": "Write one simple, working test for each core component to establish baseline coverage",
+        "details": "Components needing tests: EventEngine (test put/get event), MainEngine (test initialization), BaseAdapter (test abstract methods), OrderData (test dataclass creation), each adapter (test connection). Keep tests simple - just verify basic functionality. No mocks initially, just instantiation tests.",
+        "testStrategy": "Each test must pass independently. Run with 'pytest -v' to see individual results. Target: at least 10 passing tests across core components.",
+        "status": "pending",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 15,
+        "title": "Phase 3: Break Circular Dependencies",
+        "description": "Identify and fix all circular import dependencies in the codebase",
+        "details": "Known cycles: Engine ↔ Adapter (use event system instead), Utils ↔ Objects (extract to common.py), UI ↔ Core (UI should only import from core). Solution: Create interfaces.py with abstract base classes, use dependency injection, move shared code to separate modules. No lazy imports unless absolutely necessary.",
+        "testStrategy": "Run 'python -c \\\"import foxtrot\\\"' without circular import errors. Generate dependency graph with pydeps to verify no cycles. Mock any dependency in tests.",
+        "status": "pending",
+        "dependencies": [
+          10,
+          11,
+          12
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Setup Dependency Analysis and Generate Baseline Graph",
+            "description": "Install `pydeps` and generate a complete dependency graph of the current codebase to serve as a baseline. This will visually confirm the known cycles (Engine↔Adapter, Utils↔Objects, UI↔Core) and help identify any others.",
+            "dependencies": [],
+            "details": "Run `pydeps --show-cycles . > initial_dependency_graph.svg`. The output graph should be committed to project documentation for reference and to track progress against the baseline.",
+            "status": "pending",
+            "testStrategy": "Verify that the generated graph clearly shows the circular dependencies mentioned in the task description."
+          },
+          {
+            "id": 2,
+            "title": "Create `interfaces.py` and Define Core Abstract Base Classes (ABCs)",
+            "description": "Create a new module, `core/interfaces.py`, to house the abstract base classes that will define the contracts for components like Engine and Adapter. This is the foundation for dependency inversion and is a prerequisite for fixing the Engine↔Adapter cycle.",
+            "dependencies": [
+              "15.1"
+            ],
+            "details": "Define ABCs using Python's `abc` module for key components, such as `IEngine` and `IAdapter`. These interfaces should declare the methods necessary for interaction without referencing concrete implementations.",
+            "status": "pending",
+            "testStrategy": "Ensure the new `interfaces.py` module can be imported without errors and that the defined ABCs are correctly structured."
+          },
+          {
+            "id": 3,
+            "title": "Break Engine ↔ Adapter Cycle via Dependency Injection",
+            "description": "Refactor the `Engine` and `Adapter` modules to break their direct circular dependency. The `Engine` should depend on the `IAdapter` interface, and the `Adapter` instance should be injected into the `Engine` at runtime.",
+            "dependencies": [
+              "15.2"
+            ],
+            "details": "Modify the `Engine`'s constructor to accept an `IAdapter` instance. Remove any direct `import adapter` statements from the `engine` module and vice-versa. Use the existing event system for bidirectional communication, ensuring both components now depend on abstractions, not concretions.",
+            "status": "pending",
+            "testStrategy": "Update unit tests for `Engine` and `Adapter` to use dependency injection, mocking the `IAdapter` interface. Verify that the integrated system still functions correctly through integration tests."
+          },
+          {
+            "id": 4,
+            "title": "Resolve Utils ↔ Objects Cycle by Extracting to a `common` Module",
+            "description": "Identify the functions, classes, or constants causing the circular dependency between `utils.py` and `objects.py`. Extract this shared code into a new, lower-level module, `core/common.py`.",
+            "dependencies": [
+              "15.1"
+            ],
+            "details": "Create `core/common.py`. Move the shared entities from `utils.py` and `objects.py` into this new file. Update both original files to import from `core/common.py` instead of each other.",
+            "status": "pending",
+            "testStrategy": "Run all tests related to the `utils` and `objects` modules to ensure no functionality was broken during the refactoring. Verify both modules can be imported independently after the change."
+          },
+          {
+            "id": 5,
+            "title": "Enforce Unidirectional UI → Core Dependency",
+            "description": "Refactor the `UI` and `Core` modules to eliminate any imports from `Core` to `UI`. The `UI` should be a consumer of `Core` services, but the `Core` must have no knowledge of the `UI`.",
+            "dependencies": [
+              "15.1"
+            ],
+            "details": "Analyze imports in the `Core` module. If `Core` needs to notify the `UI`, replace direct calls with an event-based or callback mechanism that the `UI` can subscribe to. This ensures the dependency flows in only one direction.",
+            "status": "pending",
+            "testStrategy": "Run all UI-related integration tests. Statically verify that no file within the `core` directory contains an `import ui` statement using a tool like `grep`."
+          },
+          {
+            "id": 6,
+            "title": "Full Codebase Scan and Remediation of Undiscovered Cycles",
+            "description": "After fixing the known major cycles, perform a comprehensive scan of the entire codebase using `pydeps` to identify and resolve any remaining, more subtle circular dependencies.",
+            "dependencies": [
+              "15.3",
+              "15.4",
+              "15.5"
+            ],
+            "details": "Run `pydeps --show-cycles .` again. For each newly identified cycle, apply the most appropriate refactoring pattern: dependency inversion, code extraction, or type-hinting with forward references (`from __future__ import annotations` or string-based types).",
+            "status": "pending",
+            "testStrategy": "After each fix, run relevant unit tests. The goal is for the `pydeps` command to report no cycles."
+          },
+          {
+            "id": 7,
+            "title": "Final Validation and Test Suite Update",
+            "description": "Perform the final validation checks to confirm all circular dependencies have been eliminated. Update the test suite to reflect the new architecture, particularly regarding mocked dependencies and dependency injection.",
+            "dependencies": [
+              "15.6"
+            ],
+            "details": "Run `python -c \"import foxtrot\"` (or the main package name) to ensure the application is importable without `ImportError`. Generate a final, clean dependency graph with `pydeps` and save it as `final_dependency_graph.svg`. Review and update unit tests that previously relied on monkey-patching to now use proper mocking with the new interfaces.",
+            "status": "pending",
+            "testStrategy": "The primary test is the successful execution of the import command and the clean `pydeps` graph. All existing unit and integration tests must pass."
+          }
+        ]
+      },
+      {
+        "id": 16,
+        "title": "Phase 3: Extract Data Clumps into Data Classes",
+        "description": "Refactor methods with 4+ parameters into data classes",
+        "details": "Identify data clumps: order submission (8+ params), market data handlers (6+ params), config parameters. Create dataclasses: OrderRequest, MarketDataRequest, ConfigParams. No method should have >4 parameters. Use @dataclass with type hints and validation in __post_init__.",
+        "testStrategy": "grep for methods with >4 parameters should return minimal results. All data classes have type hints. Validation tests for each data class.",
+        "status": "pending",
+        "dependencies": [
+          15
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 17,
+        "title": "Phase 4: Fix TUI Navigation (Tab/Focus)",
+        "description": "Enable keyboard navigation in TUI - Tab key doesn't work, no focus indicators",
+        "details": "Implement: Tab/Shift+Tab navigation between panels, visual focus indicators (border changes), explicit tab_index for widgets, Enter to activate buttons, Escape to clear focus. Add CSS for :focus states. Mouse clicks should focus elements. Navigation order: Trading → Orders → Positions → Account → Market Data.",
+        "testStrategy": "Manual: Tab through all panels, Enter activates buttons, visual focus visible. Automated: test navigation with Textual's test pilot.",
+        "status": "pending",
+        "dependencies": [
+          10,
+          11,
+          12,
+          13,
+          14
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 18,
+        "title": "Phase 4: Connect TUI Buttons to Actions",
+        "description": "Make TUI buttons actually trigger events when clicked",
+        "details": "Currently buttons do nothing. Connect: Buy/Sell buttons to order submission, Cancel button to order cancellation, Refresh buttons to data updates. Each button press should emit an event through EventEngine. Add loading states and error feedback.",
+        "testStrategy": "Click each button and verify event is emitted. Check EventEngine receives correct event type. Verify UI shows feedback (loading/success/error).",
+        "status": "pending",
+        "dependencies": [
+          17
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 19,
+        "title": "Phase 5: Create Integration Tests",
+        "description": "Test component interactions with real event flow",
+        "details": "Test scenarios: Engine→Adapter order flow, Event propagation through system, Data updates triggering UI refresh, Error handling across components. Use real EventEngine but mock external connections. Test complete workflows end-to-end.",
+        "testStrategy": "Each integration test covers a complete user workflow. Tests should use real components where possible, mock only external APIs. Verify events flow correctly through the system.",
+        "status": "pending",
+        "dependencies": [
+          14,
+          15
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 20,
+        "title": "Add Minimal Documentation",
+        "description": "Add docstrings to all public methods and classes",
+        "details": "One-line docstrings for simple methods, multi-line for complex ones. Include: purpose, parameters, return value, exceptions raised. Focus on public API first. Use Google style docstrings. No novels - keep it concise and practical.",
+        "testStrategy": "Run pydocstyle to check docstring presence. Verify all public methods have at least one-line docstring.",
+        "status": "pending",
+        "dependencies": [
+          10,
+          11
+        ],
+        "priority": "low",
+        "subtasks": []
+      },
+      {
+        "id": 21,
+        "title": "Create Reusable Test Fixtures",
+        "description": "Build pytest fixtures for common test objects",
+        "details": "Create fixtures in conftest.py: mock_event_engine, sample_order_data, mock_adapter, test_config. Centralize test data creation. Use pytest.fixture decorator. Share across all test files. Reduce test boilerplate.",
+        "testStrategy": "All tests use fixtures instead of creating own test data. Fixtures work across different test modules. No test data duplication.",
+        "status": "pending",
+        "dependencies": [
+          13,
+          14
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 22,
+        "title": "Standardize Error Handling",
+        "description": "Implement consistent error handling across all components",
+        "details": "Create custom exceptions: FoxtrotError base class, ConnectionError, ValidationError, ExecutionError. All errors must include context. Log errors appropriately. Never silently suppress. Implement recovery strategies where applicable.",
+        "testStrategy": "All try/except blocks handle specific exceptions. No bare except clauses. Error messages include context. Test error scenarios.",
+        "status": "pending",
+        "dependencies": [
+          15,
+          16
+        ],
+        "priority": "low",
+        "subtasks": []
+      },
+      {
+        "id": 23,
+        "title": "Make TUI Responsive to Terminal Resize",
+        "description": "Handle terminal window resizing without breaking layout",
+        "details": "Currently TUI breaks on resize. Implement: responsive grid layout, minimum widget sizes, scrollable content for small terminals, graceful degradation. Test with various terminal sizes.",
+        "testStrategy": "Resize terminal to various sizes and verify layout remains functional. Test minimum size (80x24) and maximum. No widget overlap or cutoff.",
+        "status": "pending",
+        "dependencies": [
+          17,
+          18
+        ],
+        "priority": "low",
+        "subtasks": []
       }
     ],
     "metadata": {
       "created": "2025-07-27T17:18:34.572Z",
-      "updated": "2025-08-03T18:35:09.285Z",
+      "updated": "2025-08-06T06:12:13.975Z",
       "description": "Tasks for master context"
     }
   }
