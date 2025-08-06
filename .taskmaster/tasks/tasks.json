@@ -640,8 +640,8 @@
             "title": "Analyze widget.py and Plan Component Mapping",
             "description": "Perform a detailed analysis of the 1290-line widget.py to identify all classes, functions, constants, and imports. Create a clear mapping of each code block to its new target module to guide the extraction process and prevent dependency issues.",
             "dependencies": [],
-            "details": "The primary output of this subtask is a plan. Document which lines/classes/functions will move to which of the 7 new files. This initial planning is critical to ensure a smooth split and avoid circular dependencies later on.",
-            "status": "pending",
+            "details": "The primary output of this subtask is a plan. Document which lines/classes/functions will move to which of the 7 new files. This initial planning is critical to ensure a smooth split and avoid circular dependencies later on.\n<info added on 2025-08-06T06:28:17.448Z>\nBased on the analysis, here is the proposed component mapping plan:\n\n**Proposed Component Mapping Plan:**\n\n*   **`base_widget.py`**:\n    *   `BaseMonitor` class (from lines 229-597) to serve as the foundational component for all monitors.\n\n*   **`table_widget.py`**:\n    *   All Cell classes: `BaseCell`, `EnumCell`, `DirectionCell`, etc. (lines 49-227).\n    *   Table-based widgets: `ActiveOrderMonitor`, `ContractManager` (lines 1049-1169).\n\n*   **`monitor_widget.py`**:\n    *   Specific monitor implementations: `TickMonitor`, `LogMonitor`, etc. (lines 229-597). These will depend on `BaseMonitor` from `base_widget.py`.\n\n*   **`trading_widget.py`**:\n    *   The main `TradingWidget` class and its related components (lines 691-1048).\n\n*   **`dialog_widget.py`**:\n    *   All Dialog classes: `ConnectDialog`, `AboutDialog`, `GlobalDialog` (lines 598-690, 1170-1290).\n\n*   **`utils_widget.py`**:\n    *   Any standalone helper functions, constants, and enums that are not part of a specific class. (To be identified during extraction).\n\n*   **`chart_widget.py`**:\n    *   No chart-specific components were identified in the initial analysis. This file will be created, but may remain empty pending further review.\n</info added on 2025-08-06T06:28:17.448Z>",
+            "status": "done",
             "testStrategy": "Review the generated plan to confirm that every part of widget.py is accounted for and that the proposed modules adhere to the single responsibility principle."
           },
           {
@@ -651,7 +651,7 @@
             "dependencies": [
               "10.1"
             ],
-            "details": "These two modules will serve as dependencies for all other widget modules. Ensure `utils_widget.py` has no dependencies on any other new widget files. `base_widget.py` will define the common interface for all widgets.",
+            "details": "These two modules will serve as dependencies for all other widget modules. Ensure `utils_widget.py` has no dependencies on any other new widget files. `base_widget.py` will define the common interface for all widgets.\n<info added on 2025-08-06T06:31:55.446Z>\nUser has created `base_widget.py` (187 lines) containing the `BaseMonitor` class and color constants. Instead of the planned `utils_widget.py`, the user created `cell_widget.py` (186 lines) containing all 9 cell classes.\n</info added on 2025-08-06T06:31:55.446Z>",
             "status": "pending",
             "testStrategy": "Create a temporary test script that imports both new modules and attempts to instantiate any exported classes to verify there are no syntax or basic import errors."
           },
@@ -662,7 +662,7 @@
             "dependencies": [
               "10.2"
             ],
-            "details": "This file should encapsulate all logic for displaying tabular data. Refactor the moved code to import its parent class from `base_widget.py` and any helpers from `utils_widget.py`.",
+            "details": "This file should encapsulate all logic for displaying tabular data. Refactor the moved code to import its parent class from `base_widget.py` and any helpers from `utils_widget.py`.\n<info added on 2025-08-06T06:32:25.913Z>\nUser has created `monitor_widget.py` (223 lines) containing all 8 monitor implementations (TickMonitor, LogMonitor, TradeMonitor, OrderMonitor, PositionMonitor, AccountMonitor, QuoteMonitor, and ActiveOrderMonitor), with correct imports from `base_widget` and `cell_widget` modules. This work appears to address the next subtask (10.4: Extract Monitor and Trading Widgets) rather than the current subtask (10.3), which is focused on creating `table_widget.py`.\n</info added on 2025-08-06T06:32:25.913Z>",
             "status": "pending",
             "testStrategy": "Write a basic unit test (per Task 14) to instantiate the main table widget class(es) to ensure all dependencies are correctly resolved and the file is independently importable."
           },
@@ -1046,7 +1046,7 @@
     ],
     "metadata": {
       "created": "2025-07-27T17:18:34.572Z",
-      "updated": "2025-08-06T06:12:13.975Z",
+      "updated": "2025-08-06T06:33:26.978Z",
       "description": "Tasks for master context"
     }
   }
