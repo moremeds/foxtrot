@@ -1,0 +1,56 @@
+[project]
+name = "foxtrot"
+version = "0.1.0"
+description = "Event-driven trading platform framework"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "tzlocal>=5.3.1,<6.0",
+    "PySide6>=6.8.2.1,<7.0",
+    "pyqtgraph>=0.13.7,<1.0",
+    "qdarkstyle>=3.2.3,<4.0",
+    "numpy>=2.2.3,<3.0",
+    "pandas>=2.2.3,<3.0",
+    "ta-lib>=0.6.4,<1.0",
+    "deap>=1.4.2,<2.0",
+    "ccxt>=4.4.96,<5.0",
+    "ccxtpro>=1.0.0,<2.0",
+    "loguru>=0.7.3,<1.0",
+    "textual>=5.0.0,<6.0",
+    "futu-api>=9.3.5308,<10.0",
+]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=8.4.1",
+    "pytest-cov>=6.0.0",
+    "pytest-timeout>=2.3.1",
+    "pytest-asyncio>=0.21.0",
+    "black>=25.1.0",
+    "ruff>=0.12.5",
+    "mypy>=1.17.0",
+    "pytest-mock>=3.0.0",
+    "python-dotenv>=1.0.0",
+]
+
+[tool.black]
+line-length = 120
+target-version = ["py312"]
+
+[tool.ruff]
+line-length = 120
+select = ["E", "F", "I", "UP"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"

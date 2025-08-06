@@ -32,6 +32,16 @@ SETTINGS: dict[str, Any] = {
     "database.port": 0,
     "database.user": "",
     "database.password": "",
+    # WebSocket settings
+    "websocket.enabled": False,  # Global WebSocket enable/disable
+    "websocket.binance.enabled": True,  # Per-adapter WebSocket settings
+    "websocket.binance.symbols": [],  # Empty list means all symbols, or specify ["BTCUSDT", "ETHUSDT"]
+    "websocket.reconnect.max_attempts": 50,
+    "websocket.reconnect.base_delay": 1.0,
+    "websocket.reconnect.max_delay": 60.0,
+    "websocket.heartbeat.interval": 30.0,
+    "websocket.circuit_breaker.failure_threshold": 5,
+    "websocket.circuit_breaker.recovery_timeout": 60.0,
 }
 
 

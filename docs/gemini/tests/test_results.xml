@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="1" failures="4" skipped="0" tests="33" time="753.941" timestamp="2025-08-04T01:50:12.160973+00:00" hostname="ip-172-26-12-198"><testcase classname="tests.benchmarks.test_websocket_performance.TestWebSocketPerformance" name="test_websocket_latency" time="8.110" /><testcase classname="tests.benchmarks.test_websocket_performance.TestWebSocketPerformance" name="test_http_vs_websocket_comparison" time="9.029"><failure message="AssertionError: WebSocket should be at least 50% faster than HTTP polling&#10;assert 0.6396770477294922 &lt; (0.14138221740722656 * 0.5)">tests/benchmarks/test_websocket_performance.py:281: in test_http_vs_websocket_comparison
+    assert ws_median &lt; http_median * 0.5, \
+E   AssertionError: WebSocket should be at least 50% faster than HTTP polling
+E   assert 0.6396770477294922 &lt; (0.14138221740722656 * 0.5)</failure></testcase><testcase classname="tests.benchmarks.test_websocket_performance.TestWebSocketPerformance" name="test_multiple_symbol_performance" time="8.112" /><testcase classname="tests.benchmarks.test_websocket_performance.TestWebSocketPerformance" name="test_reconnection_performance" time="12.113" /><testcase classname="tests.e2e.test_binance_mainengine_e2e.TestBinanceMainEngineE2E" name="test_main_engine_setup_and_connection" time="9.113" /><testcase classname="tests.e2e.test_binance_mainengine_e2e.TestBinanceMainEngineE2E" name="test_account_query_through_main_engine" time="9.113" /><testcase classname="tests.e2e.test_binance_mainengine_e2e.TestBinanceMainEngineE2E" name="test_position_query_through_main_engine" time="11.112" /><testcase classname="tests.e2e.test_binance_mainengine_e2e.TestBinanceMainEngineE2E" name="test_contract_information_flow" time="12.113" /><testcase classname="tests.e2e.test_binance_mainengine_e2e.TestBinanceMainEngineE2E" name="test_order_lifecycle_through_main_engine" time="17.106"><failure message="AssertionError: assert '' != ''">/home/ubuntu/projects/foxtrot/tests/e2e/test_binance_mainengine_e2e.py:339: in test_order_lifecycle_through_main_engine
+    assert order_id != ""
+E   AssertionError: assert '' != ''</failure></testcase><testcase classname="tests.e2e.test_binance_mainengine_e2e.TestBinanceMainEngineE2E" name="test_market_data_subscription" time="12.118" /><testcase classname="tests.e2e.test_binance_mainengine_e2e.TestBinanceMainEngineE2E" name="test_futures_adapter_integration" time="9.112" /><testcase classname="tests.e2e.test_binance_mainengine_e2e.TestBinanceMainEngineE2E" name="test_error_handling_invalid_credentials" time="10.112" /><testcase classname="tests.e2e.test_binance_mainengine_e2e.TestBinanceMainEngineE2E" name="test_order_cancellation_through_main_engine" time="17.105"><failure message="AssertionError: assert '' != ''">/home/ubuntu/projects/foxtrot/tests/e2e/test_binance_mainengine_e2e.py:472: in test_order_cancellation_through_main_engine
+    assert order_id != ""
+E   AssertionError: assert '' != ''</failure></testcase><testcase classname="tests.e2e.test_binance_mainengine_e2e.TestBinanceMainEngineE2E" name="test_concurrent_operations" time="15.114" /><testcase classname="tests.e2e.test_binance_mainengine_e2e.TestBinanceMainEngineE2E" name="test_main_engine_state_consistency" time="14.113" /><testcase classname="tests.e2e.test_binance_mainengine_e2e.TestBinanceMainEngineE2E" name="test_resource_cleanup_and_shutdown" time="8.116" /><testcase classname="tests.fixtures.test_infrastructure" name="test_with_cleanup" time="2.104" /><testcase classname="tests.integration.adapter.binance.test_websocket_integration.TestWebSocketIntegration" name="test_websocket_streaming" time="6.111" /><testcase classname="tests.integration.adapter.binance.test_websocket_integration.TestWebSocketIntegration" name="test_websocket_reconnection" time="8.330"><failure message="assert 0 &gt; 0&#10; +  where 0 = &lt;foxtrot.util.websocket_utils.WebSocketReconnectManager object at 0x718def141010&gt;.reconnect_attempts&#10; +    where &lt;foxtrot.util.websocket_utils.WebSocketReconnectManager object at 0x718def141010&gt; = &lt;foxtrot.adapter.binance.websocket_manager.WebSocketManager object at 0x718def140f10&gt;.reconnect_manager">/home/ubuntu/projects/foxtrot/tests/integration/adapter/binance/test_websocket_integration.py:181: in test_websocket_reconnection
+    assert ws_manager.reconnect_manager.reconnect_attempts &gt; 0
+E   assert 0 &gt; 0
+E    +  where 0 = &lt;foxtrot.util.websocket_utils.WebSocketReconnectManager object at 0x718def141010&gt;.reconnect_attempts
+E    +    where &lt;foxtrot.util.websocket_utils.WebSocketReconnectManager object at 0x718def141010&gt; = &lt;foxtrot.adapter.binance.websocket_manager.WebSocketManager object at 0x718def140f10&gt;.reconnect_manager</failure></testcase><testcase classname="tests.integration.adapter.binance.test_websocket_integration.TestWebSocketIntegration" name="test_websocket_error_handling" time="5.868" /><testcase classname="tests.integration.adapter.binance.test_websocket_integration.TestWebSocketIntegration" name="test_http_fallback" time="7.936" /><testcase classname="tests.integration.adapter.binance.test_websocket_integration.TestWebSocketIntegration" name="test_subscription_management" time="6.955" /><testcase classname="tests.integration.adapter.binance.test_websocket_integration.TestWebSocketIntegration" name="test_symbol_conversion" time="5.561" /><testcase classname="tests.integration.adapter.binance.test_websocket_integration.TestWebSocketIntegration" name="test_concurrent_subscriptions" time="7.109" /><testcase classname="tests.integration.test_futu_mainengine_integration.TestFutuMainEngineIntegration" name="test_adapter_cleanup" time="7.734" /><testcase classname="tests.integration.test_futu_mainengine_integration.TestFutuMainEngineIntegration" name="test_adapter_name_uniqueness" time="8.615" /><testcase classname="tests.integration.test_futu_mainengine_integration.TestFutuMainEngineIntegration" name="test_adapter_registration" time="6.336" /><testcase classname="tests.integration.test_futu_mainengine_integration.TestFutuMainEngineIntegration" name="test_baseadapter_interface_compliance" time="9.147" /><testcase classname="tests.integration.test_futu_mainengine_integration.TestFutuMainEngineIntegration" name="test_connection_through_mainengine" time="6.321" /><testcase classname="tests.integration.test_futu_mainengine_integration.TestFutuMainEngineIntegration" name="test_default_settings_retrieval" time="10.651" /><testcase classname="tests.integration.test_futu_mainengine_integration.TestFutuMainEngineIntegration" name="test_event_system_integration" time="6.329" /><testcase classname="tests.integration.test_futu_mainengine_integration.TestFutuMainEngineIntegration" name="test_exchange_registration" time="15.851" /><testcase classname="pytest" name="internal" time="0.000"><error message="internal error">Traceback (most recent call last):
+  File "/home/ubuntu/projects/foxtrot/.venv/lib/python3.11/site-packages/_pytest/main.py", line 289, in wrap_session
+    session.exitstatus = doit(config, session) or 0
+                         ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/projects/foxtrot/.venv/lib/python3.11/site-packages/_pytest/main.py", line 343, in _main
+    config.hook.pytest_runtestloop(session=session)
+  File "/home/ubuntu/projects/foxtrot/.venv/lib/python3.11/site-packages/pluggy/_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/projects/foxtrot/.venv/lib/python3.11/site-packages/pluggy/_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/projects/foxtrot/.venv/lib/python3.11/site-packages/pluggy/_callers.py", line 167, in _multicall
+    raise exception
+  File "/home/ubuntu/projects/foxtrot/.venv/lib/python3.11/site-packages/pluggy/_callers.py", line 139, in _multicall
+    teardown.throw(exception)
+  File "/home/ubuntu/projects/foxtrot/.venv/lib/python3.11/site-packages/_pytest/logging.py", line 801, in pytest_runtestloop
+    return (yield)  # Run all the tests.
+            ^^^^^
+  File "/home/ubuntu/projects/foxtrot/.venv/lib/python3.11/site-packages/pluggy/_callers.py", line 139, in _multicall
+    teardown.throw(exception)
+  File "/home/ubuntu/projects/foxtrot/.venv/lib/python3.11/site-packages/_pytest/terminal.py", line 688, in pytest_runtestloop
+    result = yield
+             ^^^^^
+  File "/home/ubuntu/projects/foxtrot/.venv/lib/python3.11/site-packages/pluggy/_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/projects/foxtrot/.venv/lib/python3.11/site-packages/_pytest/main.py", line 367, in pytest_runtestloop
+    item.config.hook.pytest_runtest_protocol(item=item, nextitem=nextitem)
+  File "/home/ubuntu/projects/foxtrot/.venv/lib/python3.11/site-packages/pluggy/_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/projects/foxtrot/.venv/lib/python3.11/site-packages/pluggy/_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/projects/foxtrot/.venv/lib/python3.11/site-packages/pluggy/_callers.py", line 167, in _multicall
+    raise exception
+  File "/home/ubuntu/projects/foxtrot/.venv/lib/python3.11/site-packages/pluggy/_callers.py", line 139, in _multicall
+    teardown.throw(exception)
+  File "/home/ubuntu/projects/foxtrot/.venv/lib/python3.11/site-packages/_pytest/warnings.py", line 90, in pytest_runtest_protocol
+    return (yield)
+            ^^^^^
+  File "/home/ubuntu/projects/foxtrot/.venv/lib/python3.11/site-packages/pluggy/_callers.py", line 139, in _multicall
+    teardown.throw(exception)
+  File "/home/ubuntu/projects/foxtrot/.venv/lib/python3.11/site-packages/_pytest/assertion/__init__.py", line 192, in pytest_runtest_protocol
+    return (yield)
+            ^^^^^
+  File "/home/ubuntu/projects/foxtrot/.venv/lib/python3.11/site-packages/pluggy/_callers.py", line 139, in _multicall
+    teardown.throw(exception)
+  File "/home/ubuntu/projects/foxtrot/.venv/lib/python3.11/site-packages/pluggy/_callers.py", line 53, in run_old_style_hookwrapper
+    return result.get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/projects/foxtrot/.venv/lib/python3.11/site-packages/pluggy/_result.py", line 103, in get_result
+    raise exc.with_traceback(tb)
+  File "/home/ubuntu/projects/foxtrot/.venv/lib/python3.11/site-packages/pluggy/_callers.py", line 38, in run_old_style_hookwrapper
+    res = yield
+          ^^^^^
+  File "/home/ubuntu/projects/foxtrot/.venv/lib/python3.11/site-packages/pluggy/_callers.py", line 139, in _multicall
+    teardown.throw(exception)
+  File "/home/ubuntu/projects/foxtrot/.venv/lib/python3.11/site-packages/_pytest/unittest.py", line 475, in pytest_runtest_protocol
+    return (yield)
+            ^^^^^
+  File "/home/ubuntu/projects/foxtrot/.venv/lib/python3.11/site-packages/pluggy/_callers.py", line 139, in _multicall
+    teardown.throw(exception)
+  File "/home/ubuntu/projects/foxtrot/.venv/lib/python3.11/site-packages/_pytest/faulthandler.py", line 88, in pytest_runtest_protocol
+    return (yield)
+            ^^^^^
+  File "/home/ubuntu/projects/foxtrot/.venv/lib/python3.11/site-packages/pluggy/_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/projects/foxtrot/.venv/lib/python3.11/site-packages/_pytest/runner.py", line 116, in pytest_runtest_protocol
+    ihook.pytest_runtest_logstart(nodeid=item.nodeid, location=item.location)
+                                                               ^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/functools.py", line 1001, in __get__
+    val = self.func(instance)
+          ^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/projects/foxtrot/.venv/lib/python3.11/site-packages/_pytest/nodes.py", line 769, in location
+    path = absolutepath(location[0])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/projects/foxtrot/.venv/lib/python3.11/site-packages/_pytest/pathlib.py", line 1004, in absolutepath
+    return Path(os.path.abspath(path))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/pathlib.py", line 868, in __new__
+    def __new__(cls, *args, **kwargs):
+    
+  File "/home/ubuntu/projects/foxtrot/.venv/lib/python3.11/site-packages/pytest_timeout.py", line 317, in handler
+    timeout_sigalrm(item, settings)
+  File "/home/ubuntu/projects/foxtrot/.venv/lib/python3.11/site-packages/pytest_timeout.py", line 499, in timeout_sigalrm
+    dump_stacks(terminal)
+  File "/home/ubuntu/projects/foxtrot/.venv/lib/python3.11/site-packages/pytest_timeout.py", line 558, in dump_stacks
+    terminal.write("".join(traceback.format_stack(frame)))
+  File "/home/ubuntu/projects/foxtrot/.venv/lib/python3.11/site-packages/_pytest/_io/terminalwriter.py", line 165, in write
+    self._file.write(msg)
+BrokenPipeError: [Errno 32] Broken pipe</error></testcase></testsuite></testsuites>

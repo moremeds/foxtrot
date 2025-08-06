@@ -3,7 +3,7 @@
 # Status: pending
 # Dependencies: 3, 4, 6
 # Priority: medium
-# Description: Create a bespoke WebSocket streaming implementation for the Futu adapter using its native futu-api SDK. This involves building connection management, data parsing, and event transformation from scratch to handle Futu's unique API architecture and data formats.
+# Description: Create a WebSocket-enabled FutuAdapter by extending the `BaseAdapter` and implementing a bespoke streaming client using the native futu-api SDK. This involves building connection management, data parsing, and event transformation from scratch to handle Futu's unique API architecture and data formats.
 # Details:
 This task requires a high-effort, native implementation as it cannot use the unified CCXT library. The implementation must adhere to the framework's streaming architecture.
 
@@ -11,8 +11,8 @@ This task requires a high-effort, native implementation as it cannot use the uni
    - Add the `futu-api` library to the project's dependencies in `pyproject.toml`.
 
 2. **Adapter Implementation (`FutuAdapter`):**
-   - Create a new `FutuAdapter` class that inherits from the `StreamingBaseAdapter` defined in Task #3.
-   - Implement the required `connect()`, `disconnect()`, `subscribe()`, and `unsubscribe()` methods.
+   - Create a new `FutuAdapter` class that inherits from the framework's `BaseAdapter`.
+   - Implement the required `connect()`, `disconnect()`, `subscribe()`, and `unsubscribe()` methods to handle WebSocket streaming.
 
 3. **Connection and Authentication:**
    - The `connect()` method must handle the connection to the FutuOpenD client, including configuration for host, port, and the trading password required to unlock the API.

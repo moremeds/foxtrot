@@ -3,7 +3,7 @@
 # Status: pending
 # Dependencies: 3, 4, 6, 7
 # Priority: medium
-# Description: Create a dedicated task for implementing WebSocket streaming for the Interactive Brokers adapter using its native ibapi SDK, handling its complex event-driven architecture, TWS/Gateway integration, and unique callback system.
+# Description: Create a WebSocket-enabled InteractiveBrokersAdapter by extending the `BaseAdapter` and implementing a bespoke streaming client using the native `ibapi` SDK. This involves handling its complex event-driven architecture, TWS/Gateway integration, and unique callback system.
 # Details:
 This task requires a high-effort, bespoke implementation due to the unique architecture of the Interactive Brokers API. Unlike unified libraries, this involves direct integration with the `ibapi` Python SDK, managing a persistent connection to the Trader Workstation (TWS) or IB Gateway, and handling its asynchronous, callback-driven nature.
 
@@ -11,7 +11,7 @@ This task requires a high-effort, bespoke implementation due to the unique archi
    - Add the official `ibapi` library to the project's dependencies in `pyproject.toml`.
 
 2. **Adapter Implementation (`InteractiveBrokersAdapter`):
-   - Create a new `InteractiveBrokersAdapter` class that inherits from the `StreamingBaseAdapter` defined in Task #3.
+   - Create a new `InteractiveBrokersAdapter` class that inherits from the framework's `BaseAdapter`.
    - The adapter will implement a wrapper around the `ibapi.EClient` and `ibapi.EWrapper` classes.
 
 3. **Connection and Thread Management:**

@@ -6,9 +6,13 @@ and the CCXT exchange instance lifecycle. It serves as the primary interface
 for all Binance API operations.
 """
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Optional
 
 import ccxt
+try:
+    import ccxtpro
+except ImportError:
+    ccxtpro = None
 
 from foxtrot.core.event_engine import EventEngine
 from foxtrot.util.logger import get_adapter_logger
@@ -34,8 +38,13 @@ class BinanceApiClient:
         self.event_engine = event_engine
         self.adapter_name = adapter_name
 
-        # CCXT exchange instance
+        # CCXT exchange instances
         self.exchange: ccxt.binance | None = None
+        self.exchange_pro: Optional["ccxtpro.binance"] = None
+        
+        # WebSocket configuration
+        self.use_websocket = False
+        self.websocket_enabled_symbols: set[str] = set()
 
         # Manager instances (initialized later)
         self.account_manager: BinanceAccountManager | None = None
@@ -81,6 +90,16 @@ class BinanceApiClient:
             secret = settings.get("Secret", "")
             sandbox = settings.get("Sandbox", False)
             options = settings.get("options", {})
+            
+            # Check WebSocket configuration with feature flags
+            global_ws_enabled = settings.get("websocket.enabled", False)
+            binance_ws_enabled = settings.get("websocket.binance.enabled", True)
+            self.use_websocket = global_ws_enabled and binance_ws_enabled
+            
+            # Load WebSocket symbols configuration
+            websocket_symbols = settings.get("websocket.binance.symbols", [])
+            if websocket_symbols:
+                self.websocket_enabled_symbols = set(websocket_symbols)
 
             if not api_key or not secret:
                 self._log_error("Missing API credentials")
@@ -94,8 +113,18 @@ class BinanceApiClient:
             if options:
                 exchange_config["options"] = options
 
+            # Initialize standard CCXT exchange
             self.exchange = ccxt.binance(exchange_config)
             self.exchange.set_sandbox_mode(sandbox)
+            
+            # Initialize CCXT Pro exchange if WebSocket is enabled
+            if self.use_websocket and ccxtpro:
+                self.exchange_pro = ccxtpro.binance(exchange_config)
+                self.exchange_pro.set_sandbox_mode(sandbox)
+                self._log_info("WebSocket support enabled via CCXT Pro")
+            elif self.use_websocket and not ccxtpro:
+                self._log_warning("WebSocket requested but ccxtpro not available, falling back to HTTP polling")
+                self.use_websocket = False
 
             # Initialize managers
             self.initialize_managers()
@@ -120,6 +149,22 @@ class BinanceApiClient:
             if self.market_data:
                 self.market_data.close()
 
+            # Close CCXT Pro exchange if available
+            if self.exchange_pro and hasattr(self.exchange_pro, "close"):
+                import asyncio
+                # Need to close async exchange in a sync context
+                try:
+                    loop = asyncio.get_event_loop()
+                    if loop.is_running():
+                        # Schedule the close for later
+                        asyncio.create_task(self.exchange_pro.close())
+                    else:
+                        # Run the close synchronously
+                        loop.run_until_complete(self.exchange_pro.close())
+                except Exception:
+                    # If no event loop, create one temporarily
+                    asyncio.run(self.exchange_pro.close())
+                    
             if self.exchange and hasattr(self.exchange, "close"):
                 # Close any open connections
                 self.exchange.close()
@@ -141,3 +186,26 @@ class BinanceApiClient:
         """Log error message."""
         # MIGRATION: Replace print with ERROR logging
         self._logger.error(message)
+        
+    def _log_warning(self, message: str) -> None:
+        """Log warning message."""
+        self._logger.warning(message)
+        
+    def is_websocket_enabled(self, symbol: Optional[str] = None) -> bool:
+        """
+        Check if WebSocket is enabled for a given symbol.
+        
+        Args:
+            symbol: Symbol to check. If None, returns general WebSocket status.
+            
+        Returns:
+            True if WebSocket is enabled for the symbol/globally
+        """
+        if not self.use_websocket or not self.exchange_pro:
+            return False
+            
+        if symbol is None:
+            return True
+            
+        # Check if symbol is in the enabled list (empty list means all symbols)
+        return not self.websocket_enabled_symbols or symbol in self.websocket_enabled_symbols
