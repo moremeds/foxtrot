@@ -17,6 +17,7 @@ __all__ = [
     "ERROR",
     "CRITICAL",
     "logger",
+    "create_foxtrot_logger",
     "get_component_logger",
     "get_performance_logger", 
     "get_adapter_logger",
@@ -211,39 +212,32 @@ class FoxtrotLogger:
         return adapter_logger
 
 
-# Global logger instance
-_foxtrot_logger: Optional[FoxtrotLogger] = None
+# Factory function for creating logger instances
+def create_foxtrot_logger() -> FoxtrotLogger:
+    """Create a new FoxtrotLogger instance."""
+    return FoxtrotLogger()
 
 
-def get_foxtrot_logger() -> FoxtrotLogger:
-    """Get the global FoxtrotLogger instance."""
-    global _foxtrot_logger
-    if _foxtrot_logger is None:
-        _foxtrot_logger = FoxtrotLogger()
-    return _foxtrot_logger
+# Convenience functions that require an explicit logger instance
+def get_component_logger(component_name: str, foxtrot_logger: FoxtrotLogger) -> Any:
+    """Get a component-specific logger from the provided FoxtrotLogger instance."""
+    return foxtrot_logger.get_component_logger(component_name)
 
 
-# Convenience functions for backward compatibility and easy access
-def get_component_logger(component_name: str) -> Any:
-    """Get a component-specific logger."""
-    return get_foxtrot_logger().get_component_logger(component_name)
+def get_performance_logger(component_name: str, foxtrot_logger: FoxtrotLogger) -> Any:
+    """Get a performance-optimized logger from the provided FoxtrotLogger instance."""
+    return foxtrot_logger.get_performance_logger(component_name)
 
 
-def get_performance_logger(component_name: str) -> Any:
-    """Get a performance-optimized logger."""
-    return get_foxtrot_logger().get_performance_logger(component_name)
-
-
-def get_adapter_logger(adapter_name: str) -> Any:
-    """Get an adapter-specific logger."""
-    return get_foxtrot_logger().get_adapter_logger(adapter_name)
+def get_adapter_logger(adapter_name: str, foxtrot_logger: FoxtrotLogger) -> Any:
+    """Get an adapter-specific logger from the provided FoxtrotLogger instance."""
+    return foxtrot_logger.get_adapter_logger(adapter_name)
 
 
 # Legacy support - configure default logger with gateway context
+# NOTE: This still configures the global loguru logger for backward compatibility
+# Components should gradually migrate to using injected logger instances
 logger.configure(extra={"component": "Legacy"})
 
 # Log level from settings
 level: int = SETTINGS.get("log.level", INFO)
-
-# Initialize the enhanced logging system
-get_foxtrot_logger()

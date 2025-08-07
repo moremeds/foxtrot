@@ -10,7 +10,11 @@ import time
 from typing import Generator
 
 import pytest
+from unittest.mock import MagicMock, Mock
 
+from foxtrot.core.event_engine import EventEngine
+from foxtrot.util.logger import FoxtrotLogger, create_foxtrot_logger
+from foxtrot.util.settings import FoxtrotSettings, create_foxtrot_settings
 from .fixtures.test_infrastructure import TestInfrastructure
 
 
@@ -228,3 +232,123 @@ def pytest_collection_modifyitems(config, items):
         for item in items:
             if "/e2e/" in str(item.fspath) and "binance" in str(item.fspath).lower():
                 item.add_marker(skip_e2e)
+
+
+# ============================================================================
+# Dependency Injection Fixtures (Task 12.5)
+# ============================================================================
+
+@pytest.fixture
+def mock_foxtrot_logger():
+    """
+    Fixture providing a mock FoxtrotLogger instance for dependency injection testing.
+    
+    Ensures tests don't create actual log files or perform I/O operations.
+    """
+    mock_logger = Mock(spec=FoxtrotLogger)
+    
+    # Mock the logger methods to return mock loggers
+    mock_component_logger = Mock()
+    mock_performance_logger = Mock()  
+    mock_adapter_logger = Mock()
+    
+    mock_logger.get_component_logger.return_value = mock_component_logger
+    mock_logger.get_performance_logger.return_value = mock_performance_logger
+    mock_logger.get_adapter_logger.return_value = mock_adapter_logger
+    
+    return mock_logger
+
+
+@pytest.fixture  
+def mock_foxtrot_settings():
+    """
+    Fixture providing a mock FoxtrotSettings instance for dependency injection testing.
+    
+    Provides isolated test configuration without loading external files.
+    """
+    mock_settings = Mock(spec=FoxtrotSettings)
+    
+    # Default test configuration
+    test_config = {
+        "log.level": 30,  # WARNING level for tests
+        "log.console": False,  # Disable console output in tests
+        "log.file": False,  # Disable file output in tests
+        "websocket.enabled": False,  # Disable WebSocket in tests
+        "database.name": "sqlite",
+        "database.database": ":memory:",  # In-memory database for tests
+    }
+    
+    mock_settings.get.side_effect = lambda key, default=None: test_config.get(key, default)
+    mock_settings.get_all.return_value = test_config.copy()
+    
+    return mock_settings
+
+
+@pytest.fixture
+def mock_event_engine():
+    """
+    Fixture providing a mock EventEngine instance for dependency injection testing.
+    
+    Ensures tests don't start actual threads or perform background processing.
+    """
+    mock_engine = Mock(spec=EventEngine)
+    
+    # Mock thread-related attributes to prevent actual threading
+    mock_engine._active = False
+    mock_engine._thread = Mock()
+    mock_engine._timer = Mock()
+    
+    # Mock event handling without side effects
+    mock_engine.put.return_value = None
+    mock_engine.register.return_value = None
+    mock_engine.unregister.return_value = None
+    mock_engine.start.return_value = None
+    mock_engine.stop.return_value = None
+    
+    return mock_engine
+
+
+@pytest.fixture
+def dependency_container(mock_foxtrot_logger, mock_foxtrot_settings, mock_event_engine):
+    """
+    Fixture providing a complete dependency container for testing.
+    
+    Combines all mock dependencies for easy injection into components under test.
+    """
+    return {
+        'foxtrot_logger': mock_foxtrot_logger,
+        'foxtrot_settings': mock_foxtrot_settings,
+        'event_engine': mock_event_engine
+    }
+
+
+@pytest.fixture  
+def real_foxtrot_logger():
+    """
+    Fixture providing a real FoxtrotLogger instance for integration testing.
+    
+    Use only when testing actual logging functionality.
+    """
+    return create_foxtrot_logger()
+
+
+@pytest.fixture
+def real_foxtrot_settings():
+    """
+    Fixture providing a real FoxtrotSettings instance for integration testing.
+    
+    Use only when testing actual configuration functionality.
+    """
+    return create_foxtrot_settings()
+
+
+@pytest.fixture
+def real_event_engine(real_foxtrot_logger, event_engine_cleanup):
+    """
+    Fixture providing a real EventEngine instance for integration testing.
+    
+    Automatically registers for cleanup to prevent thread leaks.
+    """
+    engine = EventEngine(foxtrot_logger=real_foxtrot_logger)
+    event_engine_cleanup(engine)  # Register for cleanup
+    return engine

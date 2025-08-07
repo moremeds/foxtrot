@@ -9,7 +9,7 @@ from threading import Thread
 from time import sleep
 from typing import Any
 
-from ..util.logger import get_performance_logger
+from ..util.logger import get_performance_logger, FoxtrotLogger, create_foxtrot_logger
 
 EVENT_TIMER = "eTimer"
 
@@ -40,10 +40,14 @@ class EventEngine:
     which can be used for timing purpose.
     """
 
-    def __init__(self, interval: float = 1.0) -> None:
+    def __init__(self, interval: float = 1.0, foxtrot_logger: FoxtrotLogger | None = None) -> None:
         """
         Timer event is generated every 1 second by default, if
         interval not specified.
+        
+        Args:
+            interval: Timer interval in seconds
+            foxtrot_logger: Optional FoxtrotLogger instance for dependency injection
         """
         self._interval: float = interval
         self._queue: Queue[Event] = Queue()
@@ -54,7 +58,10 @@ class EventEngine:
         self._general_handlers: list[HandlerType] = []
         
         # Performance-optimized logger for hot path
-        self._logger = get_performance_logger("EventEngine")
+        if foxtrot_logger is None:
+            # Fallback: create a new logger instance for backward compatibility
+            foxtrot_logger = create_foxtrot_logger()
+        self._logger = get_performance_logger("EventEngine", foxtrot_logger)
 
     def _run(self) -> None:
         """

@@ -16,6 +16,8 @@ import os
 from foxtrot.adapter.base_adapter import BaseAdapter
 from foxtrot.app.app import BaseApp
 from foxtrot.core.event_engine import Event, EventEngine
+from foxtrot.util.logger import FoxtrotLogger, create_foxtrot_logger
+from foxtrot.util.settings import FoxtrotSettings, create_foxtrot_settings
 from foxtrot.server.adapter_manager import AdapterManager
 from foxtrot.server.app_manager import AppManager
 from foxtrot.server.email_engine import EmailEngine
@@ -49,12 +51,30 @@ class MainEngine:
     Acts as the core of the trading platform.
     """
 
-    def __init__(self, event_engine: EventEngine | None = None) -> None:
-        """"""
+    def __init__(self, event_engine: EventEngine | None = None, foxtrot_logger: FoxtrotLogger | None = None, foxtrot_settings: FoxtrotSettings | None = None) -> None:
+        """
+        Initialize MainEngine as the central dependency container.
+        
+        Args:
+            event_engine: Optional EventEngine instance for dependency injection
+            foxtrot_logger: Optional FoxtrotLogger instance for dependency injection  
+            foxtrot_settings: Optional FoxtrotSettings instance for dependency injection
+        """
+        # Create or use provided settings (dependency container pattern)
+        if foxtrot_settings is None:
+            foxtrot_settings = create_foxtrot_settings()
+        self.foxtrot_settings = foxtrot_settings
+        
+        # Create or use provided logger (dependency container pattern)
+        if foxtrot_logger is None:
+            foxtrot_logger = create_foxtrot_logger()
+        self.foxtrot_logger = foxtrot_logger
+        
+        # Create or use provided event engine with logger dependency
         if event_engine:
             self.event_engine: EventEngine = event_engine
         else:
-            self.event_engine = EventEngine()
+            self.event_engine = EventEngine(foxtrot_logger=foxtrot_logger)
         self.event_engine.start()
 
         # Initialize managers
