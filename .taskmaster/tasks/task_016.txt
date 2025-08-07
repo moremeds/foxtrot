@@ -1,0 +1,11 @@
+# Task ID: 16
+# Title: Phase 3: Extract Data Clumps into Data Classes
+# Status: pending
+# Dependencies: 15
+# Priority: medium
+# Description: Refactor methods with 4+ parameters into data classes
+# Details:
+Identify data clumps: order submission (8+ params), market data handlers (6+ params), config parameters. Create dataclasses: OrderRequest, MarketDataRequest, ConfigParams. No method should have >4 parameters. Use @dataclass with type hints and validation in __post_init__.
+
+# Test Strategy:
+grep for methods with >4 parameters should return minimal results. All data classes have type hints. Validation tests for each data class.

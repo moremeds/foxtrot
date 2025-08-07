@@ -1,0 +1,11 @@
+# Task ID: 17
+# Title: Phase 4: Fix TUI Navigation (Tab/Focus)
+# Status: pending
+# Dependencies: 10, 11, 12, 13, 14
+# Priority: medium
+# Description: Enable keyboard navigation in TUI - Tab key doesn't work, no focus indicators
+# Details:
+Implement: Tab/Shift+Tab navigation between panels, visual focus indicators (border changes), explicit tab_index for widgets, Enter to activate buttons, Escape to clear focus. Add CSS for :focus states. Mouse clicks should focus elements. Navigation order: Trading → Orders → Positions → Account → Market Data.
+
+# Test Strategy:
+Manual: Tab through all panels, Enter activates buttons, visual focus visible. Automated: test navigation with Textual's test pilot.

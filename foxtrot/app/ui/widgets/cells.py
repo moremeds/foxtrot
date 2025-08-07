@@ -1,18 +1,21 @@
 """
-Table cell implementations for displaying various data types.
+Cell widgets for table display.
 """
 
 from datetime import datetime
 from enum import Enum
 from typing import Any
 
-from tzlocal import get_localzone_name
-
 from foxtrot.util.constants import Direction
-from foxtrot.util.utility import ZoneInfo
+from foxtrot.util.utility import ZoneInfo, get_digits
 
-from ..qt import QtCore, QtWidgets
-from .base_widget import COLOR_ASK, COLOR_BID, COLOR_LONG, COLOR_SHORT
+from ..qt import Qt, QtCore, QtGui, QtWidgets
+
+COLOR_LONG = QtGui.QColor("red")
+COLOR_SHORT = QtGui.QColor("green")
+COLOR_BID = QtGui.QColor(255, 174, 201)
+COLOR_ASK = QtGui.QColor(160, 255, 160)
+COLOR_BLACK = QtGui.QColor("black")
 
 
 class BaseCell(QtWidgets.QTableWidgetItem):
@@ -76,7 +79,7 @@ class DirectionCell(EnumCell):
     Cell used for showing direction data.
     """
 
-    def __init__(self, content: Enum, data: Any) -> None:
+    def __init__(self, content: Direction, data: Any) -> None:
         """"""
         super().__init__(content, data)
 
@@ -143,25 +146,29 @@ class TimeCell(BaseCell):
     Cell used for showing time string from datetime object.
     """
 
-    local_tz = ZoneInfo(get_localzone_name())
+    LOCAL_TZ = ZoneInfo(get_localzone_name())
 
     def __init__(self, content: Any, data: Any) -> None:
         """"""
         super().__init__(content, data)
 
-    def set_content(self, content: datetime | None, data: Any) -> None:
-        """"""
+    def set_content(self, content: Any, data: Any) -> None:
+        """
+        Time format is 12:12:12.5
+        """
         if content is None:
             return
 
-        content = content.astimezone(self.local_tz)
+        content: datetime = content.astimezone(self.LOCAL_TZ)
         timestamp: str = content.strftime("%H:%M:%S")
 
         millisecond: int = int(content.microsecond / 1000)
-        timestamp = f"{timestamp}.{millisecond}" if millisecond else f"{timestamp}.000"
+        if millisecond:
+            timestamp = f"{timestamp}.{millisecond}"
 
-        self.setText(timestamp)
+        self._text = timestamp
         self._data = data
+        self.setText(timestamp)
 
 
 class DateCell(BaseCell):
@@ -174,12 +181,15 @@ class DateCell(BaseCell):
         super().__init__(content, data)
 
     def set_content(self, content: Any, data: Any) -> None:
-        """"""
+        """
+        Date format is YYYY-MM-DD 12:12:12.5
+        """
         if content is None:
             return
 
-        self.setText(content.strftime("%Y-%m-%d"))
+        self._text = content.strftime("%Y-%m-%d %H:%M:%S")
         self._data = data
+        self.setText(self._text)
 
 
 class MsgCell(BaseCell):
@@ -190,6 +200,4 @@ class MsgCell(BaseCell):
     def __init__(self, content: str, data: Any) -> None:
         """"""
         super().__init__(content, data)
-        self.setTextAlignment(
-            QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignVCenter
-        )
+        self.setTextAlignment(QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignVCenter)

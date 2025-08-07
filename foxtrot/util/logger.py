@@ -95,6 +95,7 @@ class FoxtrotLogger:
         
         # Legacy file output support (backward compatibility)
         if SETTINGS.get("log.file", True):
+            print(f"log.file is enabled")
             today_date = datetime.now().strftime("%Y-%m-%d")
             legacy_log_path = get_folder_path("log")
             legacy_file_path = legacy_log_path.joinpath(f"vt_{today_date}.log")

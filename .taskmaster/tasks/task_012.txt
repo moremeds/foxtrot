@@ -1,0 +1,11 @@
+# Task ID: 12
+# Title: Phase 1: Eliminate Global Instances
+# Status: pending
+# Dependencies: None
+# Priority: high
+# Description: Remove all global mutable state and singleton patterns from the codebase
+# Details:
+Find and eliminate: global event_engine instances, global logger instances, shared mutable state in utils. Replace with dependency injection pattern. MainEngine should create and pass dependencies. No module should have side effects on import.
+
+# Test Strategy:
+Import each module independently and verify no global state is created. Mock all dependencies in tests. Verify no import side effects.

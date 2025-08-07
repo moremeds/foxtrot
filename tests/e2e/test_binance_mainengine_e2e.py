@@ -325,8 +325,8 @@ class TestBinanceMainEngineE2E:
 
         # Create order request with minimal quantity
         order_req = OrderRequest(
-            symbol=test_contract.vt_symbol,
-            exchange=Exchange.BINANCE,
+            symbol=test_contract.symbol,
+            exchange=test_contract.exchange,
             direction=Direction.LONG,
             type=OrderType.LIMIT,
             volume=0.001,  # Minimal quantity
@@ -459,8 +459,8 @@ class TestBinanceMainEngineE2E:
 
         # Place a limit order that won't execute immediately
         order_req = OrderRequest(
-            symbol=test_contract.vt_symbol,
-            exchange=Exchange.BINANCE,
+            symbol=test_contract.symbol,
+            exchange=test_contract.exchange,
             direction=Direction.LONG,
             type=OrderType.LIMIT,
             volume=0.001,

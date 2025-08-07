@@ -1,0 +1,11 @@
+# Task ID: 18
+# Title: Phase 4: Connect TUI Buttons to Actions
+# Status: pending
+# Dependencies: 17
+# Priority: medium
+# Description: Make TUI buttons actually trigger events when clicked
+# Details:
+Currently buttons do nothing. Connect: Buy/Sell buttons to order submission, Cancel button to order cancellation, Refresh buttons to data updates. Each button press should emit an event through EventEngine. Add loading states and error feedback.
+
+# Test Strategy:
+Click each button and verify event is emitted. Check EventEngine receives correct event type. Verify UI shows feedback (loading/success/error).

@@ -13,7 +13,7 @@ from textual.containers import Container, Horizontal
 from textual.widget import Widget
 from textual.widgets import Label, Static
 
-from foxtrot.util.object import OrderType
+from foxtrot.util.constants import OrderType
 
 from ...utils.colors import get_color_manager
 from ...utils.formatters import TUIFormatter

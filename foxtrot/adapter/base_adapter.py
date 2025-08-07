@@ -11,12 +11,12 @@ from foxtrot.util.event_type import (
     EVENT_TICK,
     EVENT_TRADE,
 )
+from foxtrot.util.constants import Exchange
 from foxtrot.util.object import (
     AccountData,
     BarData,
     CancelRequest,
     ContractData,
-    Exchange,
     HistoryRequest,
     LogData,
     OrderData,

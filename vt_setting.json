@@ -2,7 +2,7 @@
     "log.active": true,
     "log.level": 20,
     "log.console": true,
-    "log.file": false,
+    "log.file": true,
     "email.server": "",
     "email.port": 465,
     "email.username": "",

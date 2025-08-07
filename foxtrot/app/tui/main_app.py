@@ -19,7 +19,7 @@ from foxtrot.server.engine import MainEngine
 from foxtrot.util.utility import TRADER_DIR
 from foxtrot.util.logger import get_component_logger
 
-from .components.monitors.account_monitor import create_account_monitor
+from .components.monitors.account import create_account_monitor
 from .components.monitors.log_monitor import TUILogMonitor
 from .components.monitors.order_monitor import create_order_monitor
 from .components.monitors.position_monitor import create_position_monitor

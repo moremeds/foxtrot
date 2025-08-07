@@ -1,5 +1,5 @@
 """
-Base widget classes and common utilities for the UI.
+Base monitor widget for data display.
 """
 
 import csv
@@ -9,13 +9,6 @@ from foxtrot.core.event_engine import Event, EventEngine
 from foxtrot.server.engine import MainEngine
 
 from ..qt import QtCore, QtGui, QtWidgets
-
-# Common color constants used across widgets
-COLOR_LONG = QtGui.QColor("red")
-COLOR_SHORT = QtGui.QColor("green")
-COLOR_BID = QtGui.QColor(255, 174, 201)
-COLOR_ASK = QtGui.QColor(160, 255, 160)
-COLOR_BLACK = QtGui.QColor("black")
 
 
 class BaseMonitor(QtWidgets.QTableWidget):

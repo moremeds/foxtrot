@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from server.engine import BaseEngine
+    from foxtrot.server.engine_manager import BaseEngine
 
 
 class BaseApp(ABC):

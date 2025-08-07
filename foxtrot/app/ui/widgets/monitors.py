@@ -1,5 +1,5 @@
 """
-Specific monitor implementations for different data types.
+Specific monitor widgets for different data types.
 """
 
 from foxtrot.core.event import (
@@ -11,11 +11,10 @@ from foxtrot.core.event import (
     EVENT_TICK,
     EVENT_TRADE,
 )
-from foxtrot.core.event_engine import Event
 from foxtrot.util.object import CancelRequest, OrderData, QuoteData
 
-from .base_widget import BaseMonitor
-from .cell_widget import (
+from .base_monitor import BaseMonitor
+from .cells import (
     AskCell,
     BaseCell,
     BidCell,
@@ -217,24 +216,3 @@ class QuoteMonitor(BaseMonitor):
         quote: QuoteData = cell.get_data()
         req: CancelRequest = quote.create_cancel_request()
         self.main_engine.cancel_quote(req, quote.adapter_name)
-
-
-class ActiveOrderMonitor(OrderMonitor):
-    """
-    Monitor which shows active order only.
-    """
-
-    def process_event(self, event: Event) -> None:
-        """
-        Hides the row if order is not active.
-        """
-        super().process_event(event)
-
-        order: OrderData = event.data
-        row_cells: dict = self.cells[order.vt_orderid]
-        row: int = self.row(row_cells["volume"])
-
-        if order.is_active():
-            self.showRow(row)
-        else:
-            self.hideRow(row)

@@ -1,41 +1,38 @@
 """
-UI widget components for Foxtrot trading platform.
-
-This package contains modularized widget components split from the original
-monolithic widget.py file to maintain proper file size limits and separation of concerns.
+Widget components for UI.
 """
 
-# Re-export commonly used components for backward compatibility
-from .base_widget import BaseMonitor
-from .cell_widget import (
-    BaseCell,
-    EnumCell,
-    DirectionCell,
-    BidCell,
+from .base_monitor import BaseMonitor
+from .cells import (
     AskCell,
+    BaseCell,
+    BidCell,
+    COLOR_ASK,
+    COLOR_BID,
+    COLOR_BLACK,
+    COLOR_LONG,
+    COLOR_SHORT,
+    DateCell,
+    DirectionCell,
+    EnumCell,
+    MsgCell,
     PnlCell,
     TimeCell,
-    DateCell,
-    MsgCell,
 )
-from .monitor_widget import (
-    TickMonitor,
+from .dialogs import AboutDialog, ConnectDialog, GlobalDialog
+from .monitors import (
+    AccountMonitor,
     LogMonitor,
-    TradeMonitor,
     OrderMonitor,
     PositionMonitor,
-    AccountMonitor,
     QuoteMonitor,
-    ActiveOrderMonitor,
+    TickMonitor,
+    TradeMonitor,
 )
-from .trading_widget import TradingWidget
-from .dialog_widget import ConnectDialog, AboutDialog, GlobalDialog
-from .contract_widget import ContractManager
+from .trading import ActiveOrderMonitor, ContractManager, TradingWidget
 
 __all__ = [
-    # Base
     "BaseMonitor",
-    # Cells
     "BaseCell",
     "EnumCell",
     "DirectionCell",
@@ -45,7 +42,6 @@ __all__ = [
     "TimeCell",
     "DateCell",
     "MsgCell",
-    # Monitors
     "TickMonitor",
     "LogMonitor",
     "TradeMonitor",
@@ -53,12 +49,15 @@ __all__ = [
     "PositionMonitor",
     "AccountMonitor",
     "QuoteMonitor",
-    "ActiveOrderMonitor",
-    # Main widgets
-    "TradingWidget",
-    "ContractManager",
-    # Dialogs
     "ConnectDialog",
+    "TradingWidget",
+    "ActiveOrderMonitor",
+    "ContractManager",
     "AboutDialog",
     "GlobalDialog",
+    "COLOR_LONG",
+    "COLOR_SHORT",
+    "COLOR_BID",
+    "COLOR_ASK",
+    "COLOR_BLACK",
 ]

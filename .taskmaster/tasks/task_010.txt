@@ -1,0 +1,94 @@
+# Task ID: 10
+# Title: Phase 1: Emergency File Splitting (widget.py)
+# Status: pending
+# Dependencies: None
+# Priority: high
+# Description: Split the massive 1290-line widget.py file into modular components following the 200-line limit
+# Details:
+Critical violation: widget.py has 1290 lines (6x over limit). Break into: base_widget.py (150 lines), table_widget.py (180 lines), monitor_widget.py (180 lines), trading_widget.py (180 lines), chart_widget.py (180 lines), dialog_widget.py (150 lines), utils_widget.py (100 lines). Each file must be independently testable with clear single responsibility.
+
+# Test Strategy:
+Unit test each extracted widget independently. Verify imports work correctly. Test that original functionality is preserved after splitting.
+
+# Subtasks:
+## 1. Analyze widget.py and Plan Component Mapping [done]
+### Dependencies: None
+### Description: Perform a detailed analysis of the 1290-line widget.py to identify all classes, functions, constants, and imports. Create a clear mapping of each code block to its new target module to guide the extraction process and prevent dependency issues.
+### Details:
+The primary output of this subtask is a plan. Document which lines/classes/functions will move to which of the 7 new files. This initial planning is critical to ensure a smooth split and avoid circular dependencies later on.
+<info added on 2025-08-06T06:28:17.448Z>
+Based on the analysis, here is the proposed component mapping plan:
+
+**Proposed Component Mapping Plan:**
+
+*   **`base_widget.py`**:
+    *   `BaseMonitor` class (from lines 229-597) to serve as the foundational component for all monitors.
+
+*   **`table_widget.py`**:
+    *   All Cell classes: `BaseCell`, `EnumCell`, `DirectionCell`, etc. (lines 49-227).
+    *   Table-based widgets: `ActiveOrderMonitor`, `ContractManager` (lines 1049-1169).
+
+*   **`monitor_widget.py`**:
+    *   Specific monitor implementations: `TickMonitor`, `LogMonitor`, etc. (lines 229-597). These will depend on `BaseMonitor` from `base_widget.py`.
+
+*   **`trading_widget.py`**:
+    *   The main `TradingWidget` class and its related components (lines 691-1048).
+
+*   **`dialog_widget.py`**:
+    *   All Dialog classes: `ConnectDialog`, `AboutDialog`, `GlobalDialog` (lines 598-690, 1170-1290).
+
+*   **`utils_widget.py`**:
+    *   Any standalone helper functions, constants, and enums that are not part of a specific class. (To be identified during extraction).
+
+*   **`chart_widget.py`**:
+    *   No chart-specific components were identified in the initial analysis. This file will be created, but may remain empty pending further review.
+</info added on 2025-08-06T06:28:17.448Z>
+
+## 2. Extract Foundational Modules: base_widget.py and utils_widget.py [pending]
+### Dependencies: 10.1
+### Description: Create `base_widget.py` and `utils_widget.py`. Migrate all identified abstract base classes and core widget structures to `base_widget.py`. Move all shared helper functions, formatters, and non-widget utility classes to `utils_widget.py`.
+### Details:
+These two modules will serve as dependencies for all other widget modules. Ensure `utils_widget.py` has no dependencies on any other new widget files. `base_widget.py` will define the common interface for all widgets.
+<info added on 2025-08-06T06:31:55.446Z>
+User has created `base_widget.py` (187 lines) containing the `BaseMonitor` class and color constants. Instead of the planned `utils_widget.py`, the user created `cell_widget.py` (186 lines) containing all 9 cell classes.
+</info added on 2025-08-06T06:31:55.446Z>
+
+## 3. Extract Table Widget Components into table_widget.py [pending]
+### Dependencies: 10.2
+### Description: Create `table_widget.py` and move all code related to data tables, such as order books, trade histories, and position tables. Update internal imports to use `base_widget` and `utils_widget`.
+### Details:
+This file should encapsulate all logic for displaying tabular data. Refactor the moved code to import its parent class from `base_widget.py` and any helpers from `utils_widget.py`.
+<info added on 2025-08-06T06:32:25.913Z>
+User has created `monitor_widget.py` (223 lines) containing all 8 monitor implementations (TickMonitor, LogMonitor, TradeMonitor, OrderMonitor, PositionMonitor, AccountMonitor, QuoteMonitor, and ActiveOrderMonitor), with correct imports from `base_widget` and `cell_widget` modules. This work appears to address the next subtask (10.4: Extract Monitor and Trading Widgets) rather than the current subtask (10.3), which is focused on creating `table_widget.py`.
+</info added on 2025-08-06T06:32:25.913Z>
+
+## 4. Extract Monitor and Trading Widgets [pending]
+### Dependencies: 10.2
+### Description: Create `monitor_widget.py` for status displays and `trading_widget.py` for order entry/management panels. Migrate the relevant classes to each file.
+### Details:
+Isolate the `PerformanceMonitor` and `ConnectionStatus` components into `monitor_widget.py`. Move the `OrderEntry` and other interactive trading forms into `trading_widget.py`. Update their imports.
+
+## 5. Extract Charting Widget Components into chart_widget.py [pending]
+### Dependencies: 10.2
+### Description: Create `chart_widget.py` and migrate all code responsible for graphical data visualization, including price charts and related data processing logic.
+### Details:
+This module should contain all logic for rendering charts. Ensure it correctly imports its base class from `base_widget.py` and any necessary utilities.
+
+## 6. Extract Dialog Widget Components into dialog_widget.py [pending]
+### Dependencies: 10.2
+### Description: Create `dialog_widget.py` and move all modal components, such as confirmation prompts, error messages, and input dialogs, into this new file.
+### Details:
+Consolidate all classes that implement `textual`'s `Screen` for modal behavior into this file. These should be generic and reusable components.
+
+## 7. Update All Imports Across the Application [pending]
+### Dependencies: 10.3, 10.4, 10.5, 10.6
+### Description: Perform a codebase-wide search for any remaining imports from the old `widget.py`. Refactor these import statements to point to the new, specific modules (`table_widget`, `chart_widget`, etc.).
+### Details:
+This subtask focuses exclusively on updating consumer code. The main TUI application file that assembles the UI is the primary target. Be meticulous to ensure all references are updated.
+
+## 8. Final Integration Test and Removal of widget.py [pending]
+### Dependencies: 10.7
+### Description: Run the application and perform a full smoke test to ensure all UI components load and function as expected with the new modular structure. Once verified, delete the original `widget.py` file.
+### Details:
+This final step validates the entire refactoring effort. The goal is to confirm that the application's functionality is 100% preserved before removing the legacy file to complete the task.
+

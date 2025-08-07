@@ -1,0 +1,11 @@
+# Task ID: 22
+# Title: Standardize Error Handling
+# Status: pending
+# Dependencies: 15, 16
+# Priority: low
+# Description: Implement consistent error handling across all components
+# Details:
+Create custom exceptions: FoxtrotError base class, ConnectionError, ValidationError, ExecutionError. All errors must include context. Log errors appropriately. Never silently suppress. Implement recovery strategies where applicable.
+
+# Test Strategy:
+All try/except blocks handle specific exceptions. No bare except clauses. Error messages include context. Test error scenarios.

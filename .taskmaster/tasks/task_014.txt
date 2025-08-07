@@ -1,0 +1,11 @@
+# Task ID: 14
+# Title: Phase 2: Create Basic Unit Tests (One per Component)
+# Status: pending
+# Dependencies: None
+# Priority: high
+# Description: Write one simple, working test for each core component to establish baseline coverage
+# Details:
+Components needing tests: EventEngine (test put/get event), MainEngine (test initialization), BaseAdapter (test abstract methods), OrderData (test dataclass creation), each adapter (test connection). Keep tests simple - just verify basic functionality. No mocks initially, just instantiation tests.
+
+# Test Strategy:
+Each test must pass independently. Run with 'pytest -v' to see individual results. Target: at least 10 passing tests across core components.

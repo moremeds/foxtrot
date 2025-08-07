@@ -28,7 +28,7 @@ def test_imports():
             ModalManager,
             OrderConfirmationDialog,
         )
-        from foxtrot.app.tui.components.trading_panel import TUITradingPanel
+        from foxtrot.app.tui.components.trading import TUITradingPanel
 
         # Settings
         from foxtrot.app.tui.config.settings import TUISettings, get_settings
@@ -64,7 +64,7 @@ def test_component_creation():
     """Test creating core components."""
     print("2. Testing component creation...")
     try:
-        from foxtrot.app.tui.components.trading_panel import TUITradingPanel
+        from foxtrot.app.tui.components.trading import TUITradingPanel
         from foxtrot.app.tui.integration.event_adapter import EventEngineAdapter
         from foxtrot.core.event_engine import EventEngine
         from foxtrot.server.engine import MainEngine

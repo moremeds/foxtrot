@@ -1,0 +1,11 @@
+# Task ID: 20
+# Title: Add Minimal Documentation
+# Status: pending
+# Dependencies: 10, 11
+# Priority: low
+# Description: Add docstrings to all public methods and classes
+# Details:
+One-line docstrings for simple methods, multi-line for complex ones. Include: purpose, parameters, return value, exceptions raised. Focus on public API first. Use Google style docstrings. No novels - keep it concise and practical.
+
+# Test Strategy:
+Run pydocstyle to check docstring presence. Verify all public methods have at least one-line docstring.

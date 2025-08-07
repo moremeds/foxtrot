@@ -1,0 +1,11 @@
+# Task ID: 21
+# Title: Create Reusable Test Fixtures
+# Status: pending
+# Dependencies: 13, 14
+# Priority: medium
+# Description: Build pytest fixtures for common test objects
+# Details:
+Create fixtures in conftest.py: mock_event_engine, sample_order_data, mock_adapter, test_config. Centralize test data creation. Use pytest.fixture decorator. Share across all test files. Reduce test boilerplate.
+
+# Test Strategy:
+All tests use fixtures instead of creating own test data. Fixtures work across different test modules. No test data duplication.
