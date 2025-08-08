@@ -2,8 +2,7 @@
 App management functionality for MainEngine.
 """
 
-from foxtrot.app.app import BaseApp
-from foxtrot.server.engine_manager import BaseEngine
+from foxtrot.server.engine_manager import BaseEngine, BaseApp
 
 
 class AppManager:

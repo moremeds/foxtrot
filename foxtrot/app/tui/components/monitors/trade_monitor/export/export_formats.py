@@ -73,7 +73,7 @@ class ExportFormats:
         
         # Write summary CSV
         import csv
-        from ....utils.formatters import TUIFormatter
+        from foxtrot.app.tui.utils.formatters import TUIFormatter
         
         with open(filepath, "w", newline="", encoding="utf-8") as csvfile:
             writer = csv.writer(csvfile)

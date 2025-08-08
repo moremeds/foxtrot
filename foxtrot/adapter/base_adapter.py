@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+from foxtrot.core.interfaces import IAdapter, IEventEngine
 from foxtrot.core.event_engine import Event, EventEngine
 from foxtrot.util.event_type import (
     EVENT_ACCOUNT,
@@ -30,7 +31,7 @@ from foxtrot.util.object import (
 )
 
 
-class BaseAdapter(ABC):
+class BaseAdapter(IAdapter):
     """
     Abstract adapter class for creating adapters connection
     to different trading systems.
@@ -78,9 +79,9 @@ class BaseAdapter(ABC):
     # Exchanges supported in the adapter.
     exchanges: list[Exchange] = []
 
-    def __init__(self, event_engine: EventEngine, adapter_name: str) -> None:
+    def __init__(self, event_engine: IEventEngine, adapter_name: str) -> None:
         """"""
-        self.event_engine: EventEngine = event_engine
+        self.event_engine: IEventEngine = event_engine
         self.adapter_name: str = adapter_name
 
     def on_event(self, type: str, data: object = None) -> None:

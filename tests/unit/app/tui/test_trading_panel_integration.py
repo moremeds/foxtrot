@@ -67,6 +67,7 @@ class TestTradingPanelIntegration:
 
         return panel
 
+    @pytest.mark.asyncio
     async def test_trading_panel_initialization(self, trading_panel, main_engine, event_engine):
         """Test that trading panel initializes correctly with engines."""
         assert trading_panel.main_engine == main_engine
@@ -75,6 +76,7 @@ class TestTradingPanelIntegration:
         assert hasattr(trading_panel, '_form_validators')
 
 
+    @pytest.mark.asyncio
     async def test_event_adapter_integration(self, trading_panel, event_adapter):
         """Test that trading panel integrates correctly with event adapter."""
         # Mock the event adapter methods
@@ -100,6 +102,7 @@ class TestTradingPanelIntegration:
         event_adapter.publish_order.assert_called_once_with(order_data)
 
 
+    @pytest.mark.asyncio
     async def test_input_validation_integration(self, trading_panel):
         """Test that input validation framework integrates correctly."""
         # Mock form validators
@@ -130,6 +133,7 @@ class TestTradingPanelIntegration:
             assert is_valid
 
 
+    @pytest.mark.asyncio
     async def test_validation_error_handling(self, trading_panel):
         """Test that validation errors are handled correctly."""
         # Mock form validators with validation errors
@@ -165,6 +169,7 @@ class TestTradingPanelIntegration:
             assert not is_valid
 
 
+    @pytest.mark.asyncio
     async def test_order_confirmation_dialog_integration(self, trading_panel):
         """Test that order confirmation dialog integrates correctly."""
         # Mock modal manager
@@ -192,6 +197,7 @@ class TestTradingPanelIntegration:
             assert confirmed
 
 
+    @pytest.mark.asyncio
     async def test_order_submission_pipeline(self, trading_panel, event_adapter):
         """Test the complete order submission pipeline."""
         # Set up mocks
@@ -224,6 +230,7 @@ class TestTradingPanelIntegration:
                     assert order_id == "test_order_123"
 
 
+    @pytest.mark.asyncio
     async def test_market_data_integration(self, trading_panel):
         """Test that market data integration works correctly."""
         # Mock market data updates
@@ -245,6 +252,7 @@ class TestTradingPanelIntegration:
             mock_update.assert_called_once_with(tick_data)
 
 
+    @pytest.mark.asyncio
     async def test_account_balance_integration(self, trading_panel, main_engine):
         """Test that account balance integration works correctly."""
         # Mock account data
@@ -259,6 +267,7 @@ class TestTradingPanelIntegration:
             assert balance == Decimal('10000.0')
 
 
+    @pytest.mark.asyncio
     async def test_error_handling_integration(self, trading_panel, event_adapter):
         """Test that error handling works correctly throughout the system."""
         trading_panel.set_event_adapter(event_adapter)
@@ -285,6 +294,7 @@ class TestTradingPanelIntegration:
                     assert str(e) == "Network error"
 
 
+    @pytest.mark.asyncio
     async def test_cancel_all_orders_integration(self, trading_panel, event_adapter):
         """Test that cancel all orders integration works correctly."""
         trading_panel.set_event_adapter(event_adapter)
@@ -297,6 +307,7 @@ class TestTradingPanelIntegration:
             assert result
 
 
+    @pytest.mark.asyncio
     async def test_threading_safety(self, trading_panel, event_engine):
         """Test that threading safety is maintained in integration."""
         # Test that event engine calls are thread-safe
@@ -361,6 +372,7 @@ class TestTradingPanelEventIntegration:
         return MainEngine(event_engine)
 
 
+    @pytest.mark.asyncio
     async def test_event_registration(self, main_engine, event_engine):
         """Test that trading panel registers for events correctly."""
         trading_panel = TUITradingPanel(
@@ -376,6 +388,7 @@ class TestTradingPanelEventIntegration:
         assert trading_panel.event_engine == event_engine
 
 
+    @pytest.mark.asyncio
     async def test_tick_event_handling(self, main_engine, event_engine):
         """Test that trading panel handles tick events correctly."""
         trading_panel = TUITradingPanel(

@@ -10,7 +10,7 @@ from typing import TypeVar
 import webbrowser
 
 import foxtrot
-from foxtrot.app.app import BaseApp
+from foxtrot.server.engine_manager import BaseApp
 from foxtrot.core.event_engine import EventEngine
 from foxtrot.server.engine import MainEngine
 from foxtrot.util.utility import TRADER_DIR, get_icon_path

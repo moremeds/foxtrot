@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 from foxtrot.util.constants import Direction
 from foxtrot.util.object import TradeData
-from ....utils.colors import get_color_manager
+from foxtrot.app.tui.utils.colors import get_color_manager
 
 if TYPE_CHECKING:
     from ...trade_monitor import TUITradeMonitor

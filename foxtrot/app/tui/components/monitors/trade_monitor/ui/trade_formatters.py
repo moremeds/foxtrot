@@ -9,7 +9,7 @@ from typing import Any, Dict
 
 from foxtrot.util.constants import Direction, Exchange
 from foxtrot.util.object import TradeData
-from ....utils.formatters import TUIFormatter
+from foxtrot.app.tui.utils.formatters import TUIFormatter
 
 
 class TradeFormatters:

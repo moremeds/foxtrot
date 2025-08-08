@@ -16,6 +16,7 @@ from pathlib import Path
 import sys
 
 import pytest
+import pytest_asyncio
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
@@ -30,7 +31,7 @@ from foxtrot.util.event_type import EVENT_ACCOUNT
 from foxtrot.util.object import AccountData, TickData
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def trading_panel():
     """Pytest fixture to set up the TUI trading panel for testing."""
     event_engine = EventEngine()

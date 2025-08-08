@@ -123,12 +123,8 @@ class QuoteData(BaseData):
         """
         Create cancel request object from quote.
         """
-        from .request_objects import CancelRequest
-        
-        req: CancelRequest = CancelRequest(
-            orderid=self.quoteid, symbol=self.symbol, exchange=self.exchange
-        )
-        return req
+        from ..core.common import create_cancel_request_from_quote
+        return create_cancel_request_from_quote(self)
 
     def is_active(self) -> bool:
         """

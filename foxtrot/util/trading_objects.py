@@ -47,12 +47,8 @@ class OrderData(BaseData):
         """
         Create cancel request object from order.
         """
-        from .request_objects import CancelRequest
-        
-        req: CancelRequest = CancelRequest(
-            orderid=self.orderid, symbol=self.symbol, exchange=self.exchange
-        )
-        return req
+        from ..core.common import create_cancel_request_from_order
+        return create_cancel_request_from_order(self)
 
 
 @dataclass

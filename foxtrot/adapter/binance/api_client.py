@@ -15,7 +15,7 @@ except ImportError:
     ccxtpro = None
 
 from foxtrot.core.event_engine import EventEngine
-from foxtrot.util.logger import get_adapter_logger
+from foxtrot.util.logger import get_adapter_logger, create_foxtrot_logger
 
 if TYPE_CHECKING:
     from .account_manager import BinanceAccountManager
@@ -57,7 +57,8 @@ class BinanceApiClient:
         self.connected = False
         
         # Adapter-specific logger
-        self._logger = get_adapter_logger(f"Binance{adapter_name}")
+        self._foxtrot_logger = create_foxtrot_logger()
+        self._logger = get_adapter_logger(f"Binance{adapter_name}", self._foxtrot_logger)
 
     def initialize_managers(self) -> None:
         """Initialize all manager instances."""

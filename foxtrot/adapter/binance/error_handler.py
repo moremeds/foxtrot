@@ -13,7 +13,7 @@ from typing import Any, Dict, Optional
 import time
 import asyncio
 
-from foxtrot.util.logger import get_adapter_logger
+from foxtrot.util.logger import get_adapter_logger, create_foxtrot_logger
 
 
 class ErrorType(Enum):
@@ -72,7 +72,8 @@ class WebSocketErrorHandler:
     def __init__(self, adapter_name: str = "BinanceAdapter"):
         """Initialize the error handler."""
         self.adapter_name = adapter_name
-        self.logger = get_adapter_logger(f"{adapter_name}Error")
+        foxtrot_logger = create_foxtrot_logger()
+        self.logger = get_adapter_logger(f"{adapter_name}Error", foxtrot_logger)
         
         # Error statistics
         self.error_counts: Dict[ErrorType, int] = {et: 0 for et in ErrorType}

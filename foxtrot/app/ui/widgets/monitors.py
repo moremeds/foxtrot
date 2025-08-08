@@ -54,9 +54,7 @@ class TickMonitor(BaseMonitor):
 
 
 class LogMonitor(BaseMonitor):
-    """
-    Monitor for log data.
-    """
+    """Monitor for log data."""
 
     event_type: str = EVENT_LOG
     data_key: str = ""
@@ -70,9 +68,7 @@ class LogMonitor(BaseMonitor):
 
 
 class TradeMonitor(BaseMonitor):
-    """
-    Monitor for trade data.
-    """
+    """Monitor for trade data."""
 
     event_type: str = EVENT_TRADE
     data_key: str = ""
@@ -93,9 +89,7 @@ class TradeMonitor(BaseMonitor):
 
 
 class OrderMonitor(BaseMonitor):
-    """
-    Monitor for order data.
-    """
+    """Monitor for order data."""
 
     event_type: str = EVENT_ORDER
     data_key: str = "vt_orderid"
@@ -127,18 +121,14 @@ class OrderMonitor(BaseMonitor):
         self.itemDoubleClicked.connect(self.cancel_order)
 
     def cancel_order(self, cell: BaseCell) -> None:
-        """
-        Cancel order if cell double clicked.
-        """
+        """Cancel order if cell double clicked."""
         order: OrderData = cell.get_data()
         req: CancelRequest = order.create_cancel_request()
         self.main_engine.cancel_order(req, order.adapter_name)
 
 
 class PositionMonitor(BaseMonitor):
-    """
-    Monitor for position data.
-    """
+    """Monitor for position data."""
 
     event_type: str = EVENT_POSITION
     data_key: str = "vt_positionid"
@@ -158,9 +148,7 @@ class PositionMonitor(BaseMonitor):
 
 
 class AccountMonitor(BaseMonitor):
-    """
-    Monitor for account data.
-    """
+    """Monitor for account data."""
 
     event_type: str = EVENT_ACCOUNT
     data_key: str = "vt_accountid"
@@ -176,9 +164,7 @@ class AccountMonitor(BaseMonitor):
 
 
 class QuoteMonitor(BaseMonitor):
-    """
-    Monitor for quote data.
-    """
+    """Monitor for quote data."""
 
     event_type: str = EVENT_QUOTE
     data_key: str = "vt_quoteid"
@@ -201,18 +187,13 @@ class QuoteMonitor(BaseMonitor):
     }
 
     def init_ui(self) -> None:
-        """
-        Connect signal.
-        """
+        """Connect signal."""
         super().init_ui()
-
         self.setToolTip("Double click to cancel quote")
         self.itemDoubleClicked.connect(self.cancel_quote)
 
     def cancel_quote(self, cell: BaseCell) -> None:
-        """
-        Cancel quote if cell double clicked.
-        """
+        """Cancel quote if cell double clicked."""
         quote: QuoteData = cell.get_data()
         req: CancelRequest = quote.create_cancel_request()
         self.main_engine.cancel_quote(req, quote.adapter_name)

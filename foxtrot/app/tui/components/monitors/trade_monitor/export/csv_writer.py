@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any, List, TYPE_CHECKING
 
 from foxtrot.util.object import TradeData
-from ....utils.formatters import TUIFormatter
+from foxtrot.app.tui.utils.formatters import TUIFormatter
 
 if TYPE_CHECKING:
     from ...trade_monitor import TUITradeMonitor

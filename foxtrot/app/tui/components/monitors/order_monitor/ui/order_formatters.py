@@ -8,7 +8,7 @@ for order data in the TUI order monitor.
 from typing import Any
 from foxtrot.util.constants import Direction, Offset, OrderType, Status
 from foxtrot.util.object import OrderData
-from ....utils.formatters import TUIFormatter
+from foxtrot.app.tui.utils.formatters import TUIFormatter
 
 
 class OrderFormatters:

@@ -236,3 +236,6 @@ coverage_reports/
 .cursor/
 .gemini/
 .kiro/
+
+# Cache Directories
+foxtrot_cache/temp/

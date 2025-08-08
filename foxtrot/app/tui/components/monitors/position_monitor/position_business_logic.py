@@ -10,7 +10,7 @@ from datetime import datetime
 
 from foxtrot.util.object import PositionData
 from foxtrot.util.constants import Direction, Exchange
-from ....utils.formatters import TUIFormatter
+from foxtrot.app.tui.utils.formatters import TUIFormatter
 
 
 class PositionBusinessLogic:

@@ -18,8 +18,8 @@ from foxtrot.util.constants import Direction, Status
 from foxtrot.util.event_type import EVENT_ORDER
 from foxtrot.util.object import OrderData
 
-from ...utils.colors import get_color_manager
-from ...utils.formatters import TUIFormatter
+from foxtrot.app.tui.utils.colors import get_color_manager
+from foxtrot.app.tui.utils.formatters import TUIFormatter
 from ..base_monitor import TUIDataMonitor
 
 # Import specialized components

@@ -12,8 +12,8 @@ from textual.coordinate import Coordinate
 
 from foxtrot.util.object import PositionData
 from foxtrot.util.constants import Direction
-from ....utils.colors import get_color_manager
-from ....utils.formatters import TUIFormatter
+from foxtrot.app.tui.utils.colors import get_color_manager
+from foxtrot.app.tui.utils.formatters import TUIFormatter
 from .position_business_logic import PositionBusinessLogic
 
 

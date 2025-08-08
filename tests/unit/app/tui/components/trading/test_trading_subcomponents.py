@@ -170,6 +170,7 @@ class TestSymbolInput:
         assert "Test error" in str(result.errors[0])
     
     @pytest.mark.asyncio 
+    @pytest.mark.asyncio
     async def test_symbolinput_suggestions(self):
         """Test symbol suggestions functionality."""
         symbol_input = SymbolInput()

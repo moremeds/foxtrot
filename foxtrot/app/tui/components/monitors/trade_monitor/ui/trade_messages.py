@@ -8,7 +8,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 
 from foxtrot.util.constants import Direction
-from ....utils.formatters import TUIFormatter
+from foxtrot.app.tui.utils.formatters import TUIFormatter
 
 if TYPE_CHECKING:
     from ...trade_monitor import TUITradeMonitor

@@ -5,8 +5,7 @@ import random
 import threading
 import time
 
-from foxtrot.adapter.base_adapter import BaseAdapter
-from foxtrot.core.event_engine import EventEngine
+from foxtrot.core.interfaces import IAdapter, IEventEngine
 from foxtrot.util.constants import Direction, Exchange, OrderType, Status
 from foxtrot.util.object import (
     AccountData,
@@ -24,7 +23,7 @@ from foxtrot.util.object import (
 from .market_data import MarketDataFixtures
 
 
-class MockAdapter(BaseAdapter):
+class MockAdapter(IAdapter):
     """Mock adapter that simulates realistic broker behavior."""
 
     default_name: str = "MOCK"
@@ -39,7 +38,7 @@ class MockAdapter(BaseAdapter):
 
     exchanges: list[Exchange] = [Exchange.BINANCE, Exchange.SMART, Exchange.IDEALPRO]
 
-    def __init__(self, event_engine: EventEngine, adapter_name: str) -> None:
+    def __init__(self, event_engine: IEventEngine, adapter_name: str) -> None:
         """Initialize mock adapter."""
         super().__init__(event_engine, adapter_name)
 

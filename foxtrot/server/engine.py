@@ -14,14 +14,14 @@ from collections.abc import Callable
 import os
 
 from foxtrot.adapter.base_adapter import BaseAdapter
-from foxtrot.app.app import BaseApp
+from foxtrot.core.interfaces import IEngine, IAdapter, IEventEngine
 from foxtrot.core.event_engine import Event, EventEngine
 from foxtrot.util.logger import FoxtrotLogger, create_foxtrot_logger
 from foxtrot.util.settings import FoxtrotSettings, create_foxtrot_settings
 from foxtrot.server.adapter_manager import AdapterManager
 from foxtrot.server.app_manager import AppManager
 from foxtrot.server.email_engine import EmailEngine
-from foxtrot.server.engine_manager import BaseEngine, EngineManager
+from foxtrot.server.engine_manager import BaseEngine, BaseApp, EngineManager
 from foxtrot.server.log_engine import LogEngine
 from foxtrot.server.oms_engine import OmsEngine
 from foxtrot.util.converter import OffsetConverter
@@ -46,12 +46,12 @@ from foxtrot.util.object import (
 from foxtrot.util.utility import TRADER_DIR
 
 
-class MainEngine:
+class MainEngine(IEngine):
     """
     Acts as the core of the trading platform.
     """
 
-    def __init__(self, event_engine: EventEngine | None = None, foxtrot_logger: FoxtrotLogger | None = None, foxtrot_settings: FoxtrotSettings | None = None) -> None:
+    def __init__(self, event_engine: IEventEngine | None = None, foxtrot_logger: FoxtrotLogger | None = None, foxtrot_settings: FoxtrotSettings | None = None) -> None:
         """
         Initialize MainEngine as the central dependency container.
         
@@ -140,7 +140,7 @@ class MainEngine:
         """Add function engine."""
         return self.engine_manager.add_engine(engine_class)
 
-    def add_adapter(self, adapter_class: type[BaseAdapter], adapter_name: str = "") -> BaseAdapter:
+    def add_adapter(self, adapter_class: type[IAdapter], adapter_name: str = "") -> IAdapter:
         """Add adapter."""
         return self.adapter_manager.add_adapter(adapter_class, adapter_name)
 
@@ -148,7 +148,7 @@ class MainEngine:
         """Add app."""
         return self.app_manager.add_app(app_class)
 
-    def get_adapter(self, adapter_name: str) -> BaseAdapter | None:
+    def get_adapter(self, adapter_name: str) -> IAdapter | None:
         """Return adapter object by name."""
         return self.adapter_manager.get_adapter(adapter_name)
 

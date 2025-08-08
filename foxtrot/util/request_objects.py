@@ -47,22 +47,8 @@ class OrderRequest:
         """
         Create order data from request.
         """
-        from .trading_objects import OrderData
-        from .constants import Status
-        
-        order: OrderData = OrderData(
-            symbol=self.symbol,
-            exchange=self.exchange,
-            orderid=orderid,
-            type=self.type,
-            direction=self.direction,
-            offset=self.offset,
-            price=self.price,
-            volume=self.volume,
-            status=Status.SUBMITTING,
-            adapter_name=adapter_name,
-        )
-        return order
+        from ..core.common import create_order_data_from_request
+        return create_order_data_from_request(self, orderid, adapter_name)
 
 
 @dataclass
@@ -121,20 +107,5 @@ class QuoteRequest:
         """
         Create quote data from request.
         """
-        from .market_objects import QuoteData
-        from .constants import Status
-        
-        quote: QuoteData = QuoteData(
-            symbol=self.symbol,
-            exchange=self.exchange,
-            quoteid=quoteid,
-            bid_price=self.bid_price,
-            bid_volume=self.bid_volume,
-            ask_price=self.ask_price,
-            ask_volume=self.ask_volume,
-            bid_offset=self.bid_offset,
-            ask_offset=self.ask_offset,
-            status=Status.SUBMITTING,
-            adapter_name=adapter_name,
-        )
-        return quote
+        from ..core.common import create_quote_data_from_request
+        return create_quote_data_from_request(self, quoteid, adapter_name)

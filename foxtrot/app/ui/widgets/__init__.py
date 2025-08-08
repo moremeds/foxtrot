@@ -19,7 +19,8 @@ from .cells import (
     PnlCell,
     TimeCell,
 )
-from .dialogs import AboutDialog, ConnectDialog, GlobalDialog
+from .dialogs import AboutDialog, ConnectDialog
+from .global_dialog import GlobalDialog
 from .monitors import (
     AccountMonitor,
     LogMonitor,
@@ -29,7 +30,8 @@ from .monitors import (
     TickMonitor,
     TradeMonitor,
 )
-from .trading import ActiveOrderMonitor, ContractManager, TradingWidget
+from .table_widget import ActiveOrderMonitor, ContractManager
+from .trading import TradingWidget
 
 __all__ = [
     "BaseMonitor",

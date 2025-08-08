@@ -193,11 +193,9 @@ class DateCell(BaseCell):
 
 
 class MsgCell(BaseCell):
-    """
-    Cell used for showing msg data.
-    """
+    """Cell used for showing msg data."""
 
     def __init__(self, content: str, data: Any) -> None:
-        """"""
+        """Initialize with left-aligned text."""
         super().__init__(content, data)
         self.setTextAlignment(QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignVCenter)
