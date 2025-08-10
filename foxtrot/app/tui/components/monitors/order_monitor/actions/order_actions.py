@@ -11,7 +11,7 @@ from foxtrot.util.constants import Direction, Status
 from foxtrot.util.object import OrderData
 
 if TYPE_CHECKING:
-    from ..order_monitor import TUIOrderMonitor
+    from ...order_monitor import TUIOrderMonitor
 
 
 class OrderActions:

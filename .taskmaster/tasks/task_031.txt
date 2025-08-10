@@ -1,0 +1,82 @@
+# Task ID: 31
+# Title: Comprehensive Directory Structure Compliance and Refactoring
+# Status: pending
+# Dependencies: 6, 21, 24, 27
+# Priority: medium
+# Description: Systematically reorganize all 10 project directories exceeding the 8-file limit into logical subdirectories. This task consolidates previous refactoring efforts (e.g., Tasks 26, 28) into a single, coordinated initiative to improve modularity, update all import statements, and ensure no functionality regressions.
+# Details:
+This task constitutes a major architectural refactoring to enforce project-wide directory structure standards. The work will be executed systematically across all identified monolithic directories.
+
+**1. Planning and File Mapping:**
+   - Create a definitive mapping document (e.g., a markdown file in the PR) that lists every file to be moved from the 10 source directories and its new destination subdirectory.
+   - The reorganization plan for key directories is as follows:
+     - `util/` (25 files): Reorganize into `util/core/` (logging, settings), `util/data/` (models, converters), `util/network/` (API clients, connection helpers), and `util/indicators/` (technical analysis functions).
+     - `event_adapter/` (15 files): Reorganize into `event_adapter/core/` (base classes, main loop), `event_adapter/commands/` (command objects), and `event_adapter/processors/` (event handlers).
+     - `trading/` (11 files): Reorganize by functionality into `trading/execution/`, `trading/strategies/`, and `trading/risk/`.
+     - `monitors/account/` (11 files): Implement a Facade pattern. Create a primary `monitors/account/facade.py` to expose a simple public interface, while moving the detailed implementation files into a new `monitors/account/_internal/` subdirectory.
+     - `adapter/binance/` (11 files): In coordination with Task 27, extract common patterns (e.g., WebSocket management, data transformation logic) into shared modules, potentially in a new `adapter/common/` directory or existing `util/network/` and `util/data/` directories.
+     - Other directories: Analyze the remaining 5 non-compliant directories and apply similar logical grouping based on functionality.
+
+**2. Phased Implementation:**
+   - It is recommended to tackle each top-level directory refactoring in a separate, short-lived feature branch to isolate changes and simplify code reviews.
+   - For each directory:
+     a. Create the new subdirectory structure.
+     b. Move the files according to the mapping plan.
+     c. Update all import statements within the moved files to use relative paths where appropriate.
+
+**3. Global Import Path Updates:**
+   - After moving files, perform a project-wide search-and-replace for all import statements affected by the changes. Utilize tools like `grep` and `sed`, or AST-aware refactoring tools like `bowler` or IDE features, to ensure all imports are updated correctly across the entire codebase, including application logic and test files.
+
+**4. Integration:**
+   - Sequentially merge the completed feature branches into a main integration branch for this task, resolving any conflicts.
+
+# Test Strategy:
+**1. Pre-Refactor Baseline Establishment:**
+   - On the `main` branch before any changes, establish a baseline.
+   - Execute `pytest --collect-only` and save the output to a file. This captures the exact number and names of all tests.
+   - Execute the full test suite (`pytest`) and confirm a 100% pass rate. Save the test report and any performance benchmark data.
+
+**2. Post-Refactor Verification:**
+   - After all files are moved and imports are updated on the integration branch, repeat the baseline steps.
+   - Run `pytest --collect-only` again and use a diff tool to confirm the collected tests are identical to the baseline. No tests should be lost.
+   - Execute the full test suite. It must pass with 100% success. Compare performance benchmarks against the baseline to identify any significant regressions.
+
+**3. Static Analysis for Import Compliance:**
+   - Configure and run a static analysis tool (e.g., a custom linter script or a pre-commit hook) to scan the entire codebase for legacy import paths (e.g., `from util.some_module ...`).
+   - The build or CI pipeline must fail if any outdated import statements are detected, ensuring complete migration.
+
+**4. Code Review and Manual Inspection:**
+   - Conduct a thorough peer review of the final pull request. The review should focus on the logical consistency of the new directory structures.
+   - Manually inspect for any remaining commented-out code or old import statements that automated tools might have missed.
+
+# Subtasks:
+## 1. Analysis and Comprehensive File Mapping Plan [pending]
+### Dependencies: None
+### Description: Analyze all 10 non-compliant directories and create a definitive mapping document that specifies the new location for every file being moved. This plan will serve as the single source of truth for the entire refactoring effort.
+### Details:
+Create a markdown file (e.g., `REFACTOR_PLAN.md`) to be included in the final pull request. For the 5 specified directories (`util/`, `event_adapter/`, `trading/`, `monitors/account/`, `adapter/binance/`), document the file moves as outlined in the parent task. For the remaining 5 directories, analyze their contents, determine logical groupings based on functionality, and document the proposed new subdirectory structure and file destinations in the same mapping document.
+
+## 2. Refactor Core Infrastructure: `util/` and `adapter/` [pending]
+### Dependencies: 31.1
+### Description: Execute the refactoring for the foundational `util/` directory and extract common patterns from `adapter/binance/` into shared modules as defined in the mapping plan.
+### Details:
+In a dedicated feature branch, create the new subdirectories for `util/` (`core/`, `data/`, `network/`, `indicators/`) and move the 25 files. Concurrently, refactor `adapter/binance/` by extracting shared logic (e.g., WebSocket management, data transformation) into the newly created `util/` subdirectories or a new `adapter/common/` directory. Update all relative imports within the moved files.
+
+## 3. Refactor Application Logic: `event_adapter/` and `trading/` [pending]
+### Dependencies: 31.1, 31.2
+### Description: Reorganize the core application logic directories, `event_adapter/` and `trading/`, into their planned subdirectory structures to improve modularity.
+### Details:
+In a separate feature branch, implement the planned refactoring for `event_adapter/` (into `core/`, `commands/`, `processors/`) and `trading/` (into `execution/`, `strategies/`, `risk/`). Move all files according to the mapping document and update all relative import statements within the moved files to reflect their new locations.
+
+## 4. Refactor Specialized and Remaining Directories [pending]
+### Dependencies: 31.1, 31.2
+### Description: Implement the Facade pattern for `monitors/account/` and refactor the final 5 non-compliant directories according to the established plan.
+### Details:
+In a dedicated feature branch, refactor `monitors/account/` by creating `monitors/account/facade.py` and moving implementation details into `monitors/account/_internal/`. Concurrently, refactor the 5 remaining directories by creating the subdirectories and moving files as defined in the mapping document. Update all relative imports within the moved files.
+
+## 5. Integration, Global Import Update, and Full-System Validation [pending]
+### Dependencies: 31.2, 31.3, 31.4
+### Description: Merge all refactoring branches, perform a codebase-wide update of all import paths, and execute the full test suite to ensure complete functionality and no regressions.
+### Details:
+Create a main integration branch. Sequentially merge the feature branches from the preceding subtasks, resolving any conflicts. Use an AST-aware tool like `bowler` or a systematic `grep`/`sed` to update all absolute import paths across the entire project (application code, tests, scripts) to point to the new file locations. This step makes the new structure globally effective.
+

@@ -1,11 +1,11 @@
 # Task ID: 23
 # Title: Make TUI Responsive to Terminal Resize
-# Status: pending
+# Status: cancelled
 # Dependencies: 17, 18
 # Priority: low
-# Description: Handle terminal window resizing without breaking layout
+# Description: CANCELLED - Functionality merged into Task 5.12 (Make TUI Responsive to Terminal Resize subtask).
 # Details:
-Currently TUI breaks on resize. Implement: responsive grid layout, minimum widget sizes, scrollable content for small terminals, graceful degradation. Test with various terminal sizes.
+This task was cancelled because terminal resize handling is now part of the comprehensive TUI implementation under Task 5.12. This consolidation ensures consistency with other UI components.
 
 # Test Strategy:
-Resize terminal to various sizes and verify layout remains functional. Test minimum size (80x24) and maximum. No widget overlap or cutoff.
+N/A - Task cancelled. Testing for this functionality is now part of Task 5.12.

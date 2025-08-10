@@ -21,7 +21,10 @@ from textual.widgets import DataTable, Static
 from foxtrot.core.event_engine import Event, EventEngine
 from foxtrot.server.engine import MainEngine
 from foxtrot.util.utility import TRADER_DIR
-from foxtrot.util.logger import get_component_logger
+from foxtrot.util.logger import get_component_logger, create_foxtrot_logger
+
+# Create a logger instance for this module
+_foxtrot_logger = create_foxtrot_logger()
 
 from ..config.settings import get_settings
 from ..integration.event_adapter import TUIEventMixin
@@ -82,7 +85,7 @@ class TUIDataMonitor(Container, TUIEventMixin):
         self.monitor_name = monitor_name
 
         # Initialize logger
-        self._logger = get_component_logger(f"TUI{monitor_name.replace(' ', '')}")
+        self._logger = get_component_logger(f"TUI{monitor_name.replace(' ', '')}", _foxtrot_logger)
 
         # Data storage
         self.cells: dict[str, dict[str, Any]] = {}

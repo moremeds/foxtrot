@@ -1,6 +1,6 @@
 # Task ID: 13
 # Title: Phase 2: Fix Pytest Test Collection
-# Status: pending
+# Status: done
 # Dependencies: None
 # Priority: high
 # Description: Make pytest actually collect and run tests (currently collects 0 items)
@@ -11,37 +11,37 @@ Root cause: missing __init__.py files, incorrect imports, no pytest markers. Fix
 Run 'pytest tests/unit/' and verify it collects >0 items. Run 'pytest --collect-only' to see all discovered tests. Ensure at least one test passes.
 
 # Subtasks:
-## 1. Add __init__.py to all test directories [pending]
+## 1. Add __init__.py to all test directories [done]
 ### Dependencies: None
 ### Description: Create empty __init__.py files in the 'tests/' directory and all its subdirectories to ensure they are treated as Python packages, which is essential for pytest discovery and proper module imports.
 ### Details:
 Recursively scan the 'tests/' directory and place an empty '__init__.py' file in each subfolder. This is the first step to fixing module resolution issues.
 
-## 2. Create and configure pytest.ini [pending]
+## 2. Create and configure pytest.ini [done]
 ### Dependencies: 13.1
 ### Description: Create a 'pytest.ini' file in the project root to explicitly tell pytest where to find tests, improving discovery reliability and speed.
 ### Details:
 Create a file named 'pytest.ini' in the root. Add a '[pytest]' section and set 'testpaths = tests' to configure the primary test discovery path.
 
-## 3. Standardize test file naming convention [pending]
+## 3. Standardize test file naming convention [done]
 ### Dependencies: 13.1
 ### Description: Rename all test files to match pytest's default discovery pattern (starting with 'test_' or ending with '_test.py') so they are automatically detected.
 ### Details:
 Review all files in the 'tests/' directory. Rename any files containing tests to follow the 'test_*.py' or '*_test.py' convention. For example, 'ordertests.py' should become 'test_orders.py'.
 
-## 4. Refactor import paths in test files [pending]
+## 4. Refactor import paths in test files [done]
 ### Dependencies: 13.1, 13.3
 ### Description: Update all import statements within the test files to use absolute paths from the project root ('foxtrot') to resolve 'ModuleNotFoundError' and ensure consistency.
 ### Details:
 Go through each test file (e.g., 'tests/unit/test_engine.py') and change relative imports like 'from ..engine import Engine' to absolute imports like 'from foxtrot.engine import Engine'.
 
-## 5. Verify test collection [pending]
+## 5. Verify test collection [done]
 ### Dependencies: 13.2, 13.4
 ### Description: Run pytest in 'collect-only' mode to confirm that all structural and import fixes have successfully enabled test discovery.
 ### Details:
 Execute 'pytest --collect-only' from the project root. The primary goal is to see an output indicating that pytest collected more than 0 items.
 
-## 6. Execute tests and ensure at least one test passes [pending]
+## 6. Execute tests and ensure at least one test passes [done]
 ### Dependencies: 13.5
 ### Description: Run the full test suite to ensure that the collected tests can execute without runtime errors and that the testing environment is correctly configured.
 ### Details:

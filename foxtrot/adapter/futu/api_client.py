@@ -18,7 +18,7 @@ from .components.status.status_provider import FutuStatusProvider
 
 if TYPE_CHECKING:
     from .account_manager import FutuAccountManager
-    from .contract_manager import FutuContractManager
+    from .contract_manager_facade import FutuContractManager
     from .historical_data import FutuHistoricalData
     from .market_data import FutuMarketData
     from .order_manager import FutuOrderManager

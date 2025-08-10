@@ -1,0 +1,71 @@
+# Task ID: 30
+# Title: Phase 5: Quality Assurance, Automated Compliance, and Documentation
+# Status: pending
+# Dependencies: 16, 19, 20, 21, 24, 27
+# Priority: medium
+# Description: Validate all architectural improvements via comprehensive regression testing, implement automated compliance checks using pre-commit hooks, and create updated architecture diagrams and developer documentation to ensure long-term sustainability.
+# Details:
+This final phase solidifies the project's new architecture by implementing automated guards and comprehensive documentation.
+
+1. **Implement Automated Compliance Hooks:**
+   - Integrate the `pre-commit` framework into the repository.
+   - Configure hooks in `.pre-commit-config.yaml`:
+     - **File Size Validation:** Use `pre-commit-hooks`'s `check-added-large-files` or a custom script to enforce file size limits (e.g., <300 lines for application code, <500 for tests).
+     - **Directory Structure Check:** Implement a custom Python script hook that traverses directories like `util/`, `event_adapter/`, etc., and fails if any directory contains more than the maximum allowed number of files (e.g., 8), enforcing the structure from Tasks 26 & 28.
+     - **Import Organization:** Configure `isort` or `ruff` to strictly enforce the new modular import paths (e.g., `util.core`, `util.data`) and prevent legacy imports.
+
+2. **Comprehensive Regression Testing:**
+   - Define a master test suite in `pytest.ini` that aggregates all unit and integration tests.
+   - Execute the full test suite, including tests for refactored components from Tasks 24, 25, 27, and 29, and integration tests from Task 19.
+   - Generate a final code coverage report using `pytest-cov`, ensuring it meets or exceeds the 90% target established in previous phases.
+
+3. **Create Architecture Diagrams:**
+   - Use a 'diagrams as code' library (e.g., Python's `diagrams` library) to generate version-controlled diagrams.
+   - Create a high-level system diagram showing the interaction between major services (Event Engine, Risk Manager, Trading Services).
+   - Create detailed diagrams for the refactored structures, including the `util/` sub-module layout (Task 26) and the standardized adapter architecture (Task 27).
+
+4. **Establish Long-Term Sustainability Measures:**
+   - Create a `CONTRIBUTING.md` file outlining the core development principles, including code style, testing requirements, and the new architectural rules (file/directory limits, use of data classes).
+   - Create a `REFACTORING_PATTERNS.md` document. For each major refactoring (e.g., Service Extraction from Task 25, Adapter Abstraction from Task 27, Data Clump to Dataclass from Task 16), provide a description, rationale, and a concise before-and-after code example.
+
+# Test Strategy:
+Verification will focus on the successful operation of the automated checks and the clarity and accuracy of the documentation.
+
+1. **Pre-Commit Hook Validation:**
+   - On a separate branch, attempt to commit code that violates each configured hook: an oversized file, a disallowed import statement, and a file added to an already full directory.
+   - Verify that each commit attempt fails with a clear, actionable error message from the corresponding hook.
+   - Verify that a commit with compliant code passes all hooks successfully.
+
+2. **Regression Suite Execution:**
+   - Run the full, aggregated test suite on a clean checkout of the main branch.
+   - Confirm that the run completes with a 100% pass rate and that the generated coverage report meets the project's target percentage.
+
+3. **Documentation and Diagram Review:**
+   - Conduct a peer review of the generated architecture diagrams, comparing them against the final codebase to ensure they accurately reflect the new modular structure.
+   - Review `CONTRIBUTING.md` and `REFACTORING_PATTERNS.md` for clarity, accuracy, and completeness. Ensure the guidelines are unambiguous and directly support the new architecture.
+
+# Subtasks:
+## 1. Implement Automated Compliance Hooks [done]
+### Dependencies: None
+### Description: Integrate the `pre-commit` framework to automatically enforce architectural rules on file size, directory structure, and import organization before code is committed.
+### Details:
+Create and configure a `.pre-commit-config.yaml` file. Implement a hook using `check-added-large-files` to limit file lines (<300 for app code, <500 for tests). Add a custom Python script hook to check for a maximum of 8 files in key directories like `util/` and `event_adapter/`. Configure `isort` or `ruff` to enforce modular import paths (e.g., `util.core`) and block legacy imports.
+
+## 2. Execute Full Regression Test Suite and Verify Coverage [done]
+### Dependencies: None
+### Description: Run the master test suite, aggregating all unit and integration tests, to validate the stability of all architectural improvements and ensure code coverage meets the project target.
+### Details:
+Define a master test suite in `pytest.ini` that aggregates all existing tests, including those for components refactored in tasks 24, 25, 27, and 29, and integration tests from task 19. Execute the full suite via `pytest` and generate a final coverage report using `pytest-cov`, ensuring the result meets or exceeds the 90% target.
+
+## 3. Generate Version-Controlled Architecture Diagrams [done]
+### Dependencies: None
+### Description: Use a 'diagrams as code' library to create and version control key architectural diagrams, including a high-level system overview and detailed views of refactored modules.
+### Details:
+Using the Python `diagrams` library, create a script to generate a high-level system diagram showing interactions between the Event Engine, Risk Manager, and Trading Services. Also, generate detailed diagrams for the `util/` sub-module layout and the standardized adapter architecture. Commit both the generation script and the output images to the repository.
+
+## 4. Author Developer Sustainability and Onboarding Documentation [done]
+### Dependencies: 30.1, 30.2, 30.3
+### Description: Create `CONTRIBUTING.md` and `REFACTORING_PATTERNS.md` to document development standards, architectural rules, and key refactoring decisions, ensuring long-term project health and easier onboarding.
+### Details:
+Create `CONTRIBUTING.md` detailing the development process, code style, testing requirements (90% coverage), and architectural rules enforced by pre-commit hooks. Create `REFACTORING_PATTERNS.md` to document major refactorings (e.g., Service Extraction, Adapter Abstraction, Data Clump to Dataclass) with rationale and concise before-and-after code examples.
+

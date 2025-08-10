@@ -1,0 +1,28 @@
+# Task ID: 36
+# Title: Increase Test Coverage for Core Components to 80%+
+# Status: pending
+# Dependencies: 14, 21, 22, 24, 35
+# Priority: medium
+# Description: Increase test coverage from the current 53% baseline to over 80% for high-priority modules. This involves adding new unit tests for uncovered code paths, edge cases, and error handling scenarios in key components.
+# Details:
+This task builds upon the foundation of 25 basic unit tests (Task 14) to systematically improve code quality and robustness by increasing test coverage. The primary goal is to raise the overall project test coverage from 53% to a minimum of 80%.
+
+**Target Modules & Goals:**
+1.  **`adapter/base_adapter.py`**: Increase coverage from 61% to >80%. Focus on abstract method contracts, error handling during connection/subscription, and default behavior.
+2.  **`core/event_engine.py`**: Increase coverage from 78% to >90%. Target thread safety, queue management edge cases (e.g., full queue, stopping with pending events), and dynamic handler registration/unregistration logic.
+3.  **`server/engine.py`**: Increase coverage from 86% to >90%. Focus on adapter lifecycle management (loading/unloading failures), configuration error handling, and inter-component communication paths.
+
+**Implementation Plan:**
+1.  **Analyze Coverage Gaps:** Use `pytest-cov` to generate a detailed HTML report and identify specific lines and branches that are not currently tested in the target modules.
+2.  **Write Targeted Tests:** Develop new tests specifically for the identified gaps. The focus should be on:
+    *   **Error Handling:** Test `try...except` blocks and ensure custom exceptions (from Task 22) are raised correctly.
+    *   **Edge Cases:** Test with invalid inputs, empty data structures, boundary conditions, and unexpected sequences of calls.
+    *   **Integration Scenarios:** Write unit tests that verify the interaction between the engine and a mocked adapter, focusing on the contracts defined in `BaseAdapter`.
+3.  **Maintain Quality:** All new tests must adhere to the established clean test patterns and utilize the shared fixtures from `conftest.py` (Task 21) to ensure consistency and maintainability.
+
+# Test Strategy:
+Verification of this task will be based on quantitative and qualitative metrics.
+
+1.  **Coverage Measurement:** Execute the test suite with coverage analysis (`pytest --cov=foxtrot`) both before and after the changes. The primary success criterion is achieving an overall coverage score of 80% or higher, with each target module meeting its specified goal.
+2.  **Test Suite Integrity:** The entire test suite, including all new and existing tests, must pass without any failures or regressions. This will be verified in the CI/CD pipeline.
+3.  **Code Review:** New test cases will be subject to a thorough code review. The review will validate that the tests are targeting meaningful logic (not just increasing line count), are easy to understand, and effectively cover the intended edge cases and error paths.

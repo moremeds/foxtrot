@@ -1,0 +1,75 @@
+# Task ID: 27
+# Title: Phase 3: Standardize Market Data Adapters and Extract Reusable Components
+# Status: pending
+# Dependencies: 16, 21, 22
+# Priority: medium
+# Description: Refactor market data adapters (e.g., Binance, Futu) by extracting common logic into a shared base class. Create reusable WebSocket management components and implement standardized error handling to reduce code duplication and complexity across adapter implementations.
+# Details:
+This task focuses on refactoring the 24 MAJOR TIER adapter files (300-500 lines), including the high-complexity Binance and Futu market data handlers (400+ lines each), by abstracting common patterns.
+
+1. **Analysis and Pattern Identification:**
+   - Audit the `BinanceAdapter` and `FutuAdapter` market data handling logic to identify common functionalities. Key patterns to look for include: WebSocket connection lifecycle management (connect, disconnect, reconnect), subscription/unsubscription message formatting, heartbeat handling (pings/pongs), and raw message parsing loops.
+
+2. **Create Reusable WebSocket Component:**
+   - In the `util/network/` directory (created in Task 26), implement a new `GenericWebSocketClient` class.
+   - This class will manage the entire WebSocket lifecycle, including auto-reconnection with exponential backoff, handling of `on_open`, `on_message`, `on_error`, and `on_close` events, and sending heartbeat messages.
+   - It should provide a simple API for sending subscription messages and allow the consumer (the adapter) to register a callback for processing incoming data payloads.
+
+3. **Develop a Base Adapter for Market Data:**
+   - Create a new abstract base class, `BaseMarketDataHandler`, which will utilize the `GenericWebSocketClient`.
+   - This base class will implement the boilerplate logic for connecting, subscribing to symbols, and handling WebSocket events. It will define abstract methods like `_get_subscription_payload(symbol)` and `_parse_message(payload)` that concrete adapters must implement.
+
+4. **Standardize Error Handling:**
+   - Integrate the custom exceptions from Task 22 (`ConnectionError`, `ValidationError`, etc.) into the `GenericWebSocketClient` and `BaseMarketDataHandler`.
+   - All network issues should raise a `ConnectionError`. Malformed messages from the exchange should raise a `DataError` or `ValidationError`. This ensures consistent error reporting across all adapters that use this base handler.
+
+5. **Refactor Concrete Adapters:**
+   - Modify `BinanceAdapter`, `FutuAdapter`, and other relevant adapters to inherit from `BaseMarketDataHandler`.
+   - Remove all duplicated WebSocket management and error handling logic, replacing it with calls to the base class methods.
+   - The refactored adapters should primarily contain exchange-specific logic: endpoint URLs, authentication methods, and the implementation of `_get_subscription_payload` and `_parse_message` to handle their unique data formats, transforming them into the application's internal data models (defined in Task 16).
+
+# Test Strategy:
+Testing will focus on the new reusable components and ensuring the refactored adapters maintain full functionality without regression.
+
+1. **Unit Testing for Reusable Components:**
+   - Create dedicated unit tests for the `GenericWebSocketClient` in `tests/unit/util/network/`. Use a mocked WebSocket library to simulate connection lifecycle events (open, close, error) and message streams. Verify that reconnection logic and heartbeat mechanisms trigger correctly.
+   - Test the `BaseMarketDataHandler` by mocking the `GenericWebSocketClient` and asserting that it correctly calls the abstract methods that a concrete adapter would implement.
+
+2. **Integration Testing for Refactored Adapters:**
+   - For each refactored adapter (e.g., `BinanceAdapter`), create integration tests that provide mock WebSocket messages (as JSON strings) to the `on_message` handler.
+   - Verify that the adapter's `_parse_message` implementation correctly transforms the exchange-specific payload into the standardized internal `MarketData` object and emits the correct event through the `EventEngine`.
+   - Use the shared test fixtures from Task 21 (`mock_event_engine`, etc.) to streamline these tests.
+
+3. **Error Handling Verification:**
+   - Write tests that simulate specific failure scenarios. For example, simulate a WebSocket connection failure and assert that a `ConnectionError` (from Task 22) is caught and logged appropriately. Simulate an invalid JSON payload and verify a `DataError` is raised.
+
+4. **Code Metrics and Regression:**
+   - Before and after refactoring, run a code duplication analysis tool (e.g., SonarQube, `pmd`) to quantify the reduction in duplicated code.
+   - The line count for `BinanceAdapter` and `FutuAdapter` should be reduced by at least 30-40%.
+   - Ensure that all existing unit and integration tests for the adapters continue to pass to guarantee no functional regressions have been introduced.
+
+# Subtasks:
+## 1. Analyze and Identify Common Adapter Patterns [pending]
+### Dependencies: None
+### Description: Audit the existing `BinanceAdapter` and `FutuAdapter` to identify and document common patterns in WebSocket lifecycle management (connect, reconnect), subscription logic, heartbeat mechanisms, and message parsing loops. This analysis will serve as the blueprint for the shared components.
+### Details:
+Focus on identifying recurring logic for connection/disconnection sequences, the format of subscription/unsubscription messages, ping/pong handling, and the general structure of the message processing loop. The output should be a design document outlining the functionalities to be abstracted into the generic client and base handler.
+
+## 2. Implement Generic WebSocket Client [pending]
+### Dependencies: 27.1
+### Description: Create a reusable `GenericWebSocketClient` class in the `util/network/` directory. This class will encapsulate the entire WebSocket connection lifecycle, including connection, disconnection, automatic reconnection with exponential backoff, and heartbeat (ping/pong) management.
+### Details:
+The client must provide a simple API for connecting to a URL, sending messages, and registering callbacks for `on_open`, `on_message`, `on_error`, and `on_close` events. It will serve as the low-level networking component for all market data adapters.
+
+## 3. Develop Base Market Data Handler with Standardized Error Handling [pending]
+### Dependencies: 27.2
+### Description: Create an abstract `BaseMarketDataHandler` class that utilizes the `GenericWebSocketClient`. This base class will implement the common logic for connecting and subscribing, and will integrate the standardized exceptions from Task 22 (`ConnectionError`, `DataError`) to ensure consistent error reporting.
+### Details:
+The `BaseMarketDataHandler` will manage the WebSocket stream via the `GenericWebSocketClient`. It will define abstract methods like `_get_subscription_payload(symbol)` and `_parse_message(payload)` that concrete adapters must implement. It will also map low-level network issues to `ConnectionError` and malformed data to `DataError`.
+
+## 4. Refactor Binance and Futu Adapters to Use Base Handler [pending]
+### Dependencies: 27.3
+### Description: Refactor the `BinanceAdapter` and `FutuAdapter` to inherit from the new `BaseMarketDataHandler`. Remove all duplicated WebSocket management and error handling logic, replacing it with calls to the base class methods.
+### Details:
+The refactored adapters will be significantly smaller, focusing solely on exchange-specific logic: providing the endpoint URL and implementing the `_get_subscription_payload` and `_parse_message` methods. The `_parse_message` method will transform raw exchange data into the standardized internal data models defined in Task 16.
+

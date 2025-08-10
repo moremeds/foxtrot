@@ -197,3 +197,13 @@ class IEventEngine(ABC):
     def unregister(self, type: str, handler: Callable) -> None:
         """Unregister event handler."""
         pass
+    
+    @abstractmethod
+    def is_active(self) -> bool:
+        """
+        Check if the event engine is currently active.
+        
+        Returns:
+            True if the engine is running, False otherwise
+        """
+        pass

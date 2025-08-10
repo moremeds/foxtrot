@@ -17,17 +17,32 @@ import foxtrot
 from foxtrot.core.event_engine import EventEngine
 from foxtrot.server.engine import MainEngine
 from foxtrot.util.utility import TRADER_DIR
-from foxtrot.util.logger import get_component_logger
+from foxtrot.util.logger import get_component_logger, create_foxtrot_logger
+
+# Lazy initialization of logger to avoid circular imports
+_foxtrot_logger = None
+
+def _get_logger():
+    """Get or create the module logger."""
+    global _foxtrot_logger
+    if _foxtrot_logger is None:
+        _foxtrot_logger = create_foxtrot_logger()
+    return _foxtrot_logger
 
 from .components.monitors.account import create_account_monitor
 from .components.monitors.log_monitor import TUILogMonitor
-from .components.monitors.order_monitor import create_order_monitor
+# Import directly from the module files to avoid directory/file confusion
+from .components.monitors import order_monitor as order_monitor_module
 from .components.monitors.position_monitor import create_position_monitor
 from .components.monitors.tick_monitor import create_tick_monitor
-from .components.monitors.trade_monitor import create_trade_monitor
+from .components.monitors import trade_monitor as trade_monitor_module
 from .components.trading_panel import TUITradingPanel
 from .config.settings import TUISettings
 from .integration.event_adapter import EventEngineAdapter
+from .async_bridge import AsyncBridge, AsyncDataFetcher, AsyncEventHandler
+from foxtrot.adapter.binance.binance import BinanceAdapter
+from foxtrot.util.request_objects import SubscribeRequest
+from foxtrot.util.constants import Exchange
 
 
 class FoxtrotTUIApp(App[None]):
@@ -86,6 +101,8 @@ class FoxtrotTUIApp(App[None]):
         Binding("ctrl+q", "quit", "Quit", priority=True),
         Binding("ctrl+c", "cancel_all_orders", "Cancel All", priority=True),
         Binding("f1", "show_help", "Help"),
+        Binding("f5", "add_symbol", "Add Symbol"),
+        Binding("f6", "remove_symbol", "Remove Symbol"),
         Binding("f2", "show_contracts", "Contracts"),
         Binding("f3", "show_settings", "Settings"),
         Binding("f4", "show_connect", "Connect"),
@@ -110,11 +127,13 @@ class FoxtrotTUIApp(App[None]):
         # Initialize TUI-specific components
         self.settings = TUISettings()
         self.event_adapter: EventEngineAdapter | None = None
+        self.async_bridge = AsyncBridge()
+        self.data_fetcher = AsyncDataFetcher(main_engine)
 
         # Monitor components
         self.tick_monitor = create_tick_monitor(main_engine, event_engine)
-        self.order_monitor = create_order_monitor(main_engine, event_engine)
-        self.trade_monitor = create_trade_monitor(main_engine, event_engine)
+        self.order_monitor = order_monitor_module.TUIOrderMonitor(main_engine, event_engine)
+        self.trade_monitor = trade_monitor_module.TUITradeMonitor(main_engine, event_engine)
         self.position_monitor = create_position_monitor(main_engine, event_engine)
         self.account_monitor = create_account_monitor(main_engine, event_engine)
         self.log_monitor = TUILogMonitor(main_engine, event_engine)
@@ -198,8 +217,36 @@ class FoxtrotTUIApp(App[None]):
         await self._load_settings()
 
         # Update status
-        self._update_status("TUI Initialized - Ready to Connect")
+        self._update_status("TUI Initialized - Ready to Connect (F5 add symbol)")
 
+        # Auto-connect Binance for public market data (no keys) and enable websockets if present
+        # Run in background to avoid blocking UI initialization
+        self.async_bridge.create_background_task(
+            self._auto_connect_binance(),
+            name="auto_connect_binance"
+        )
+
+    async def _auto_connect_binance(self) -> None:
+        """Auto-connect to Binance for public market data (non-blocking)."""
+        try:
+            setting = {
+                "Public Market Data Only": True,
+                "websocket.enabled": True,
+                "websocket.binance.enabled": True,
+                "websocket.binance.symbols": [],
+                "Sandbox": False,
+            }
+            
+            # Run the blocking operations in thread pool
+            def connect():
+                self.main_engine.add_adapter(BinanceAdapter, "BINANCE")
+                self.main_engine.connect(setting, "BINANCE")
+            
+            await self.async_bridge.run_in_thread(connect)
+            self._log_message("INFO", "Connected to Binance (public market data)")
+        except Exception as e:
+            self._log_message("ERROR", f"Auto-connect Binance failed: {e}")
+    
     async def _initialize_trading_panel(self) -> None:
         """Initialize the interactive trading panel."""
         try:
@@ -329,6 +376,33 @@ class FoxtrotTUIApp(App[None]):
         """Cycle focus to previous widget."""
         self.screen.focus_previous()
 
+    # Symbol management actions
+    def action_add_symbol(self) -> None:
+        """Prompt and subscribe a symbol (e.g., BTCUSDT)."""
+        try:
+            # Basic prompt via console as a temporary input (replace with dialog later)
+            symbol = input("Add symbol (e.g., BTCUSDT): ").strip().upper()
+            if not symbol:
+                return
+            req = SubscribeRequest(symbol=symbol, exchange=Exchange.BINANCE)
+            self.main_engine.subscribe(req, "BINANCE")
+            self._log_message("INFO", f"Subscribed {symbol}")
+        except Exception as e:
+            self._log_message("ERROR", f"Add symbol failed: {e}")
+
+    def action_remove_symbol(self) -> None:
+        """Prompt and unsubscribe a symbol."""
+        try:
+            symbol = input("Remove symbol (e.g., BTCUSDT): ").strip().upper()
+            if not symbol:
+                return
+            vt_symbol = f"{symbol}.BINANCE"
+            if hasattr(self.main_engine, "unsubscribe"):
+                self.main_engine.unsubscribe(vt_symbol, "BINANCE")
+            self._log_message("INFO", f"Unsubscribed {symbol}")
+        except Exception as e:
+            self._log_message("ERROR", f"Remove symbol failed: {e}")
+
     # Trading panel integration handlers
 
     async def on_trading_panel_order_submitted(self, message) -> None:
@@ -402,8 +476,10 @@ def main() -> None:
     This function should be called when running the TUI version of Foxtrot.
     """
     import sys
+    import traceback
     
-    logger = get_component_logger("TUIMain")
+    # Get logger with lazy initialization
+    logger = get_component_logger("TUIMain", _get_logger())
 
     try:
         # Import foxtrot components

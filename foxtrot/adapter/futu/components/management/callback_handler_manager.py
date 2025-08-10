@@ -9,8 +9,8 @@ import weakref
 from typing import Dict, Optional, TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
-    from ..futu_callbacks import FutuQuoteHandler, FutuTradeHandler
-    from ...api_client import FutuApiClient
+    from foxtrot.adapter.futu.futu_callbacks import FutuQuoteHandler, FutuTradeHandler
+    from foxtrot.adapter.futu.api_client import FutuApiClient
 
 
 class FutuCallbackHandlerManager:
@@ -52,7 +52,7 @@ class FutuCallbackHandlerManager:
 
         try:
             # Import callback handlers locally to avoid circular imports
-            from ..futu_callbacks import FutuQuoteHandler, FutuTradeHandler
+            from foxtrot.adapter.futu.futu_callbacks import FutuQuoteHandler, FutuTradeHandler
 
             # Create callback handlers
             self._quote_handler = FutuQuoteHandler(api_client)

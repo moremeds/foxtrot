@@ -5,9 +5,26 @@ Global setting of the trading platform.
 from logging import CRITICAL
 from typing import Any
 
-from tzlocal import get_localzone_name
+# Provide a graceful fallback if tzlocal is not available
+try:  # pragma: no cover
+    from tzlocal import get_localzone_name  # type: ignore
+except Exception:  # pragma: no cover
+    def get_localzone_name() -> str:  # type: ignore
+        return "UTC"
 
-from .utility import load_json
+# Lightweight JSON loader to avoid importing heavy utility module during startup
+def _load_json(path: str) -> dict:
+    try:
+        import json
+        from pathlib import Path
+        p = Path(path)
+        if not p.exists():
+            return {}
+        with p.open("r", encoding="utf-8") as f:
+            return json.load(f) or {}
+    except Exception:
+        return {}
+
 
 class FoxtrotSettings:
     """Configuration class for Foxtrot trading platform."""
@@ -58,7 +75,7 @@ class FoxtrotSettings:
     
     def _load_from_file(self) -> None:
         """Load settings from configuration file."""
-        user_settings = load_json(self._config_file)
+        user_settings = _load_json(self._config_file)
         if user_settings:
             self._settings.update(user_settings)
     

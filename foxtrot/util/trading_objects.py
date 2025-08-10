@@ -6,9 +6,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from .base_objects import BaseData, ACTIVE_STATUSES
 from .constants import Direction, Exchange, Offset, OrderType, Status
+
+if TYPE_CHECKING:
+    from .request_objects import CancelRequest
 
 
 @dataclass

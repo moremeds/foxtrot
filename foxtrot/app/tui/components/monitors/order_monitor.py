@@ -26,8 +26,8 @@ from ..base_monitor import TUIDataMonitor
 from .order_monitor.ui.order_formatters import OrderFormatters
 from .order_monitor.filters.order_filters import OrderFilters
 from .order_monitor.actions.order_actions import OrderActions
-from .statistics import OrderStatistics
-from .messages import (
+from .order_monitor.statistics import OrderStatistics
+from .order_monitor.messages import (
     OrderCancelRequested,
     AllOrdersCancelRequested,
     OrderSelected,

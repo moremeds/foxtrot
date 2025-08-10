@@ -1,6 +1,6 @@
 # Task ID: 17
 # Title: Phase 4: Fix TUI Navigation (Tab/Focus)
-# Status: pending
+# Status: done
 # Dependencies: 10, 11, 12, 13, 14
 # Priority: medium
 # Description: Enable keyboard navigation in TUI - Tab key doesn't work, no focus indicators

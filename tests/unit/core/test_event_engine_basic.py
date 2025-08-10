@@ -12,6 +12,11 @@ from foxtrot.core.event_engine import EventEngine
 from foxtrot.core.event import Event
 from foxtrot.util.event_type import EVENT_TICK, EVENT_LOG
 
+# Test timing constants
+STARTUP_WAIT_TIME = 0.1  # Time to wait for engine startup
+EVENT_WAIT_TIMEOUT = 2.0  # Maximum time to wait for event handling
+SHUTDOWN_WAIT_TIME = 0.1  # Time to wait for engine shutdown
+
 
 class TestEventEngineBasic(unittest.TestCase):
     """Basic tests for EventEngine functionality."""
@@ -22,13 +27,13 @@ class TestEventEngineBasic(unittest.TestCase):
 
     def tearDown(self):
         """Clean up EventEngine."""
-        if self.engine and self.engine._active:
+        if self.engine and self.engine.is_active():
             self.engine.stop()
 
     def test_event_engine_initialization(self):
         """Test EventEngine can be created and has expected attributes."""
         self.assertIsNotNone(self.engine)
-        self.assertFalse(self.engine._active)
+        self.assertFalse(self.engine.is_active())
         self.assertIsNotNone(self.engine._queue)
         self.assertIsNotNone(self.engine._handlers)
 
@@ -36,14 +41,14 @@ class TestEventEngineBasic(unittest.TestCase):
         """Test EventEngine can start and stop cleanly."""
         # Start engine
         self.engine.start()
-        self.assertTrue(self.engine._active)
+        self.assertTrue(self.engine.is_active())
         
         # Allow brief time for startup
-        time.sleep(0.1)
+        time.sleep(STARTUP_WAIT_TIME)
         
         # Stop engine
         self.engine.stop()
-        self.assertFalse(self.engine._active)
+        self.assertFalse(self.engine.is_active())
 
     def test_event_handler_registration(self):
         """Test event handler registration."""
@@ -78,7 +83,7 @@ class TestEventEngineBasic(unittest.TestCase):
         self.engine.put(test_event)
         
         # Wait for handler to be called (with timeout)
-        handler_called.wait(timeout=2.0)
+        handler_called.wait(timeout=EVENT_WAIT_TIMEOUT)
         
         # Verify handler was called with correct event
         self.assertTrue(handler_called.is_set(), "Handler was not called within timeout")
@@ -107,8 +112,8 @@ class TestEventEngineBasic(unittest.TestCase):
         self.engine.put(test_event)
         
         # Both handlers should be called
-        handler1_called.wait(timeout=2.0)
-        handler2_called.wait(timeout=2.0)
+        handler1_called.wait(timeout=EVENT_WAIT_TIMEOUT)
+        handler2_called.wait(timeout=EVENT_WAIT_TIMEOUT)
         
         self.assertTrue(handler1_called.is_set())
         self.assertTrue(handler2_called.is_set())
@@ -126,20 +131,20 @@ class TestEventEngineBasic(unittest.TestCase):
         
         # Queue should not be empty immediately after putting events
         # Note: This is a basic check, actual queue might be processed quickly
-        time.sleep(0.1)  # Allow processing
+        time.sleep(STARTUP_WAIT_TIME)  # Allow processing
 
     def test_engine_restart(self):
         """Test engine can be restarted after stopping."""
         # Start, stop, then start again
         self.engine.start()
-        self.assertTrue(self.engine._active)
+        self.assertTrue(self.engine.is_active())
         
         self.engine.stop()
-        self.assertFalse(self.engine._active)
+        self.assertFalse(self.engine.is_active())
         
         # Should be able to start again
         self.engine.start()
-        self.assertTrue(self.engine._active)
+        self.assertTrue(self.engine.is_active())
 
 
 if __name__ == '__main__':

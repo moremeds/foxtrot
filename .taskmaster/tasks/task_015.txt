@@ -11,43 +11,43 @@ Known cycles: Engine ↔ Adapter (use event system instead), Utils ↔ Objects (
 Run 'python -c \"import foxtrot\"' without circular import errors. Generate dependency graph with pydeps to verify no cycles. Mock any dependency in tests.
 
 # Subtasks:
-## 1. Setup Dependency Analysis and Generate Baseline Graph [pending]
+## 1. Setup Dependency Analysis and Generate Baseline Graph [done]
 ### Dependencies: None
 ### Description: Install `pydeps` and generate a complete dependency graph of the current codebase to serve as a baseline. This will visually confirm the known cycles (Engine↔Adapter, Utils↔Objects, UI↔Core) and help identify any others.
 ### Details:
 Run `pydeps --show-cycles . > initial_dependency_graph.svg`. The output graph should be committed to project documentation for reference and to track progress against the baseline.
 
-## 2. Create `interfaces.py` and Define Core Abstract Base Classes (ABCs) [pending]
+## 2. Create `interfaces.py` and Define Core Abstract Base Classes (ABCs) [done]
 ### Dependencies: 15.1
 ### Description: Create a new module, `core/interfaces.py`, to house the abstract base classes that will define the contracts for components like Engine and Adapter. This is the foundation for dependency inversion and is a prerequisite for fixing the Engine↔Adapter cycle.
 ### Details:
 Define ABCs using Python's `abc` module for key components, such as `IEngine` and `IAdapter`. These interfaces should declare the methods necessary for interaction without referencing concrete implementations.
 
-## 3. Break Engine ↔ Adapter Cycle via Dependency Injection [pending]
+## 3. Break Engine ↔ Adapter Cycle via Dependency Injection [done]
 ### Dependencies: 15.2
 ### Description: Refactor the `Engine` and `Adapter` modules to break their direct circular dependency. The `Engine` should depend on the `IAdapter` interface, and the `Adapter` instance should be injected into the `Engine` at runtime.
 ### Details:
 Modify the `Engine`'s constructor to accept an `IAdapter` instance. Remove any direct `import adapter` statements from the `engine` module and vice-versa. Use the existing event system for bidirectional communication, ensuring both components now depend on abstractions, not concretions.
 
-## 4. Resolve Utils ↔ Objects Cycle by Extracting to a `common` Module [pending]
+## 4. Resolve Utils ↔ Objects Cycle by Extracting to a `common` Module [done]
 ### Dependencies: 15.1
 ### Description: Identify the functions, classes, or constants causing the circular dependency between `utils.py` and `objects.py`. Extract this shared code into a new, lower-level module, `core/common.py`.
 ### Details:
 Create `core/common.py`. Move the shared entities from `utils.py` and `objects.py` into this new file. Update both original files to import from `core/common.py` instead of each other.
 
-## 5. Enforce Unidirectional UI → Core Dependency [pending]
+## 5. Enforce Unidirectional UI → Core Dependency [done]
 ### Dependencies: 15.1
 ### Description: Refactor the `UI` and `Core` modules to eliminate any imports from `Core` to `UI`. The `UI` should be a consumer of `Core` services, but the `Core` must have no knowledge of the `UI`.
 ### Details:
 Analyze imports in the `Core` module. If `Core` needs to notify the `UI`, replace direct calls with an event-based or callback mechanism that the `UI` can subscribe to. This ensures the dependency flows in only one direction.
 
-## 6. Full Codebase Scan and Remediation of Undiscovered Cycles [pending]
+## 6. Full Codebase Scan and Remediation of Undiscovered Cycles [done]
 ### Dependencies: 15.3, 15.4, 15.5
 ### Description: After fixing the known major cycles, perform a comprehensive scan of the entire codebase using `pydeps` to identify and resolve any remaining, more subtle circular dependencies.
 ### Details:
 Run `pydeps --show-cycles .` again. For each newly identified cycle, apply the most appropriate refactoring pattern: dependency inversion, code extraction, or type-hinting with forward references (`from __future__ import annotations` or string-based types).
 
-## 7. Final Validation and Test Suite Update [pending]
+## 7. Final Validation and Test Suite Update [done]
 ### Dependencies: 15.6
 ### Description: Perform the final validation checks to confirm all circular dependencies have been eliminated. Update the test suite to reflect the new architecture, particularly regarding mocked dependencies and dependency injection.
 ### Details:

@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import Dict, List, Optional, Deque
 import statistics
 
-from foxtrot.util.logger import get_component_logger
+from foxtrot.util.logger import create_foxtrot_logger, get_component_logger
 
 
 @dataclass
@@ -102,7 +102,8 @@ class WebSocketMonitor:
     def __init__(self, adapter_name: str):
         """Initialize the monitor."""
         self.adapter_name = adapter_name
-        self.logger = get_component_logger(f"{adapter_name}Monitor")
+        self.foxtrot_logger = create_foxtrot_logger()
+        self.logger = get_component_logger(f"{adapter_name}Monitor", self.foxtrot_logger)
         
         # Metrics storage
         self.metrics: Dict[str, WebSocketMetrics] = {}

@@ -184,6 +184,15 @@ class EventEngine:
                     "Main thread didn't terminate within timeout",
                     extra={"thread_type": "main", "timeout_seconds": 5.0}
                 )
+    
+    def is_active(self) -> bool:
+        """
+        Check if the event engine is currently active.
+        
+        Returns:
+            True if the engine is running, False otherwise
+        """
+        return self._active
 
     def put(self, event: Event) -> None:
         """

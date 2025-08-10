@@ -10,7 +10,7 @@ from typing import Dict, Optional, TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
     from ...account_manager import FutuAccountManager
-    from ...contract_manager import FutuContractManager
+    from ...contract_manager_facade import FutuContractManager
     from ...historical_data import FutuHistoricalData
     from ...market_data import FutuMarketData
     from ...order_manager import FutuOrderManager
@@ -57,11 +57,11 @@ class FutuManagerCoordinator:
 
         try:
             # Import here to avoid circular imports
-            from ..account_manager import FutuAccountManager
-            from ..contract_manager import FutuContractManager
-            from ..historical_data import FutuHistoricalData
-            from ..market_data import FutuMarketData
-            from ..order_manager import FutuOrderManager
+            from ...account_manager import FutuAccountManager
+            from ...contract_manager_facade import FutuContractManager
+            from ...historical_data import FutuHistoricalData
+            from ...market_data import FutuMarketData
+            from ...order_manager import FutuOrderManager
 
             # Initialize all managers with the API client
             self._managers["account"] = FutuAccountManager(api_client)

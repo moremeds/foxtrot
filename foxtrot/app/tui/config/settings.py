@@ -181,6 +181,12 @@ class TUISettings:
 
     def __post_init__(self):
         """Initialize settings after creation."""
+        # Prevent recursion by checking if already initialized
+        if hasattr(self, '_initialized'):
+            return
+        
+        object.__setattr__(self, '_initialized', True)
+        
         self.config_dir = Path(TRADER_DIR) / ".tui"
         self.config_dir.mkdir(exist_ok=True)
 
@@ -419,7 +425,24 @@ class TUISettings:
 
     def reset_to_defaults(self) -> None:
         """Reset all settings to default values."""
-        self.__init__()
+        # Create new instance with defaults
+        defaults = TUISettings()
+        
+        # Copy values from defaults
+        self.interface = defaults.interface
+        self.theme = defaults.theme
+        self.colors = defaults.colors
+        self.hotkeys = defaults.hotkeys
+        self.layout = defaults.layout
+        self.performance = defaults.performance
+        self.font_size = defaults.font_size
+        self.show_title_bar = defaults.show_title_bar
+        self.show_status_bar = defaults.show_status_bar
+        self.show_clock = defaults.show_clock
+        self.confirm_orders = defaults.confirm_orders
+        self.double_click_trading = defaults.double_click_trading
+        self.auto_connect_gateway = defaults.auto_connect_gateway
+        
         logger.info("TUI settings reset to defaults")
 
     def _apply_env_overrides(self) -> None:
@@ -429,20 +452,21 @@ class TUISettings:
             if "FOXTROT_TUI_THEME" in os.environ:
                 theme_value = os.environ["FOXTROT_TUI_THEME"]
                 try:
-                    self.theme = TUITheme(theme_value)
+                    # Use object.__setattr__ to avoid triggering __post_init__ recursion
+                    object.__setattr__(self, 'theme', TUITheme(theme_value))
                     logger.info(f"Theme set from environment: {theme_value}")
                 except ValueError:
                     logger.warning(f"Invalid theme in environment: {theme_value}")
 
             # Auto-connect gateway override
             if "FOXTROT_PREFERRED_ADAPTER" in os.environ:
-                self.auto_connect_gateway = os.environ["FOXTROT_PREFERRED_ADAPTER"]
+                object.__setattr__(self, 'auto_connect_gateway', os.environ["FOXTROT_PREFERRED_ADAPTER"])
                 logger.info(f"Preferred adapter set from environment: {self.auto_connect_gateway}")
 
             # Paper trading mode (affects confirmation settings)
             if "FOXTROT_PAPER_TRADING" in os.environ:
                 # In paper trading mode, we might want different confirmation settings
-                self.confirm_orders = os.environ.get("FOXTROT_PAPER_TRADING") != "1"
+                object.__setattr__(self, 'confirm_orders', os.environ.get("FOXTROT_PAPER_TRADING") != "1")
                 logger.info(f"Paper trading mode detected, confirm_orders set to: {self.confirm_orders}")
 
         except Exception as e:

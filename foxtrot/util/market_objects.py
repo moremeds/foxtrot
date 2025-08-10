@@ -6,9 +6,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from .base_objects import BaseData, ACTIVE_STATUSES
 from .constants import Exchange, Interval, Offset, Status
+
+
+if TYPE_CHECKING:
+    # Imported only for static type checking to resolve forward references
+    from .request_objects import CancelRequest
 
 
 @dataclass

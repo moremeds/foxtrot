@@ -36,6 +36,12 @@ class BinanceAdapter(BaseAdapter):
         "API Key": "",
         "Secret": "",
         "Sandbox": False,
+        # Enable public market-data mode (no keys required)
+        "Public Market Data Only": True,
+        # Realtime via websockets (requires ccxtpro)
+        "websocket.enabled": True,
+        "websocket.binance.enabled": True,
+        "websocket.binance.symbols": [],
         "Proxy Host": "",
         "Proxy Port": 0,
     }
@@ -48,6 +54,8 @@ class BinanceAdapter(BaseAdapter):
 
         # Create the API client that coordinates all operations
         self.api_client = BinanceApiClient(event_engine, adapter_name)
+        # Set back-reference for event firing
+        self.api_client.adapter = self
 
     def connect(self, setting: dict[str, Any]) -> bool:
         """
@@ -87,6 +95,20 @@ class BinanceAdapter(BaseAdapter):
         if not self.api_client.market_data:
             return False
         return self.api_client.market_data.subscribe(req)
+
+    def unsubscribe(self, symbol: str) -> bool:
+        """
+        Unsubscribe from market data.
+
+        Args:
+            symbol: VT symbol (e.g., "BTCUSDT.BINANCE")
+
+        Returns:
+            True if unsubscription successful
+        """
+        if not self.api_client.market_data:
+            return False
+        return self.api_client.market_data.unsubscribe(symbol)
 
     def send_order(self, req: OrderRequest) -> str:
         """

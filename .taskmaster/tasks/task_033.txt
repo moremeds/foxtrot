@@ -1,0 +1,41 @@
+# Task ID: 33
+# Title: Refactor WebSocket and Performance Tests to Use Mocks
+# Status: cancelled
+# Dependencies: 19, 21
+# Priority: medium
+# Description: Refactor 10 failing integration and benchmark tests to use mocked WebSocket connections and synthetic performance data, eliminating reliance on live network connections and resolving current test failures.
+# Details:
+Based on the latest test report, all 6 integration WebSocket tests and 4 benchmark tests are failing due to attempts to make live network connections or dependencies on real-time performance metrics. Failures include connection assertion errors and `KeyError: 'latencies'`. This task involves refactoring these tests to be hermetic and reliable.
+
+**Implementation Steps:**
+
+1.  **Identify Failing Tests:** Isolate the 6 WebSocket integration tests and 4 performance benchmark tests that are consistently failing in the test suite.
+
+2.  **Create Mock WebSocket Fixture:**
+    *   In `conftest.py`, create a new pytest fixture named `mock_websocket_client`.
+    *   This mock client must simulate the entire WebSocket lifecycle: `connect()`, `disconnect()`, `send()`, and handling of incoming messages.
+    *   It should allow tests to queue up mock server responses and assert that the adapter sends the correct subscription/request messages.
+
+3.  **Refactor WebSocket Integration Tests:**
+    *   Modify the 6 failing integration tests (likely for Binance, Futu, and IB adapters) to use the `mock_websocket_client` fixture.
+    *   Remove all code that attempts to establish a real network connection.
+    *   Inject the mock client into the adapter instance during test setup.
+    *   Update assertions to verify the adapter's interaction with the mock client (e.g., `assert mock_client.send.called_with(...)`) and its handling of simulated incoming data.
+
+4.  **Refactor Performance Benchmark Tests:**
+    *   Analyze the 4 failing benchmark tests to locate where they expect performance results (e.g., the source of the `KeyError: 'latencies'`).
+    *   Create a new fixture or helper function that generates synthetic, valid performance data. This data structure should mirror the real output, including keys like `latencies`, `throughput`, and `cpu_usage`.
+    *   Modify the tests to call the system-under-test with mocked dependencies and then use the synthetic performance data for assertions, thus testing the result-parsing and analysis logic without a live run.
+
+# Test Strategy:
+The primary goal is to make the WebSocket and performance tests stable, fast, and independent of external network conditions.
+
+**Verification Steps:**
+
+1.  **Resolve All Failures:** Execute the full `pytest` suite and confirm that the 10 previously failing tests now pass consistently.
+
+2.  **Test Hermeticity:** Run the test suite with all external network access disabled. The entire suite, including the refactored tests, must still pass. This confirms that no real network connections are being attempted.
+
+3.  **Mock Validation:** Assert that the mocks are being used correctly. For example, verify that mock methods like `send` or `connect` on the `mock_websocket_client` are called with the expected arguments during the test run.
+
+4.  **Maintain Coverage:** Ensure that the refactoring does not decrease overall test coverage. The new tests must still exercise the same code paths in the adapters and performance analysis tools, but with mocked inputs instead of live ones.

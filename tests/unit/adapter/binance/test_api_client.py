@@ -58,7 +58,12 @@ class TestBinanceApiClient:
         mock_exchange.load_markets.return_value = {"BTC/USDT": {}}
         mock_ccxt_binance.return_value = mock_exchange
 
-        settings = {"API Key": "test_key", "Secret": "test_secret", "Sandbox": True}
+        # Use valid-looking test credentials that pass validation
+        settings = {
+            "API Key": "test_api_key_1234567890abcdef1234567890abcdef",
+            "Secret": "test_secret_1234567890abcdef1234567890abcdef",
+            "Sandbox": True
+        }
 
         result = self.api_client.connect(settings)
 
@@ -69,8 +74,8 @@ class TestBinanceApiClient:
         # Verify CCXT exchange configuration
         mock_ccxt_binance.assert_called_once_with(
             {
-                "apiKey": "test_key",
-                "secret": "test_secret",
+                "apiKey": "test_api_key_1234567890abcdef1234567890abcdef",
+                "secret": "test_secret_1234567890abcdef1234567890abcdef",
                 "enableRateLimit": True,
             }
         )
@@ -99,7 +104,12 @@ class TestBinanceApiClient:
         """Test connection failure due to CCXT exception."""
         mock_ccxt_binance.side_effect = Exception("Connection failed")
 
-        settings = {"API Key": "test_key", "Secret": "test_secret", "Sandbox": True}
+        # Use valid-looking test credentials that pass validation
+        settings = {
+            "API Key": "test_api_key_1234567890abcdef1234567890abcdef",
+            "Secret": "test_secret_1234567890abcdef1234567890abcdef",
+            "Sandbox": True
+        }
 
         result = self.api_client.connect(settings)
 
@@ -114,7 +124,12 @@ class TestBinanceApiClient:
         mock_exchange.load_markets.return_value = {}  # Empty markets
         mock_ccxt_binance.return_value = mock_exchange
 
-        settings = {"API Key": "test_key", "Secret": "test_secret", "Sandbox": True}
+        # Use valid-looking test credentials that pass validation
+        settings = {
+            "API Key": "test_api_key_1234567890abcdef1234567890abcdef",
+            "Secret": "test_secret_1234567890abcdef1234567890abcdef",
+            "Sandbox": True
+        }
 
         result = self.api_client.connect(settings)
 

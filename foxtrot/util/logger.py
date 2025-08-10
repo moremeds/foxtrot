@@ -5,10 +5,70 @@ import sys
 import inspect
 from typing import Optional, Dict, Any
 
-from loguru import logger
+# Graceful fallback if loguru is unavailable
+try:
+    from loguru import logger  # type: ignore
+except Exception:  # pragma: no cover
+    import logging
+
+    class _BoundLogger:
+        def __init__(self, base: logging.Logger, component: str):
+            self._base = base
+            self._component = component
+
+        def debug(self, msg: str, *args, **kwargs):
+            self._base.debug(msg, extra={"component": self._component})
+
+        def info(self, msg: str, *args, **kwargs):
+            self._base.info(msg, extra={"component": self._component})
+
+        def warning(self, msg: str, *args, **kwargs):
+            self._base.warning(msg, extra={"component": self._component})
+
+        def error(self, msg: str, *args, **kwargs):
+            self._base.error(msg, extra={"component": self._component})
+
+    class _FallbackLogger:
+        def __init__(self):
+            self._logger = logging.getLogger("Foxtrot")
+            self._logger.setLevel(logging.INFO)
+            if not self._logger.handlers:
+                handler = logging.StreamHandler(sys.stdout)
+                fmt = logging.Formatter("%(asctime)s | %(levelname)-8s | %(message)s")
+                handler.setFormatter(fmt)
+                self._logger.addHandler(handler)
+
+        # Compatibility no-ops / minimal implementations
+        def remove(self, *args, **kwargs):
+            return
+
+        def add(self, sink, level=INFO, format=None, **kwargs):
+            # Support stdout or file sinks
+            import logging
+            if sink is sys.stdout:
+                # already added in __init__
+                return
+            try:
+                if isinstance(sink, (str, Path)):
+                    fh = logging.FileHandler(str(sink))
+                    if format:
+                        fh.setFormatter(logging.Formatter(format.replace("<level>", "").replace("</level>", "")))
+                    fh.setLevel(level)
+                    self._logger.addHandler(fh)
+            except Exception:
+                # Best-effort only
+                pass
+
+        def bind(self, **kwargs):
+            component = kwargs.get("component", "Logger")
+            return _BoundLogger(self._logger, component)
+
+        def configure(self, *args, **kwargs):
+            return
+
+    logger = _FallbackLogger()
 
 from .settings import SETTINGS
-from .utility import get_folder_path
 
 __all__ = [
     "DEBUG",
@@ -68,6 +128,16 @@ class FoxtrotLogger:
         # Create directory if it doesn't exist
         log_dir.mkdir(parents=True, exist_ok=True)
         return log_dir
+
+    def _get_legacy_log_file(self) -> Path:
+        today_date = datetime.now().strftime("%Y-%m-%d")
+        # Store legacy log in user home under .vntrader/log for compatibility
+        home_path = Path.home()
+        vntrader_dir = home_path.joinpath(".vntrader")
+        vntrader_dir.mkdir(parents=True, exist_ok=True)
+        legacy_log_path = vntrader_dir.joinpath("log")
+        legacy_log_path.mkdir(parents=True, exist_ok=True)
+        return legacy_log_path.joinpath(f"vt_{today_date}.log")
     
     def _configure_loggers(self):
         """Configure loguru with Foxtrot-specific settings."""
@@ -97,10 +167,7 @@ class FoxtrotLogger:
         # Legacy file output support (backward compatibility)
         if SETTINGS.get("log.file", True):
             print(f"log.file is enabled")
-            today_date = datetime.now().strftime("%Y-%m-%d")
-            legacy_log_path = get_folder_path("log")
-            legacy_file_path = legacy_log_path.joinpath(f"vt_{today_date}.log")
-            
+            legacy_file_path = self._get_legacy_log_file()
             logger.add(
                 sink=legacy_file_path,
                 level=SETTINGS.get("log.level", INFO),

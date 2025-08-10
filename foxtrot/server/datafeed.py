@@ -4,7 +4,7 @@ from types import ModuleType
 
 from util.object import BarData, HistoryRequest, TickData
 from util.settings import SETTINGS
-from util.logger import get_component_logger
+from util.logger import create_foxtrot_logger, get_component_logger
 
 
 class BaseDatafeed:
@@ -47,7 +47,8 @@ def get_datafeed() -> BaseDatafeed:
     if datafeed is not None:
         return datafeed
     
-    logger = get_component_logger("DatafeedManager")
+    foxtrot_logger = create_foxtrot_logger()
+    logger = get_component_logger("DatafeedManager", foxtrot_logger)
 
     # Read datafeed related global setting
     datafeed_name: str = SETTINGS["datafeed.name"]

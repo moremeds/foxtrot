@@ -6,8 +6,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from .constants import Direction, Exchange, Interval, Offset, OrderType
+
+
+if TYPE_CHECKING:
+    # Imported only for static type checking to resolve forward references
+    from foxtrot.util.trading_objects import OrderData
+    from foxtrot.util.market_objects import QuoteData
 
 
 @dataclass
@@ -47,7 +54,7 @@ class OrderRequest:
         """
         Create order data from request.
         """
-        from ..core.common import create_order_data_from_request
+        from foxtrot.core.common import create_order_data_from_request
         return create_order_data_from_request(self, orderid, adapter_name)
 
 
@@ -107,5 +114,5 @@ class QuoteRequest:
         """
         Create quote data from request.
         """
-        from ..core.common import create_quote_data_from_request
+        from foxtrot.core.common import create_quote_data_from_request
         return create_quote_data_from_request(self, quoteid, adapter_name)

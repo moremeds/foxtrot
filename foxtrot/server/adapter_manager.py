@@ -90,6 +90,15 @@ class AdapterManager:
         if adapter:
             adapter.subscribe(req)
 
+    def unsubscribe(self, symbol: str, adapter_name: str) -> None:
+        """Unsubscribe tick data update of a specific adapter."""
+        adapter: BaseAdapter | None = self.get_adapter(adapter_name)
+        if adapter and hasattr(adapter, "unsubscribe"):
+            try:
+                getattr(adapter, "unsubscribe")(symbol)
+            except Exception:
+                self.write_log(f"Unsubscribe failed for {adapter_name}:{symbol}")
+
     def send_order(self, req: OrderRequest, adapter_name: str) -> str:
         """
         Send new order request to a specific gateway.

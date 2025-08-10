@@ -1,0 +1,96 @@
+# Task ID: 24
+# Title: Phase 1: Emergency Refactoring of Large Test Files
+# Status: pending
+# Dependencies: 21
+# Priority: medium
+# Description: Split five oversized test files, including test_event_engine_unit.py (853 lines) and test_event_engine_thread_safety.py (813 lines), into smaller, focused modules to improve maintainability, readability, and test isolation.
+# Details:
+This task addresses critical code health violations by refactoring the five largest test files. Each file must be broken down into 3-4 smaller, logically grouped modules. Use shared fixtures from conftest.py (see Task 21) to avoid code duplication and ensure proper test isolation.
+
+File Breakdown Plan:
+1.  **test_event_engine_unit.py (853 lines):** Split by engine functionality.
+    - `test_engine_lifecycle.py`: Tests for start(), stop(), and state management.
+    - `test_event_queue.py`: Tests for event queuing, processing, and priority.
+    - `test_handler_registration.py`: Tests for adding, removing, and managing event handlers.
+    - `test_timer_management.py`: Tests for timed event generation and cancellation.
+
+2.  **test_event_engine_thread_safety.py (813 lines):** Split by concurrency scenario.
+    - `test_concurrent_event_dispatch.py`: Focus on race conditions when multiple threads dispatch events.
+    - `test_concurrent_handler_modification.py`: Focus on safely adding/removing handlers from multiple threads.
+    - `test_engine_stress.py`: High-load and long-duration stress tests.
+
+3.  **test_utility.py (810 lines):** Split by utility domain.
+    - `test_data_formatting_utils.py`: Tests for data serialization and presentation helpers.
+    - `test_time_utils.py`: Tests for custom timestamp and timezone functions.
+    - `test_config_loading_utils.py`: Tests for configuration file parsing and validation.
+
+4.  **test_event_engine_performance.py (669 lines):** Split by performance metric.
+    - `test_event_throughput.py`: Benchmark tests for events processed per second.
+    - `test_event_latency.py`: Benchmark tests for time from event post to handler execution.
+    - `test_engine_memory_footprint.py`: Tests for memory usage under different loads.
+
+5.  **test_account_controller.py (641 lines):** Split by controller responsibility.
+    - `test_position_updates.py`: Tests for handling position change events.
+    - `test_balance_calculations.py`: Tests for cash, margin, and equity updates.
+    - `test_order_state_logic.py`: Tests for how the controller reacts to order fills and rejections.
+
+# Test Strategy:
+The success of this refactoring task will be verified by ensuring no loss of test coverage or functionality.
+1.  **Test Equivalence:** Run `pytest --collect-only` before and after the refactoring. The total number of collected tests must be identical.
+2.  **Full Suite Pass:** Execute the entire test suite (`pytest`) after the refactoring. All tests must pass without errors.
+3.  **Module Isolation:** Run each newly created test file independently (e.g., `pytest tests/engine/test_engine_lifecycle.py`) to confirm it has no unstated dependencies on other test files.
+4.  **Code Coverage Check:** Generate a code coverage report before and after the changes. The coverage percentage must not decrease, ensuring all original code paths are still tested.
+5.  **Fixture Usage:** Verify that the new test modules correctly utilize shared fixtures from `conftest.py` and do not define their own duplicate setup objects.
+
+# Subtasks:
+## 1. Refactor test_event_engine_unit.py by Functionality [pending]
+### Dependencies: None
+### Description: Split the oversized test_event_engine_unit.py (853 lines) into four smaller, focused modules based on engine functionality: lifecycle, event queue, handler registration, and timer management.
+### Details:
+Move tests from test_event_engine_unit.py into four new files:
+1. test_engine_lifecycle.py: For start(), stop(), and state management tests.
+2. test_event_queue.py: For event queuing, processing, and priority tests.
+3. test_handler_registration.py: For adding, removing, and managing event handlers.
+4. test_timer_management.py: For timed event generation and cancellation tests.
+Utilize shared fixtures from conftest.py to maintain consistency and avoid code duplication.
+
+## 2. Refactor test_event_engine_thread_safety.py by Concurrency Scenario [pending]
+### Dependencies: None
+### Description: Split the test_event_engine_thread_safety.py file (813 lines) into three modules, each targeting a specific concurrency scenario to improve clarity and isolation of thread safety tests.
+### Details:
+Migrate tests from test_event_engine_thread_safety.py into three new files:
+1. test_concurrent_event_dispatch.py: Focus on race conditions during event dispatch.
+2. test_concurrent_handler_modification.py: Focus on safely adding/removing handlers from multiple threads.
+3. test_engine_stress.py: High-load and long-duration stress tests.
+Ensure all tests leverage shared fixtures from conftest.py.
+
+## 3. Refactor test_utility.py by Utility Domain [pending]
+### Dependencies: None
+### Description: Decompose the large test_utility.py file (810 lines) into three distinct modules based on the utility's domain: data formatting, time utilities, and configuration loading.
+### Details:
+Break down test_utility.py into the following new files:
+1. test_data_formatting_utils.py: For data serialization and presentation helpers.
+2. test_time_utils.py: For custom timestamp and timezone functions.
+3. test_config_loading_utils.py: For configuration file parsing and validation.
+Relocate all relevant tests and ensure proper use of shared fixtures.
+
+## 4. Refactor test_event_engine_performance.py by Metric [pending]
+### Dependencies: None
+### Description: Split the test_event_engine_performance.py file (669 lines) into three modules, each focused on a specific performance metric: throughput, latency, and memory usage.
+### Details:
+Create three new performance test files from the original:
+1. test_event_throughput.py: Benchmark tests for events processed per second.
+2. test_event_latency.py: Benchmark tests for time from event post to handler execution.
+3. test_engine_memory_footprint.py: Tests for memory usage under different loads.
+Ensure benchmarks are properly isolated in their new modules.
+
+## 5. Refactor test_account_controller.py by Responsibility [pending]
+### Dependencies: None
+### Description: Split the test_account_controller.py file (641 lines) into three smaller modules organized by the controller's primary responsibilities: position updates, balance calculations, and order logic.
+### Details:
+Move tests from test_account_controller.py into three new, focused files:
+1. test_position_updates.py: For handling position change events.
+2. test_balance_calculations.py: For cash, margin, and equity updates.
+3. test_order_state_logic.py: For controller reactions to order fills and rejections.
+Refactor to use shared fixtures from conftest.py where applicable.
+

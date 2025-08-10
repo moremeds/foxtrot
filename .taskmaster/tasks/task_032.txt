@@ -1,0 +1,24 @@
+# Task ID: 32
+# Title: Fix Incomplete Logging Migration in Adapters
+# Status: pending
+# Dependencies: 7, 14
+# Priority: high
+# Description: Resolve 61 failing adapter tests by correcting the logging implementation across multiple adapters where the `foxtrot_logger` parameter is missing from `get_adapter_logger()` calls.
+# Details:
+Based on test report analysis, a significant number of adapter tests are failing due to an incomplete migration to the new logging standard. This task involves applying the correct logging pattern across all affected components, such as WebSocketErrorHandler and various adapters, using the implementation in BinanceApiClient as a reference.
+
+Implementation Steps:
+1. **Identify Affected Components:** Systematically review all adapters, handlers, and utility classes that call `get_adapter_logger()`.
+2. **Apply Fix Pattern:** For each affected file, implement the following changes:
+   - Add the import: `from foxtrot.util.logging import create_foxtrot_logger`
+   - Instantiate the logger at the module or class level: `foxtrot_logger = create_foxtrot_logger()`
+   - Update the call to `get_adapter_logger()` to pass the instance as a keyword argument: `self.logger = get_adapter_logger(self.adapter_name, foxtrot_logger=foxtrot_logger)`
+3. **Verify Scope:** Ensure the fix is applied comprehensively to address all 61 identified test failures.
+
+# Test Strategy:
+The primary goal is to ensure the logging system is correctly and consistently implemented across all adapters, resolving the identified test failures.
+
+Verification Steps:
+1. **Resolve Test Failures:** Execute the full `pytest` suite and confirm that the 61 previously failing adapter tests now pass. The total number of collected tests must remain unchanged, and no new regressions should be introduced.
+2. **Static Code Analysis:** Perform a codebase-wide search for the function call `get_adapter_logger(` to ensure no instances are called without the required `foxtrot_logger` parameter.
+3. **Log Output Validation:** In a development environment, run a single adapter and inspect its log output. Confirm that logs are being generated with the correct adapter-specific context and adhere to the structured JSON format defined in the logging migration plan (Task 7).

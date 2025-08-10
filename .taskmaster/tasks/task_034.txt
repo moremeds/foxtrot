@@ -1,0 +1,23 @@
+# Task ID: 34
+# Title: Fix Asynchronous and Threading Issues in Test Suite
+# Status: cancelled
+# Dependencies: 14, 19, 21
+# Priority: medium
+# Description: Resolve systemic ERROR statuses in async and threaded tests by implementing robust async test fixtures, improving event loop management, and correcting async/await patterns in the test suite.
+# Details:
+Based on test reports, numerous tests involving async operations, particularly in WebSocket utilities and async thread bridges, are failing with ERROR status. This is attributed to improper management of the asyncio event loop within the pytest environment.
+
+Implementation Steps:
+1. **Integrate Async Test Runner:** Add and configure `pytest-asyncio` to manage the event loop lifecycle for tests. This will provide a standardized and reliable way to run `async def` tests.
+2. **Create Async Fixtures:** Develop a set of reusable pytest fixtures in `conftest.py` for common asynchronous patterns. This includes a fixture that provides a properly configured and isolated event loop for each test, preventing state leakage between tests.
+3. **Refactor Failing Tests:** Systematically refactor all tests currently showing async-related ERRORs. Convert test functions to `async def` and mark them with `@pytest.mark.asyncio`. Remove all manual event loop management (e.g., `asyncio.run()`, `loop.run_until_complete()`) and replace it with direct `await` calls on coroutines.
+4. **Improve Timeout Handling:** Review tests for inadequate or missing timeouts. Where appropriate, wrap long-running awaitables with `asyncio.wait_for()` to prevent tests from hanging indefinitely and provide clear timeout errors.
+5. **Correct Async/Await Patterns:** Audit the test suite for common anti-patterns, such as calling coroutines without `await` or using blocking I/O calls inside an async function. Ensure all asynchronous operations are correctly awaited.
+
+# Test Strategy:
+Verification will focus on stability and correctness of the asynchronous test execution.
+
+1. **Eliminate ERRORs:** Execute the entire test suite via `pytest`. The primary success criterion is the complete elimination of `ERROR` statuses in the test report. All tests should either `PASS` or `FAIL` with a specific assertion error.
+2. **Confirm Stability:** Run the refactored tests in a loop (e.g., using `pytest-repeat` or a shell script) to ensure the fixes have resolved any race conditions or intermittent failures. The tests must pass consistently across multiple runs.
+3. **No Regressions:** Verify that the total number of collected tests has not decreased and that all previously passing tests continue to pass. The changes should only fix broken tests, not introduce new issues.
+4. **CI Pipeline Validation:** The full test suite must pass cleanly within the Continuous Integration environment to confirm the solution is robust and not dependent on a local developer setup.

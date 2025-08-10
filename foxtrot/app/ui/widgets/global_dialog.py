@@ -61,15 +61,23 @@ class GlobalDialog(QtWidgets.QDialog):
         settings: dict = {}
         for field_name, tp in self.widgets.items():
             widget, field_type = tp
-            value_text: str = widget.text()
+            value_text: str = widget.text().strip()
 
             if field_type is bool:
-                if value_text == "True":
-                    field_value: bool = True
-                else:
-                    field_value = False
+                field_value = self._parse_boolean(value_text, field_name)
             else:
-                field_value = field_type(value_text)
+                try:
+                    field_value = field_type(value_text)
+                except (ValueError, TypeError) as e:
+                    QtWidgets.QMessageBox.warning(
+                        self,
+                        "Invalid Input",
+                        f"Invalid value for {field_name}: {value_text}\n"
+                        f"Expected type: {field_type.__name__}\n"
+                        f"Error: {str(e)}",
+                        QtWidgets.QMessageBox.StandardButton.Ok,
+                    )
+                    return  # Don't save if validation fails
 
             settings[field_name] = field_value
 
@@ -81,3 +89,51 @@ class GlobalDialog(QtWidgets.QDialog):
         )
 
         save_json(SETTING_FILENAME, settings)
+    
+    def _parse_boolean(self, value: str, field_name: str) -> bool:
+        """
+        Parse a string value to boolean with robust handling.
+        
+        Accepts various boolean representations:
+        - True values: 'true', 'True', 'TRUE', '1', 'yes', 'Yes', 'YES', 'on', 'On', 'ON'
+        - False values: 'false', 'False', 'FALSE', '0', 'no', 'No', 'NO', 'off', 'Off', 'OFF'
+        - Empty string defaults to False
+        
+        Args:
+            value: String value to parse
+            field_name: Name of the field being parsed (for error messages)
+            
+        Returns:
+            Boolean value
+            
+        Raises:
+            Shows warning dialog for invalid values
+        """
+        # Handle empty string
+        if not value:
+            return False
+        
+        # Normalize the value
+        normalized = value.lower().strip()
+        
+        # Define true and false values
+        true_values = {'true', '1', 'yes', 'on', 't', 'y'}
+        false_values = {'false', '0', 'no', 'off', 'f', 'n'}
+        
+        if normalized in true_values:
+            return True
+        elif normalized in false_values:
+            return False
+        else:
+            # Show warning for invalid boolean value
+            QtWidgets.QMessageBox.warning(
+                self,
+                "Invalid Boolean Value",
+                f"Invalid boolean value for {field_name}: '{value}'\n"
+                f"Accepted values:\n"
+                f"  True: true, True, TRUE, 1, yes, Yes, YES, on, On, ON, t, T, y, Y\n"
+                f"  False: false, False, FALSE, 0, no, No, NO, off, Off, OFF, f, F, n, N\n"
+                f"Using default: False",
+                QtWidgets.QMessageBox.StandardButton.Ok,
+            )
+            return False

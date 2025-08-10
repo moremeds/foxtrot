@@ -7,6 +7,7 @@ for all Binance API operations.
 """
 
 from typing import TYPE_CHECKING, Any, Optional
+import asyncio
 
 import ccxt
 try:
@@ -37,6 +38,8 @@ class BinanceApiClient:
         """Initialize the API client."""
         self.event_engine = event_engine
         self.adapter_name = adapter_name
+        # Back-reference to adapter (set by adapter on init)
+        self.adapter: Any | None = None
 
         # CCXT exchange instances
         self.exchange: ccxt.binance | None = None
@@ -102,15 +105,23 @@ class BinanceApiClient:
             if websocket_symbols:
                 self.websocket_enabled_symbols = set(websocket_symbols)
 
-            if not api_key or not secret:
-                self._log_error("Missing API credentials")
-                return False
+            # Public market-data only mode (no API key/secret required)
+            public_only: bool = bool(
+                settings.get("Public Market Data Only")
+                or settings.get("public_market_data_only")
+            )
 
-            exchange_config = {
-                "apiKey": api_key,
-                "secret": secret,
-                "enableRateLimit": True,
-            }
+            # Validate API credentials only if not in public-only mode
+            exchange_config: dict[str, Any] = {"enableRateLimit": True}
+            if not public_only:
+                validation_result = self._validate_api_credentials(api_key, secret)
+                if not validation_result["valid"]:
+                    self._log_error(
+                        f"Invalid API credentials: {validation_result['reason']}"
+                    )
+                    return False
+                exchange_config["apiKey"] = api_key
+                exchange_config["secret"] = secret
             if options:
                 exchange_config["options"] = options
 
@@ -145,38 +156,151 @@ class BinanceApiClient:
             return False
 
     def close(self) -> None:
-        """Close connection and cleanup resources."""
-        try:
-            if self.market_data:
+        """Close connection and cleanup resources with proper error handling."""
+        cleanup_errors = []
+        
+        # Close market data manager
+        if self.market_data:
+            try:
                 self.market_data.close()
+                self._log_debug("Market data manager closed successfully")
+            except Exception as e:
+                error_msg = f"Failed to close market data manager: {str(e)}"
+                self._log_error(error_msg)
+                cleanup_errors.append(error_msg)
 
-            # Close CCXT Pro exchange if available
-            if self.exchange_pro and hasattr(self.exchange_pro, "close"):
-                import asyncio
-                # Need to close async exchange in a sync context
-                try:
-                    loop = asyncio.get_event_loop()
-                    if loop.is_running():
-                        # Schedule the close for later
-                        asyncio.create_task(self.exchange_pro.close())
-                    else:
-                        # Run the close synchronously
-                        loop.run_until_complete(self.exchange_pro.close())
-                except Exception:
-                    # If no event loop, create one temporarily
-                    asyncio.run(self.exchange_pro.close())
+        # Close CCXT Pro exchange (async)
+        if self.exchange_pro and hasattr(self.exchange_pro, "close"):
+            try:
+                self._close_async_exchange()
+                self._log_debug("CCXT Pro exchange closed successfully")
+            except Exception as e:
+                error_msg = f"Failed to close CCXT Pro exchange: {str(e)}"
+                self._log_error(error_msg)
+                cleanup_errors.append(error_msg)
                     
-            if self.exchange and hasattr(self.exchange, "close"):
-                # Close any open connections
+        # Close standard CCXT exchange
+        if self.exchange and hasattr(self.exchange, "close"):
+            try:
                 self.exchange.close()
+                self._log_debug("CCXT exchange closed successfully")
+            except Exception as e:
+                error_msg = f"Failed to close CCXT exchange: {str(e)}"
+                self._log_error(error_msg)
+                cleanup_errors.append(error_msg)
 
-            self._log_info("Binance connection closed")
-
+        # Set connected to False regardless of cleanup success
+        self.connected = False
+        
+        # Log final status
+        if cleanup_errors:
+            self._log_warning(f"Connection closed with {len(cleanup_errors)} errors")
+        else:
+            self._log_info("Binance connection closed successfully")
+    
+    def _close_async_exchange(self) -> None:
+        """
+        Close async exchange with proper event loop handling.
+        
+        This method handles the complexity of closing an async resource
+        from a potentially sync context.
+        """
+        import asyncio
+        
+        # Try to get the current event loop
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            # No event loop exists, create one temporarily
+            self._log_debug("No event loop found, creating temporary loop for cleanup")
+            asyncio.run(self.exchange_pro.close())
+            return
+        
+        # Check if the loop is running
+        if loop.is_running():
+            # We're in an async context, schedule the close
+            self._log_debug("Scheduling async close in running event loop")
+            task = asyncio.create_task(self.exchange_pro.close())
+            # Add a callback to log completion
+            task.add_done_callback(self._on_async_close_complete)
+        else:
+            # We're in a sync context with a non-running loop
+            self._log_debug("Running async close in non-running event loop")
+            try:
+                loop.run_until_complete(self.exchange_pro.close())
+            except RuntimeError as e:
+                # Loop might be closed, create a new one
+                self._log_debug(f"Event loop error: {e}, using asyncio.run")
+                asyncio.run(self.exchange_pro.close())
+    
+    def _on_async_close_complete(self, task: asyncio.Task) -> None:
+        """
+        Callback for async close task completion.
+        
+        Args:
+            task: The completed async task
+        """
+        try:
+            # Check if the task raised an exception
+            exception = task.exception()
+            if exception:
+                self._log_error(f"Async close failed: {exception}")
+            else:
+                self._log_debug("Async close completed successfully")
         except Exception as e:
-            self._log_error(f"Error closing connection: {str(e)}")
-        finally:
-            # Always set connected to False regardless of cleanup success
-            self.connected = False
+            self._log_error(f"Error in async close callback: {e}")
+
+    def _validate_api_credentials(self, api_key: str, secret: str) -> dict:
+        """
+        Validate API credentials format and content.
+        
+        Args:
+            api_key: Binance API key
+            secret: Binance API secret
+            
+        Returns:
+            Dictionary with 'valid' (bool) and 'reason' (str) keys
+        """
+        import re
+        
+        # Check if credentials are provided
+        if not api_key or not secret:
+            return {"valid": False, "reason": "Missing API key or secret"}
+        
+        # Check API key format
+        # Binance API keys are typically 64 characters long and alphanumeric
+        if not isinstance(api_key, str):
+            return {"valid": False, "reason": "API key must be a string"}
+        
+        if len(api_key) < 20 or len(api_key) > 100:
+            return {"valid": False, "reason": f"API key length {len(api_key)} is invalid (expected 20-100 characters)"}
+        
+        # Check if API key contains only valid characters (alphanumeric, dash, underscore)
+        if not re.match(r'^[A-Za-z0-9\-_]+$', api_key):
+            return {"valid": False, "reason": "API key contains invalid characters"}
+        
+        # Check secret format
+        if not isinstance(secret, str):
+            return {"valid": False, "reason": "Secret must be a string"}
+        
+        if len(secret) < 20 or len(secret) > 100:
+            return {"valid": False, "reason": f"Secret length {len(secret)} is invalid (expected 20-100 characters)"}
+        
+        # Check if secret contains only valid characters
+        if not re.match(r'^[A-Za-z0-9\-_]+$', secret):
+            return {"valid": False, "reason": "Secret contains invalid characters"}
+        
+        # Check for common placeholder values
+        placeholder_values = ["your_api_key", "your_secret", "xxx", "api_key", "secret", 
+                             "YOUR_API_KEY", "YOUR_SECRET", "<api_key>", "<secret>"]
+        if api_key.lower() in [p.lower() for p in placeholder_values]:
+            return {"valid": False, "reason": "API key appears to be a placeholder value"}
+        
+        if secret.lower() in [p.lower() for p in placeholder_values]:
+            return {"valid": False, "reason": "Secret appears to be a placeholder value"}
+        
+        # All validations passed
+        return {"valid": True, "reason": "Credentials format validated"}
 
     def _log_info(self, message: str) -> None:
         """Log info message."""
@@ -191,6 +315,10 @@ class BinanceApiClient:
     def _log_warning(self, message: str) -> None:
         """Log warning message."""
         self._logger.warning(message)
+    
+    def _log_debug(self, message: str) -> None:
+        """Log debug message."""
+        self._logger.debug(message)
         
     def is_websocket_enabled(self, symbol: Optional[str] = None) -> bool:
         """

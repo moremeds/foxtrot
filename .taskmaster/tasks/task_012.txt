@@ -1,6 +1,6 @@
 # Task ID: 12
 # Title: Phase 1: Eliminate Global Instances
-# Status: pending
+# Status: done
 # Dependencies: None
 # Priority: high
 # Description: Remove all global mutable state and singleton patterns from the codebase
@@ -9,3 +9,35 @@ Find and eliminate: global event_engine instances, global logger instances, shar
 
 # Test Strategy:
 Import each module independently and verify no global state is created. Mock all dependencies in tests. Verify no import side effects.
+
+# Subtasks:
+## 1. Refactor EventEngine for Dependency Injection [done]
+### Dependencies: None
+### Description: Eliminate the global `event_engine` singleton. Modify the `EventEngine` class and all dependent components (e.g., `BaseAdapter`, `MainEngine`) to accept the engine instance via their constructors instead of importing a global instance.
+### Details:
+Search the codebase for global imports of the `event_engine`. Change class constructors (e.g., `__init__(self, ..., event_engine: EventEngine)`) to accept the engine. Update all instantiation points, primarily in `MainEngine`, to pass the engine instance. This is the first step towards a fully injectable architecture and directly impacts Task 4 and Task 9.
+
+## 2. Refactor Global Logger for Dependency Injection [done]
+### Dependencies: None
+### Description: Remove the globally configured logger instance. All modules and classes that perform logging must be modified to receive a logger instance through their constructor, aligning with the goals of Task 7.
+### Details:
+Identify the module where the global logger is configured and initialized (likely as a side effect of import). Remove this behavior. Update classes to accept a `logger` object in their `__init__` methods. Replace global `logger.info(...)` calls with `self.logger.info(...)`.
+
+## 3. Purge Shared Mutable State from Utility Modules [done]
+### Dependencies: None
+### Description: Audit all modules in the `utils` package to find and eliminate any module-level mutable variables that are shared and modified across the application. Refactor functions to be pure or to receive state as explicit arguments.
+### Details:
+Systematically review each file in `utils/`. Look for module-level lists, dictionaries, or other mutable objects that are modified by functions within the module. Refactor by either making the functions pure (returning new objects instead of modifying in-place) or by converting the utility into a class that encapsulates state and is instantiated by `MainEngine`.
+
+## 4. Implement Dependency Container in MainEngine [done]
+### Dependencies: 12.1, 12.2
+### Description: Modify `MainEngine` to act as the central point for dependency creation and injection. It will be responsible for instantiating the `EventEngine`, `Logger`, and other core services, and then passing these instances to the components it manages.
+### Details:
+In the `MainEngine`'s initialization sequence, create single instances of `EventEngine` and the application's main logger. When `MainEngine` creates other objects (like the IB Adapter from Task 9), it will pass these shared services into their constructors. This centralizes object lifecycle management and is the core of the DI pattern implementation.
+
+## 5. Update Test Suite with Mocking Fixtures and DI [done]
+### Dependencies: 12.1, 12.2, 12.3, 12.4
+### Description: Refactor the entire test suite to align with the new dependency injection pattern. Create and use `pytest` fixtures for mocked dependencies like `event_engine` and `logger`, as outlined in Task 21, to remove any reliance on global state.
+### Details:
+Create a `conftest.py` with fixtures for `mock_event_engine`, `mock_logger`, etc., as specified in Task 21. Go through all test files and replace manual mock creation or reliance on global state with these new fixtures. Ensure that importing any application module within a test does not trigger side effects.
+

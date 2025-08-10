@@ -92,3 +92,97 @@ Create handlers for backend disconnection and error events. When such an event i
 ### Details:
 Using the `textual.pilot` testing framework, create a test suite that simulates user interactions and verifies the TUI's response. Tests should cover key user workflows: entering and submitting orders, navigating between screens, and verifying data updates from mock backend events. The suite will run headlessly in CI/CD to catch regressions.
 
+## 8. Implement TUI Navigation System [pending]
+### Dependencies: 5.1, 5.2
+### Description: Build comprehensive navigation system with keyboard shortcuts, focus management, and context-aware navigation patterns. This includes implementing tab navigation between widgets, modal dialogs, and breadcrumb navigation (merged from Task 17).
+### Details:
+
+
+## 9. Implement Button Framework and Event Binding [pending]
+### Dependencies: 5.1, 5.2
+### Description: Create comprehensive button framework with action binding system. Implement command pattern for button actions, connect buttons to backend events (order placement, cancellation, refresh), add visual feedback for button states, and ensure proper event delegation (merged from Task 18).
+### Details:
+
+
+## 10. Real-time Data Display Integration [pending]
+### Dependencies: 5.1, 5.2, 5.4
+### Description: Implement real-time market data updates in TUI widgets. Connect to EventEngine for tick data, order updates, and position changes. Ensure efficient rendering without blocking UI, implement throttling for high-frequency updates, and add visual indicators for data freshness.
+### Details:
+
+
+## 11. Order Management UI Implementation [pending]
+### Dependencies: 5.3, 5.9
+### Description: Build order entry forms with comprehensive validation, order book display with real-time updates, order status tracking and modification capabilities, quick order buttons for common actions, and integration with risk management checks.
+### Details:
+
+
+## 12. Make TUI Responsive to Terminal Resize [pending]
+### Dependencies: 5.1, 5.2, 5.8
+### Description: Handle terminal window resizing without breaking layout. Implement responsive grid layout, minimum widget sizes, scrollable content for small terminals, and graceful degradation. Test with various terminal sizes from minimum (80x24) to maximum. Ensure no widget overlap or cutoff.
+### Details:
+
+
+## 13. Fix TUI Startup Script and Launch Issues [pending]
+### Dependencies: None
+### Description: The TUI starting script (./scripts/foxtrot-tui or run_tui.py) is currently broken and prevents the application from launching. Debug and fix the startup sequence including: script path issues, import errors, async event loop initialization, dependency resolution, and configuration file loading. Ensure the TUI can be launched reliably from both the command line script and direct Python execution.
+### Details:
+<info added on 2025-08-08T10:15:12.806Z>
+CRITICAL BLOCKER: This must be fixed first before any other TUI work can proceed. The startup script failure blocks all TUI development and testing. Common issues to check:
+1. Python path and module resolution errors
+2. Missing or incorrect imports after refactoring
+3. Async event loop conflicts between textual and asyncio
+4. Configuration file (vt_setting.json) not found or incorrect path
+5. Dependencies not properly installed via uv/poetry
+Test both ./scripts/foxtrot-tui and direct python execution methods.
+</info added on 2025-08-08T10:15:12.806Z>
+
+## 14. Implement Live Binance Market Data Display [pending]
+### Dependencies: 5.10, 5.13
+### Description: Create the Priority Symbols market data table that displays real-time streaming data from Binance WebSocket. Must show Symbol, Mark Price, Bid Price, Bid Qty, Ask Price, Ask Qty, and Index Price columns with live updates. Support multiple cryptocurrency pairs (BTCUSDT, ETHUSDT, BNBUSDT, etc.) with proper price formatting and color coding (red for price decrease, green for increase).
+### Details:
+<info added on 2025-08-08T10:25:09.752Z>
+ACCEPTANCE CRITERIA for Live Market Data Display:
+
+VISUAL REQUIREMENTS (example match screenshot): /home/ubuntu/projects/foxtrot/docs/example.jpg
+1. Table header: "Priority Symbols Market Data"
+2. Columns: Symbol | Mark Price | Bid Price | Bid Qty | Ask Price | Ask Qty | Index Price
+3. Support example 6 cryptocurrency pairs: BTCUSDT, ETHUSDT, BNBUSDT, ADAUSDT, SOLUSDT, SUIUSDT
+4. Price color coding: RED for price decrease, GREEN for price increase, WHITE/DEFAULT for unchanged
+5. Proper decimal formatting:
+   - BTC: 2 decimal places (e.g., 114706.6185)
+   - Other cryptos: 4-5 decimals based on value
+   - Quantities: appropriate precision (e.g., 8.13, 305.92)
+
+FUNCTIONAL REQUIREMENTS:
+1. Connect to Binance WebSocket on startup
+2. Subscribe to bookTicker streams for all symbols
+3. Update prices in real-time (<100ms latency)
+4. Each symbol updates independently
+5. No UI blocking during updates
+6. Handle 20+ simultaneous symbol streams
+
+PERFORMANCE CRITERIA:
+1. Zero flickering during updates
+2. Smooth scrolling if table exceeds screen height
+3. Memory stable over 1+ hour operation
+4. CPU usage <10% during normal operation
+
+DATA ACCURACY:
+1. Prices match Binance real-time data
+2. Bid/Ask spreads correctly displayed
+3. All fields populated (no empty cells)
+4. Stale data indicator if no update >5 seconds
+
+ERROR HANDLING:
+1. Auto-reconnect on WebSocket disconnect
+2. Display "Connecting..." during initialization
+3. Show "Disconnected" with last known values
+4. No crashes on malformed messages
+
+TEST VERIFICATION:
+- Manual: Compare with Binance website for 5 minutes
+- Automated: Mock WebSocket with known data sequences
+- Performance: Run for 1 hour with monitoring
+- Stress: 50 symbols simultaneously
+</info added on 2025-08-08T10:25:09.752Z>
+

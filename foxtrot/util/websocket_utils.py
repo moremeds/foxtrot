@@ -13,7 +13,7 @@ import time
 
 from foxtrot.core.event import Event
 from foxtrot.core.event_engine import EventEngine
-from foxtrot.util.logger import get_component_logger
+from foxtrot.util.logger import create_foxtrot_logger, get_component_logger
 
 
 class AsyncThreadBridge:
@@ -34,7 +34,9 @@ class AsyncThreadBridge:
             shutdown_timeout: Timeout for graceful shutdown (default: 30 seconds)
         """
         self.event_engine = event_engine
-        self.logger = get_component_logger("AsyncBridge")
+        # Lazy initialization of logger to avoid circular imports
+        self._foxtrot_logger = None
+        self._logger = None
         self.shutdown_timeout = shutdown_timeout
         
         # Asyncio components
@@ -48,6 +50,15 @@ class AsyncThreadBridge:
         
         # State tracking
         self._running = False
+    
+    @property
+    def logger(self):
+        """Lazy initialization of logger to avoid circular imports."""
+        if self._logger is None:
+            if self._foxtrot_logger is None:
+                self._foxtrot_logger = create_foxtrot_logger()
+            self._logger = get_component_logger("AsyncBridge", self._foxtrot_logger)
+        return self._logger
         
     def start(self) -> None:
         """Start the asyncio event loop in a dedicated thread."""

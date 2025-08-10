@@ -1,11 +1,11 @@
 # Task ID: 18
 # Title: Phase 4: Connect TUI Buttons to Actions
-# Status: pending
+# Status: cancelled
 # Dependencies: 17
 # Priority: medium
-# Description: Make TUI buttons actually trigger events when clicked
+# Description: CANCELLED: This task's functionality has been merged into Task 5.9 (Button Framework and Event Binding subtask).
 # Details:
-Currently buttons do nothing. Connect: Buy/Sell buttons to order submission, Cancel button to order cancellation, Refresh buttons to data updates. Each button press should emit an event through EventEngine. Add loading states and error feedback.
+This task was cancelled because its requirements—connecting Buy/Sell, Cancel, and Refresh buttons to their respective actions via the EventEngine, including loading states and error feedback—have been consolidated into the broader TUI implementation under Task 5.9. This avoids redundant work and centralizes TUI development.
 
 # Test Strategy:
-Click each button and verify event is emitted. Check EventEngine receives correct event type. Verify UI shows feedback (loading/success/error).
+N/A - Task cancelled. Testing for this functionality is now part of Task 5.9.

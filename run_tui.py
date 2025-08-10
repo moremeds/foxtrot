@@ -14,7 +14,10 @@ import sys
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-from foxtrot.util.logger import get_component_logger
+from foxtrot.util.logger import get_component_logger, create_foxtrot_logger
+
+# Create a global logger instance for the TUI
+foxtrot_logger = create_foxtrot_logger()
 
 
 def parse_arguments():
@@ -73,7 +76,7 @@ def setup_logging(debug: bool = False):
 
 def check_dependencies():
     """Check if all required dependencies are available."""
-    logger = get_component_logger("TUILauncher")
+    logger = get_component_logger("TUILauncher", foxtrot_logger)
     missing_deps = []
 
     try:
@@ -101,7 +104,7 @@ def check_dependencies():
 def main():
     """Main entry point for the TUI application."""
     args = parse_arguments()
-    logger = get_component_logger("TUILauncher")
+    logger = get_component_logger("TUILauncher", foxtrot_logger)
 
     # Setup logging
     setup_logging(args.debug)
@@ -137,6 +140,12 @@ def main():
         # Import and run the TUI application
         # Set up environment variables based on arguments
         import os
+        
+        # Add detailed debugging for import issues
+        if args.debug:
+            print("DEBUG: Starting imports...")
+            import sys
+            sys.setrecursionlimit(500)  # Increase limit to help with import issues
 
         from foxtrot.app.tui.main_app import main as run_tui
 

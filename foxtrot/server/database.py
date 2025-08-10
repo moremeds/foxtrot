@@ -8,7 +8,7 @@ from util.constants import Exchange, Interval
 from util.object import BarData, TickData
 from util.settings import SETTINGS
 from util.utility import ZoneInfo
-from util.logger import get_component_logger
+from util.logger import create_foxtrot_logger, get_component_logger
 
 DB_TZ = ZoneInfo(SETTINGS["database.timezone"])
 
@@ -116,7 +116,8 @@ def get_database() -> BaseDatabase:
     if database:
         return database
     
-    logger = get_component_logger("DatabaseManager")
+    foxtrot_logger = create_foxtrot_logger()
+    logger = get_component_logger("DatabaseManager", foxtrot_logger)
 
     # Read database related global setting
     database_name: str = SETTINGS["database.name"]

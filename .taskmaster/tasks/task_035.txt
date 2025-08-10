@@ -1,0 +1,34 @@
+# Task ID: 35
+# Title: Fix Failing Technical Indicator Calculation Tests
+# Status: pending
+# Dependencies: 14, 21
+# Priority: low
+# Description: Investigate and resolve failures in the technical indicator calculation tests for SMA, RSI, MACD, and Bollinger Bands. The fix will involve correcting mathematical precision, validating test data, and ensuring all dependencies are correctly handled.
+# Details:
+Based on the test report, several mathematical indicator tests are failing. This task involves a systematic approach to identify the root cause and implement a robust solution.
+
+1. **Isolate and Analyze Failures:**
+   - For each failing indicator (SMA, RSI, MACD, Bollinger Bands), run the corresponding test in isolation to analyze the specific assertion failure.
+   - Manually recalculate the expected output using a trusted external source (e.g., TA-Lib, Pandas TA, or a spreadsheet) with the exact same input data from the test fixture. This will determine if the bug is in the implementation logic or the test's expected value.
+
+2. **Review and Correct Implementation:**
+   - **Numerical Precision:** Examine the calculation logic for floating-point inaccuracies. Refactor comparisons in tests to use `pytest.approx` or `numpy.isclose` instead of direct equality checks (`==`) to handle floating-point arithmetic correctly.
+   - **Test Data Integrity:** Review the test fixtures providing market data. Verify that the input data is clean, correctly formatted, and contains a sufficient number of data points for each indicator's period.
+   - **Algorithm Logic:** Scrutinize the core calculation algorithms for each indicator. Compare them against standard, well-documented formulas to identify any logical errors or off-by-one mistakes in indexing or slicing.
+
+3. **Update Test Cases:**
+   - Correct the `expected` output values in the test assertions to match the validated calculations.
+   - If test data is found to be the issue, update the relevant test fixtures (see Task 21).
+
+# Test Strategy:
+The successful completion of this task will be verified through the following steps:
+
+1. **All Tests Pass:** All unit tests within the technical indicator test module must pass consistently when the full test suite is executed.
+
+2. **Cross-Validation:** The output of the corrected indicator functions must match the results from a trusted third-party library (e.g., TA-Lib) to at least 5 decimal places for a standardized set of input data.
+
+3. **Edge Case Coverage:** Add new unit tests for each indicator to handle known edge cases:
+   - Input data series shorter than the indicator's period (should handle gracefully, e.g., return NaN or raise an error).
+   - Input data containing zeros, negative values, or flat-line data.
+
+4. **Regression Verification:** Run the entire project test suite after the fixes are applied to ensure that the changes have not introduced any regressions in other parts of the system.

@@ -1,11 +1,49 @@
 # Task ID: 20
-# Title: Add Minimal Documentation
+# Title: Comprehensive Test Coverage Enhancement
 # Status: pending
 # Dependencies: 10, 11
-# Priority: low
-# Description: Add docstrings to all public methods and classes
+# Priority: high
+# Description: Successfully stabilized the CI/CD pipeline by fixing critical flaky WebSocket and performance tests. The focus is now on resolving remaining test failures and continuing to expand coverage through new unit, integration, and E2E tests.
 # Details:
-One-line docstrings for simple methods, multi-line for complex ones. Include: purpose, parameters, return value, exceptions raised. Focus on public API first. Use Google style docstrings. No novels - keep it concise and practical.
+Key progress includes mocking WebSocket and performance tests to eliminate timeouts, significantly reducing test execution time, and creating comprehensive tests for the DI container. The CI/CD pipeline is no longer blocked by flaky tests. Remaining work involves fixing specific WebSocket subscription failures related to `api_client` initialization and developing the planned E2E test suites.
 
 # Test Strategy:
-Run pydocstyle to check docstring presence. Verify all public methods have at least one-line docstring.
+Success will be measured by: 1. Complete resolution of all WebSocket test failures. 2. An increase in overall test coverage percentage to the project's target, tracked via `pytest-cov`. 3. Successful integration of all new test suites (especially E2E) into the CI process. 4. Peer review of all new tests to ensure they are robust and meaningful.
+
+# Subtasks:
+## 1. Fix flaky WebSocket integration tests by mocking real connections and removing long sleeps [done]
+### Dependencies: None
+### Description: 
+### Details:
+
+
+## 2. Refactor performance benchmark tests to eliminate real threads and delays, fixing timeouts [done]
+### Dependencies: None
+### Description: 
+### Details:
+
+
+## 3. Create comprehensive unit tests for the DI container [done]
+### Dependencies: None
+### Description: 
+### Details:
+
+
+## 4. Resolve failing WebSocket subscription tests due to api_client initialization issues [pending]
+### Dependencies: None
+### Description: 
+### Details:
+
+
+## 5. Develop and implement E2E test suites for key user workflows [pending]
+### Dependencies: None
+### Description: 
+### Details:
+
+
+## 6. Continue increasing unit test coverage for critical business logic and utility modules [in_progress]
+### Dependencies: None
+### Description: 
+### Details:
+
+

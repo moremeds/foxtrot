@@ -180,6 +180,10 @@ class MainEngine(IEngine):
         """Subscribe tick data update of a specific adapter."""
         self.adapter_manager.subscribe(req, adapter_name)
 
+    def unsubscribe(self, symbol: str, adapter_name: str) -> None:
+        """Unsubscribe tick data update of a specific adapter."""
+        self.adapter_manager.unsubscribe(symbol, adapter_name)
+
     def send_order(self, req: OrderRequest, adapter_name: str) -> str:
         """Send new order request to a specific gateway."""
         return self.adapter_manager.send_order(req, adapter_name)
